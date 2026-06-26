@@ -1,40 +1,22 @@
-<div align="center">
+<h1 align="center">🛠 Dev Tools</h1>
 
-# 🛠 Dev Tools
-
-**一站式开发工具箱 — 62 个实用开发工具**
+<p align="center"><b>一站式开发工具箱 — 62 个实用开发工具</b></p>
 
 <p align="center">
-  <a href="https://github.com/MY-Final/dev-tools/releases/latest">
-    <img src="https://img.shields.io/github/v/release/MY-Final/dev-tools?style=flat-square&label=版本&color=6366f1" alt="版本" />
-  </a>
-  <a href="https://github.com/MY-Final/dev-tools/releases">
-    <img src="https://img.shields.io/github/downloads/MY-Final/dev-tools/total?style=flat-square&label=下载&color=22c55e" alt="下载" />
-  </a>
-  <a href="https://github.com/MY-Final/dev-tools/blob/master/LICENSE">
-    <img src="https://img.shields.io/github/license/MY-Final/dev-tools?style=flat-square&label=许可&color=f59e0b" alt="许可" />
-  </a>
-  <a href="https://github.com/MY-Final/dev-tools">
-    <img src="https://img.shields.io/github/stars/MY-Final/dev-tools?style=flat-square&label=Stars&color=ec4899" alt="Stars" />
-  </a>
-  <a href="https://github.com/MY-Final/dev-tools/actions">
-    <img src="https://img.shields.io/github/actions/workflow/status/MY-Final/dev-tools/build.yml?style=flat-square&label=构建&color=8b5cf6" alt="构建" />
-  </a>
-  <a href="https://github.com/MY-Final/dev-tools/blob/master/CHANGELOG.md">
-    <img src="https://img.shields.io/badge/更新日志-✓-blue?style=flat-square&color=06b6d4" alt="更新日志" />
-  </a>
+  <a href="https://github.com/MY-Final/dev-tools/releases/latest"><img src="https://img.shields.io/github/v/release/MY-Final/dev-tools?style=flat-square&label=版本&color=6366f1" alt="版本" /></a>
+  <a href="https://github.com/MY-Final/dev-tools/releases"><img src="https://img.shields.io/github/downloads/MY-Final/dev-tools/total?style=flat-square&label=下载&color=22c55e" alt="下载" /></a>
+  <a href="https://github.com/MY-Final/dev-tools/blob/master/LICENSE"><img src="https://img.shields.io/github/license/MY-Final/dev-tools?style=flat-square&label=许可&color=f59e0b" alt="许可" /></a>
+  <a href="https://github.com/MY-Final/dev-tools"><img src="https://img.shields.io/github/stars/MY-Final/dev-tools?style=flat-square&label=Stars&color=ec4899" alt="Stars" /></a>
+  <a href="https://github.com/MY-Final/dev-tools/actions"><img src="https://img.shields.io/github/actions/workflow/status/MY-Final/dev-tools/build.yml?style=flat-square&label=构建&color=8b5cf6" alt="构建" /></a>
+  <a href="https://github.com/MY-Final/dev-tools/blob/master/CHANGELOG.md"><img src="https://img.shields.io/badge/更新日志-✓-blue?style=flat-square&color=06b6d4" alt="更新日志" /></a>
 </p>
 
 https://github.com/user-attachments/assets/6e9e5535-cc74-43aa-846e-67590db01b71
 
-</div>
-
 <br />
 
 <p align="center">
-  <img src="./dian.png" width="120" alt="看板娘" />
-  <br />
-  <sub><b>✨ Dev Tools 看板娘 · Dian</b></sub>
+  <img src="./dian.png" width="350" alt="Dev Tools 看板娘 · Dian" />
 </p>
 
 <br />
@@ -60,6 +42,7 @@ https://github.com/user-attachments/assets/6e9e5535-cc74-43aa-846e-67590db01b71
 - **Base64 Codec** — Base64 编码与解码
 - **URL Codec** — URL 编码与解码
 - **UUID Decoder** — 解析 UUID 版本、变体、时间戳与 MAC
+
 </details>
 
 <details>
@@ -74,6 +57,7 @@ https://github.com/user-attachments/assets/6e9e5535-cc74-43aa-846e-67590db01b71
 - **Color Converter** — 颜色格式转换 HEX ↔ RGB ↔ HSL
 - **Number Base Converter** — 进制转换 · 反码 · 补码
 - **Image Tools** — 图片转 Base64 · 图片信息查看
+
 </details>
 
 <details>
@@ -84,6 +68,7 @@ https://github.com/user-attachments/assets/6e9e5535-cc74-43aa-846e-67590db01b71
 - **Subnet Calculator** — IPv4 子网计算器
 - **IPv4 Converter** — IPv4 地址与数字格式互相转换
 - **IP Range Expander** — IP 范围转 CIDR 计算
+
 </details>
 
 <details>
@@ -97,6 +82,7 @@ https://github.com/user-attachments/assets/6e9e5535-cc74-43aa-846e-67590db01b71
 - **Keyboard Tester** — 实时查看键盘按键的 KeyboardEvent
 - **Mouse Tester** — 鼠标事件检测（坐标/滚轮/按键）
 - **Timer & Stopwatch** — 秒表 · 倒计时 · 番茄钟 · 间歇训练
+
 </details>
 
 <details>
@@ -114,6 +100,7 @@ https://github.com/user-attachments/assets/6e9e5535-cc74-43aa-846e-67590db01b71
 - **JSON Converter** — JSON → TypeScript · TOML · XML · YAML
 - **CSS Gradient Generator** — 可视化渐变生成器
 - **HTML to JSX** — HTML 一键转 React JSX 语法
+
 </details>
 
 <details>
@@ -125,6 +112,7 @@ https://github.com/user-attachments/assets/6e9e5535-cc74-43aa-846e-67590db01b71
 - **Lorem Ipsum Generator** — 虚拟占位文本生成
 - **Diff Checker** — 逐行对比文本差异
 - **Image Tools** — 图片转 Base64 · 图片信息查看
+
 </details>
 
 <details>
@@ -141,6 +129,7 @@ https://github.com/user-attachments/assets/6e9e5535-cc74-43aa-846e-67590db01b71
 - **HTML Entities** — HTML 实体字符速查手册
 - **SQL Cheat Sheet** — SQL 常用语法速查手册
 - **CSS Cheat Sheet** — Flexbox · Grid · 单位 · 选择器 · 动画速查
+
 </details>
 
 ---
@@ -200,6 +189,7 @@ npm run format        # Prettier 格式化
 
 <p align="center">
   <sub>Built with ❤️ by <a href="https://github.com/MY-Final">MY-Final</a></sub>
+  <br />
   <br />
   ![dev-tools](https://count.getloli.com/@MY-Final_dev-tools?name=dev-tools&theme=minecraft&padding=6&offset=0&align=top&scale=1&pixelated=1&darkmode=auto)
 </p>
