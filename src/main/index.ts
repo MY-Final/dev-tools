@@ -82,12 +82,31 @@ function registerUpdaterHandlers(): void {
   })
 }
 
-const SOLR_BASE = 'https://search.maven.org/solrsearch/select'
+const MAVEN_SOURCES = [
+  'https://search.maven.org/solrsearch/select',
+  'https://maven.aliyun.com/repository/central'
+]
+
+async function mavenFetch(params: URLSearchParams): Promise<Response | null> {
+  for (const source of MAVEN_SOURCES) {
+    try {
+      const controller = new AbortController()
+      const timeout = setTimeout(() => controller.abort(), 8000)
+      const res = await fetch(`${source}?${params}`, { signal: controller.signal })
+      clearTimeout(timeout)
+      if (res.ok) return res
+    } catch {
+      continue
+    }
+  }
+  return null
+}
 
 function registerMavenHandlers(): void {
   ipcMain.handle('maven:search', async (_event, query: string, rows: number) => {
     const params = new URLSearchParams({ q: query, rows: String(rows || 20), wt: 'json' })
-    const res = await fetch(`${SOLR_BASE}?${params}`)
+    const res = await mavenFetch(params)
+    if (!res) return { response: { docs: [] } }
     return res.json()
   })
 
@@ -98,7 +117,8 @@ function registerMavenHandlers(): void {
       rows: '15',
       wt: 'json'
     })
-    const res = await fetch(`${SOLR_BASE}?${params}`)
+    const res = await mavenFetch(params)
+    if (!res) return { response: { docs: [] } }
     return res.json()
   })
 
@@ -133,10 +153,12 @@ function registerMavenHandlers(): void {
     for (const seed of seeds) {
       try {
         const params = new URLSearchParams({ q: `a:${seed}`, rows: '1', wt: 'json' })
-        const res = await fetch(`${SOLR_BASE}?${params}`)
-        const data = await res.json()
-        if (data.response?.docs?.length > 0) {
-          results.push(data.response.docs[0])
+        const res = await mavenFetch(params)
+        if (res) {
+          const data = await res.json()
+          if (data.response?.docs?.length > 0) {
+            results.push(data.response.docs[0])
+          }
         }
       } catch {
         // skip

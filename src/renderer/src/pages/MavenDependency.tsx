@@ -3,7 +3,6 @@ import { Copy, Check, Search, ExternalLink, Globe, Loader } from 'lucide-react'
 import {
   searchMavenArtifacts,
   getArtifactVersions,
-  fetchPopularDeps,
   type MavenDoc
 } from '@renderer/lib/maven-api'
 
@@ -55,7 +54,6 @@ export default function MavenDependency(): React.JSX.Element {
   const [search, setSearch] = useState('')
   const [deps, setDeps] = useState<MavenDoc[]>([])
   const [loading, setLoading] = useState(false)
-  const [popularLoading, setPopularLoading] = useState(true)
   const [selectedDep, setSelectedDep] = useState<MavenDoc | null>(null)
   const [selectedVersion, setSelectedVersion] = useState('')
   const [versions, setVersions] = useState<string[]>([])
@@ -66,54 +64,22 @@ export default function MavenDependency(): React.JSX.Element {
   const [mirrorCopied, setMirrorCopied] = useState(false)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
-  // Load popular deps on mount
-  useEffect(() => {
-    fetchPopularDeps().then((docs) => {
-      setDeps(docs)
-      setPopularLoading(false)
-    })
-  }, [])
-
   // Debounced search
   const doSearch = useCallback(async (query: string) => {
-    if (!query.trim()) {
-      setLoading(true)
-      const docs = await fetchPopularDeps()
-      setDeps(docs)
-      setLoading(false)
-      return
-    }
+    if (!query.trim()) { setDeps([]); return }
     setLoading(true)
     const docs = await searchMavenArtifacts(query)
     setDeps(docs)
     setLoading(false)
   }, [])
 
-  // Trigger search with debounce, unless immediate is set
-  const triggerSearch = useCallback(
-    (query: string, immediate = false) => {
-      if (debounceRef.current) clearTimeout(debounceRef.current)
-      if (immediate) {
-        doSearch(query)
-        return
-      }
-      debounceRef.current = setTimeout(() => doSearch(query), 200)
-    },
-    [doSearch]
-  )
-
-  /* eslint-disable react-hooks/set-state-in-effect */
+  // Debounced search effect
   useEffect(() => {
-    if (!search.trim()) {
-      triggerSearch('', true)
-    } else {
-      triggerSearch(search)
-    }
-    return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current)
-    }
-  }, [search, triggerSearch])
-  /* eslint-enable react-hooks/set-state-in-effect */
+    if (!search.trim()) { setDeps([]); return }
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => doSearch(search), 200)
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
+  }, [search, doSearch])
 
   const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>): void => {
     if (e.key === 'Enter') {
@@ -223,7 +189,7 @@ export default function MavenDependency(): React.JSX.Element {
 
             <div className="mvn-content">
               <div className="mvn-dep-list">
-                {popularLoading || loading ? (
+                {loading ? (
                   <div className="mvn-dep-empty">
                     <Loader size={20} className="updater-spin" />
                     <span>加载中...</span>
