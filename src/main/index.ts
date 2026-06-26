@@ -95,7 +95,7 @@ async function mavenFetch(params: URLSearchParams, retries = 2): Promise<Respons
       clearTimeout(timeout)
       if (res.ok) return res
       if (res.status === 504 && attempt < retries) {
-        await new Promise(r => setTimeout(r, 1000 * (attempt + 1)))
+        await new Promise(r => setTimeout(r, 2000 * (attempt + 1)))
         continue
       }
     } catch {

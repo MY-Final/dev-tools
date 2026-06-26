@@ -54,6 +54,7 @@ export default function MavenDependency(): React.JSX.Element {
   const [search, setSearch] = useState('')
   const [deps, setDeps] = useState<MavenDoc[]>([])
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
   const [selectedDep, setSelectedDep] = useState<MavenDoc | null>(null)
   const [selectedVersion, setSelectedVersion] = useState('')
   const [versions, setVersions] = useState<string[]>([])
@@ -66,11 +67,12 @@ export default function MavenDependency(): React.JSX.Element {
 
   // Debounced search
   const doSearch = useCallback(async (query: string) => {
-    if (!query.trim()) { setDeps([]); return }
-    setLoading(true)
+    if (!query.trim()) { setDeps([]); setError(''); return }
+    setLoading(true); setError('')
     const docs = await searchMavenArtifacts(query)
     setDeps(docs)
     setLoading(false)
+    if (docs.length === 0) setError('未找到匹配的依赖，请检查关键词或网络连接')
   }, [])
 
   // Debounced search effect
@@ -194,6 +196,8 @@ export default function MavenDependency(): React.JSX.Element {
                     <Loader size={20} className="updater-spin" />
                     <span>加载中...</span>
                   </div>
+                ) : error ? (
+                  <div className="npm-error">{error}</div>
                 ) : filteredDeps.length === 0 ? (
                   <div className="mvn-dep-empty">未找到匹配的依赖</div>
                 ) : (
