@@ -33,6 +33,39 @@ function AppContent(): React.JSX.Element {
     updateAppearance({ sidebarCollapsed: !settings.appearance.sidebarCollapsed })
   }, [settings.appearance.sidebarCollapsed, updateAppearance])
 
+  // 全局快捷键
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent): void => {
+      // 在输入框中不处理快捷键
+      const target = e.target as HTMLElement
+      const isInput =
+        target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable
+
+      // Alt+B: 切换侧边栏
+      if (e.altKey && e.key === 'b') {
+        e.preventDefault()
+        updateAppearance({ sidebarCollapsed: !settings.appearance.sidebarCollapsed })
+        return
+      }
+
+      // Ctrl+,: 打开设置
+      if ((e.ctrlKey || e.metaKey) && e.key === ',') {
+        e.preventDefault()
+        setCurrentPage('settings')
+        return
+      }
+
+      // Esc: 返回首页（非输入框中且不在首页）
+      if (e.key === 'Escape' && !isInput && currentPage !== 'home') {
+        setCurrentPage('home')
+        return
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [settings.appearance.sidebarCollapsed, currentPage, updateAppearance, setCurrentPage])
+
   // ── Render ──────────────────────────────────────────────────
   const renderPage = (): React.JSX.Element => {
     // Special pages
