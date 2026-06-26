@@ -2,21 +2,10 @@
 
 <p align="center"><b>一站式开发工具箱 — 62 个实用开发工具</b></p>
 
-<p align="center">
-  <a href="https://github.com/MY-Final/dev-tools/releases/latest"><img src="https://img.shields.io/github/v/release/MY-Final/dev-tools?style=flat-square&label=版本&color=6366f1" alt="版本" /></a>
-  <a href="https://github.com/MY-Final/dev-tools/releases"><img src="https://img.shields.io/github/downloads/MY-Final/dev-tools/total?style=flat-square&label=下载&color=22c55e" alt="下载" /></a>
-  <a href="https://github.com/MY-Final/dev-tools/blob/master/LICENSE"><img src="https://img.shields.io/github/license/MY-Final/dev-tools?style=flat-square&label=许可&color=f59e0b" alt="许可" /></a>
-  <a href="https://github.com/MY-Final/dev-tools"><img src="https://img.shields.io/github/stars/MY-Final/dev-tools?style=flat-square&label=Stars&color=ec4899" alt="Stars" /></a>
-  <a href="https://github.com/MY-Final/dev-tools/actions"><img src="https://img.shields.io/github/actions/workflow/status/MY-Final/dev-tools/build.yml?style=flat-square&label=构建&color=8b5cf6" alt="构建" /></a>
-  <a href="https://github.com/MY-Final/dev-tools/blob/master/CHANGELOG.md"><img src="https://img.shields.io/badge/更新日志-✓-blue?style=flat-square&color=06b6d4" alt="更新日志" /></a>
-</p>
-
-https://github.com/user-attachments/assets/6e9e5535-cc74-43aa-846e-67590db01b71
-
 <br />
 
 <p align="center">
-  <img src="./dian.png" width="350" alt="Dev Tools 看板娘 · Dian" />
+  <img src="./dian.png" width="400" alt="Dev Tools 看板娘 · Dian" />
 </p>
 
 <br />
@@ -191,5 +180,4 @@ npm run format        # Prettier 格式化
   <sub>Built with ❤️ by <a href="https://github.com/MY-Final">MY-Final</a></sub>
   <br />
   <br />
-  ![dev-tools](https://count.getloli.com/@MY-Final_dev-tools?name=dev-tools&theme=minecraft&padding=6&offset=0&align=top&scale=1&pixelated=1&darkmode=auto)
 </p>
