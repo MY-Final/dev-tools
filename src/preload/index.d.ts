@@ -23,6 +23,7 @@ export interface AppSettings {
     maxTokens: number
   }
   npmRegistry: string
+  mavenSearchUrl: string
 }
 
 export interface SettingsAPI {
@@ -36,6 +37,8 @@ export interface SettingsAPI {
   updateTranslator: (updates: Partial<AppSettings['translator']>) => Promise<AppSettings>
   getNpmRegistry: () => Promise<string>
   updateNpmRegistry: (npmRegistry: string) => Promise<AppSettings>
+  getMavenSearchUrl: () => Promise<string>
+  updateMavenSearchUrl: (url: string) => Promise<AppSettings>
   resetToDefaults: () => Promise<AppSettings>
 }
 

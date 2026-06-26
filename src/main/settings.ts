@@ -25,6 +25,7 @@ export interface AppSettings {
     maxTokens: number
   }
   npmRegistry: string
+  mavenSearchUrl: string
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -49,7 +50,8 @@ const DEFAULT_SETTINGS: AppSettings = {
     temperature: 0.3,
     maxTokens: 4096
   },
-  npmRegistry: ''
+  npmRegistry: '',
+  mavenSearchUrl: ''
 }
 
 class SettingsStore {
@@ -81,7 +83,8 @@ class SettingsStore {
       editor: { ...DEFAULT_SETTINGS.editor, ...data.editor },
       updater: { ...DEFAULT_SETTINGS.updater, ...data.updater },
       translator: { ...DEFAULT_SETTINGS.translator, ...data.translator },
-      npmRegistry: data.npmRegistry ?? ''
+      npmRegistry: data.npmRegistry ?? '',
+      mavenSearchUrl: data.mavenSearchUrl ?? ''
     }
   }
 
@@ -143,6 +146,12 @@ class SettingsStore {
 
   updateNpmRegistry(npmRegistry: string): AppSettings {
     this.settings.npmRegistry = npmRegistry
+    this.save()
+    return this.getSettings()
+  }
+
+  updateMavenSearchUrl(mavenSearchUrl: string): AppSettings {
+    this.settings.mavenSearchUrl = mavenSearchUrl
     this.save()
     return this.getSettings()
   }

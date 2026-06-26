@@ -24,6 +24,7 @@ export interface AppSettings {
     maxTokens: number
   }
   npmRegistry: string
+  mavenSearchUrl: string
 }
 
 export type UpdateStatus =
@@ -55,6 +56,10 @@ const settingsAPI = {
     ipcRenderer.invoke('settings:get-npm-registry'),
   updateNpmRegistry: (npmRegistry: string): Promise<AppSettings> =>
     ipcRenderer.invoke('settings:update-npm-registry', npmRegistry),
+  getMavenSearchUrl: (): Promise<string> =>
+    ipcRenderer.invoke('settings:get-maven-search-url'),
+  updateMavenSearchUrl: (url: string): Promise<AppSettings> =>
+    ipcRenderer.invoke('settings:update-maven-search-url', url),
   resetToDefaults: (): Promise<AppSettings> => ipcRenderer.invoke('settings:reset')
 }
 

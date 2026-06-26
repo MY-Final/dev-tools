@@ -23,6 +23,7 @@ export interface AppSettings {
     maxTokens: number
   }
   npmRegistry: string
+  mavenSearchUrl: string
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -47,7 +48,8 @@ const DEFAULT_SETTINGS: AppSettings = {
     temperature: 0.3,
     maxTokens: 4096
   },
-  npmRegistry: ''
+  npmRegistry: '',
+  mavenSearchUrl: ''
 }
 
 interface SettingsContextType {
@@ -58,6 +60,7 @@ interface SettingsContextType {
   updateUpdater: (updates: Partial<AppSettings['updater']>) => Promise<void>
   updateTranslator: (updates: Partial<AppSettings['translator']>) => Promise<void>
   updateNpmRegistry: (npmRegistry: string) => Promise<void>
+  updateMavenSearchUrl: (url: string) => Promise<void>
   resetToDefaults: () => Promise<void>
 }
 
@@ -126,6 +129,15 @@ export function SettingsProvider({ children }: { children: ReactNode }): React.J
     }
   }, [])
 
+  const updateMavenSearchUrl = useCallback(async (url: string) => {
+    try {
+      const updated = await window.api.updateMavenSearchUrl(url)
+      setSettings(updated)
+    } catch {
+      // 忽略错误
+    }
+  }, [])
+
   const resetToDefaults = useCallback(async () => {
     try {
       const reset = await window.api.resetToDefaults()
@@ -137,7 +149,7 @@ export function SettingsProvider({ children }: { children: ReactNode }): React.J
 
   return (
     <SettingsContext.Provider
-      value={{ settings, loading, updateAppearance, updateEditor, updateUpdater, updateTranslator, updateNpmRegistry, resetToDefaults }}
+      value={{ settings, loading, updateAppearance, updateEditor, updateUpdater, updateTranslator, updateNpmRegistry, updateMavenSearchUrl, resetToDefaults }}
     >
       {children}
     </SettingsContext.Provider>

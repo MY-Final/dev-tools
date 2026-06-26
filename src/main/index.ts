@@ -52,6 +52,14 @@ function registerSettingsHandlers(): void {
     return settingsStore.updateNpmRegistry(npmRegistry)
   })
 
+  ipcMain.handle('settings:get-maven-search-url', () => {
+    return settingsStore.getSettings().mavenSearchUrl
+  })
+
+  ipcMain.handle('settings:update-maven-search-url', (_event, url: string) => {
+    return settingsStore.updateMavenSearchUrl(url)
+  })
+
   ipcMain.handle('settings:get-translator', () => {
     return settingsStore.getTranslator()
   })
@@ -82,16 +90,15 @@ function registerUpdaterHandlers(): void {
   })
 }
 
-const MAVEN_SOURCES = [
-  'https://search.maven.org/solrsearch/select'
-]
+const MAVEN_DEFAULT_SEARCH = 'https://search.maven.org/solrsearch/select'
 
-async function mavenFetch(params: URLSearchParams, retries = 2): Promise<Response | null> {
+async function mavenFetch(params: URLSearchParams, retries = 2, customUrl?: string): Promise<Response | null> {
+  const baseUrl = customUrl || MAVEN_DEFAULT_SEARCH
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
       const controller = new AbortController()
       const timeout = setTimeout(() => controller.abort(), 15000)
-      const res = await fetch(`${MAVEN_SOURCES[0]}?${params}`, { signal: controller.signal })
+      const res = await fetch(`${baseUrl}?${params}`, { signal: controller.signal })
       clearTimeout(timeout)
       if (res.ok) return res
       if (res.status === 504 && attempt < retries) {
@@ -110,20 +117,22 @@ async function mavenFetch(params: URLSearchParams, retries = 2): Promise<Respons
 
 function registerMavenHandlers(): void {
   ipcMain.handle('maven:search', async (_event, query: string, rows: number) => {
+    const config = settingsStore.getSettings()
     const params = new URLSearchParams({ q: query, rows: String(rows || 20), wt: 'json' })
-    const res = await mavenFetch(params)
+    const res = await mavenFetch(params, 2, config.mavenSearchUrl)
     if (!res) return { response: { docs: [] } }
     return res.json()
   })
 
   ipcMain.handle('maven:versions', async (_event, groupId: string, artifactId: string) => {
+    const config = settingsStore.getSettings()
     const params = new URLSearchParams({
       q: `g:${groupId} AND a:${artifactId}`,
       core: 'gav',
       rows: '15',
       wt: 'json'
     })
-    const res = await mavenFetch(params)
+    const res = await mavenFetch(params, 1, config.mavenSearchUrl)
     if (!res) return { response: { docs: [] } }
     return res.json()
   })

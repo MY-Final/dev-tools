@@ -5,7 +5,7 @@ import { useUpdater } from '@renderer/lib/updater-context'
 import '../styles/settings.css'
 
 export default function SettingsPage(): React.JSX.Element {
-  const { settings, updateAppearance, updateEditor, updateUpdater, updateTranslator, updateNpmRegistry, resetToDefaults } = useSettings()
+  const { settings, updateAppearance, updateEditor, updateUpdater, updateTranslator, updateNpmRegistry, updateMavenSearchUrl, resetToDefaults } = useSettings()
   const {
     status,
     version,
@@ -344,6 +344,29 @@ export default function SettingsPage(): React.JSX.Element {
                 value={settings.npmRegistry}
                 onChange={(e) => updateNpmRegistry(e.target.value)}
                 placeholder="https://registry.npmjs.org"
+              />
+            </div>
+          </div>
+
+          {/* Maven 搜索设置 */}
+          <div className="settings-section">
+            <h3 className="settings-section-title">
+              <span className="settings-section-icon" style={{ fontSize: 18 }}>🔍</span>
+              Maven Search
+            </h3>
+            <div className="settings-item settings-item-column">
+              <div className="settings-item-info">
+                <p className="settings-item-label">Maven 搜索地址</p>
+                <p className="settings-item-description">
+                  默认 search.maven.org，国内可换用镜像站
+                </p>
+              </div>
+              <input
+                className="settings-input"
+                type="text"
+                value={settings.mavenSearchUrl}
+                onChange={(e) => updateMavenSearchUrl(e.target.value)}
+                placeholder="https://search.maven.org/solrsearch/select"
               />
             </div>
           </div>
