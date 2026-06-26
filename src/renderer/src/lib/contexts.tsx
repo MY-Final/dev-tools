@@ -24,6 +24,11 @@ export interface AppSettings {
   }
   npmRegistry: string
   mavenSearchUrl: string
+  proxy: {
+    enabled: boolean
+    url: string
+  }
+  disabledTools: string[]
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -49,7 +54,12 @@ const DEFAULT_SETTINGS: AppSettings = {
     maxTokens: 4096
   },
   npmRegistry: '',
-  mavenSearchUrl: ''
+  mavenSearchUrl: '',
+  proxy: {
+    enabled: false,
+    url: ''
+  },
+  disabledTools: []
 }
 
 interface SettingsContextType {
@@ -61,6 +71,8 @@ interface SettingsContextType {
   updateTranslator: (updates: Partial<AppSettings['translator']>) => Promise<void>
   updateNpmRegistry: (npmRegistry: string) => Promise<void>
   updateMavenSearchUrl: (url: string) => Promise<void>
+  updateProxy: (updates: Partial<{ enabled: boolean; url: string }>) => Promise<void>
+  updateDisabledTools: (disabledTools: string[]) => Promise<void>
   resetToDefaults: () => Promise<void>
 }
 
@@ -138,6 +150,24 @@ export function SettingsProvider({ children }: { children: ReactNode }): React.J
     }
   }, [])
 
+  const updateProxy = useCallback(async (updates: Partial<{ enabled: boolean; url: string }>) => {
+    try {
+      const updated = await window.api.updateProxy(updates)
+      setSettings(updated)
+    } catch {
+      // 忽略错误
+    }
+  }, [])
+
+  const updateDisabledTools = useCallback(async (disabledTools: string[]) => {
+    try {
+      const updated = await window.api.updateDisabledTools(disabledTools)
+      setSettings(updated)
+    } catch {
+      // 忽略错误
+    }
+  }, [])
+
   const resetToDefaults = useCallback(async () => {
     try {
       const reset = await window.api.resetToDefaults()
@@ -149,7 +179,7 @@ export function SettingsProvider({ children }: { children: ReactNode }): React.J
 
   return (
     <SettingsContext.Provider
-      value={{ settings, loading, updateAppearance, updateEditor, updateUpdater, updateTranslator, updateNpmRegistry, updateMavenSearchUrl, resetToDefaults }}
+      value={{ settings, loading, updateAppearance, updateEditor, updateUpdater, updateTranslator, updateNpmRegistry, updateMavenSearchUrl, updateProxy, updateDisabledTools, resetToDefaults }}
     >
       {children}
     </SettingsContext.Provider>

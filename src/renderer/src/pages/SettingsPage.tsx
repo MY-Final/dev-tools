@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Settings, Palette, RotateCcw, RefreshCw, Download, FileText, X } from 'lucide-react'
+import { Settings, Palette, RotateCcw, RefreshCw, Download, FileText, X, ChevronRight, Wifi, ShieldOff } from 'lucide-react'
 import { useSettings } from '@renderer/lib/contexts'
 import { useUpdater } from '@renderer/lib/updater-context'
 import '../styles/settings.css'
 
 export default function SettingsPage(): React.JSX.Element {
-  const { settings, updateAppearance, updateEditor, updateUpdater, updateTranslator, updateNpmRegistry, updateMavenSearchUrl, resetToDefaults } = useSettings()
+  const { settings, updateAppearance, updateEditor, updateUpdater, updateTranslator, updateNpmRegistry, updateMavenSearchUrl, updateProxy, updateDisabledTools, resetToDefaults } = useSettings()
   const {
     status,
     version,
@@ -25,6 +25,20 @@ export default function SettingsPage(): React.JSX.Element {
   const [testResult, setTestResult] = useState('未测试')
   const [testing, setTesting] = useState(false)
   const [fetchedModels, setFetchedModels] = useState<string[]>([])
+  const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({
+    appearance: false,
+    editor: false,
+    translator: false,
+    npm: false,
+    maven: false,
+    proxy: false,
+    tools: false,
+    updater: false
+  })
+
+  const toggleSection = useCallback((key: string) => {
+    setCollapsedSections(prev => ({ ...prev, [key]: !prev[key] }))
+  }, [])
 
   // Auto-fetch models on mount if config exists
   useEffect(() => {
@@ -78,13 +92,16 @@ export default function SettingsPage(): React.JSX.Element {
         </div>
 
         <div className="settings-content">
+
           {/* 外观设置 */}
-          <div className="settings-section">
+          <div className="settings-section-header" onClick={() => toggleSection('appearance')}>
             <h3 className="settings-section-title">
               <Palette size={18} className="settings-section-icon" />
               外观
             </h3>
-
+            <ChevronRight size={16} className={`settings-section-chevron ${!collapsedSections.appearance ? 'open' : ''}`} />
+          </div>
+          <div className={`settings-section-body ${!collapsedSections.appearance ? 'open' : ''}`}>
             <div className="settings-item">
               <div className="settings-item-info">
                 <p className="settings-item-label">主题</p>
@@ -156,12 +173,14 @@ export default function SettingsPage(): React.JSX.Element {
           </div>
 
           {/* 编辑器设置 */}
-          <div className="settings-section">
+          <div className="settings-section-header" onClick={() => toggleSection('editor')}>
             <h3 className="settings-section-title">
               <Settings size={18} className="settings-section-icon" />
               编辑器
             </h3>
-
+            <ChevronRight size={16} className={`settings-section-chevron ${!collapsedSections.editor ? 'open' : ''}`} />
+          </div>
+          <div className={`settings-section-body ${!collapsedSections.editor ? 'open' : ''}`}>
             <div className="settings-item">
               <div className="settings-item-info">
                 <p className="settings-item-label">JSON 缩进</p>
@@ -200,12 +219,14 @@ export default function SettingsPage(): React.JSX.Element {
           </div>
 
           {/* AI 翻译设置 */}
-          <div className="settings-section">
+          <div className="settings-section-header" onClick={() => toggleSection('translator')}>
             <h3 className="settings-section-title">
               <span className="settings-section-icon" style={{ fontSize: 18 }}>🤖</span>
               AI 翻译
             </h3>
-
+            <ChevronRight size={16} className={`settings-section-chevron ${!collapsedSections.translator ? 'open' : ''}`} />
+          </div>
+          <div className={`settings-section-body ${!collapsedSections.translator ? 'open' : ''}`}>
             <div className="settings-item settings-item-column">
               <div className="settings-item-info">
                 <p className="settings-item-label">Base URL</p>
@@ -325,12 +346,14 @@ export default function SettingsPage(): React.JSX.Element {
           </div>
 
           {/* npm 源设置 */}
-          <div className="settings-section">
+          <div className="settings-section-header" onClick={() => toggleSection('npm')}>
             <h3 className="settings-section-title">
               <span className="settings-section-icon" style={{ fontSize: 18 }}>📦</span>
               npm Registry
             </h3>
-
+            <ChevronRight size={16} className={`settings-section-chevron ${!collapsedSections.npm ? 'open' : ''}`} />
+          </div>
+          <div className={`settings-section-body ${!collapsedSections.npm ? 'open' : ''}`}>
             <div className="settings-item settings-item-column">
               <div className="settings-item-info">
                 <p className="settings-item-label">自定义 npm 源</p>
@@ -349,11 +372,14 @@ export default function SettingsPage(): React.JSX.Element {
           </div>
 
           {/* Maven 搜索设置 */}
-          <div className="settings-section">
+          <div className="settings-section-header" onClick={() => toggleSection('maven')}>
             <h3 className="settings-section-title">
               <span className="settings-section-icon" style={{ fontSize: 18 }}>🔍</span>
               Maven Search
             </h3>
+            <ChevronRight size={16} className={`settings-section-chevron ${!collapsedSections.maven ? 'open' : ''}`} />
+          </div>
+          <div className={`settings-section-body ${!collapsedSections.maven ? 'open' : ''}`}>
             <div className="settings-item settings-item-column">
               <div className="settings-item-info">
                 <p className="settings-item-label">Maven 搜索地址</p>
@@ -371,13 +397,105 @@ export default function SettingsPage(): React.JSX.Element {
             </div>
           </div>
 
+          {/* 代理设置 */}
+          <div className="settings-section-header" onClick={() => toggleSection('proxy')}>
+            <h3 className="settings-section-title">
+              <Wifi size={18} className="settings-section-icon" />
+              代理
+            </h3>
+            <ChevronRight size={16} className={`settings-section-chevron ${!collapsedSections.proxy ? 'open' : ''}`} />
+          </div>
+          <div className={`settings-section-body ${!collapsedSections.proxy ? 'open' : ''}`}>
+            <div className="settings-item">
+              <div className="settings-item-info">
+                <p className="settings-item-label">启用代理</p>
+                <p className="settings-item-description">
+                  开启后，网络请求将通过代理转发
+                </p>
+              </div>
+              <label className="settings-toggle">
+                <input
+                  type="checkbox"
+                  checked={settings.proxy.enabled}
+                  onChange={(e) => updateProxy({ enabled: e.target.checked })}
+                />
+                <span className="settings-toggle-slider" />
+              </label>
+            </div>
+            <div className="settings-item settings-item-column">
+              <div className="settings-item-info">
+                <p className="settings-item-label">代理地址</p>
+                <p className="settings-item-description">
+                  支持 HTTP/HTTPS/SOCKS 代理，例如 http://127.0.0.1:7890
+                </p>
+              </div>
+              <input
+                className="settings-input"
+                type="text"
+                value={settings.proxy.url}
+                onChange={(e) => updateProxy({ url: e.target.value })}
+                placeholder="http://127.0.0.1:7890"
+              />
+            </div>
+          </div>
+
+          {/* 工具禁用 */}
+          <div className="settings-section-header" onClick={() => toggleSection('tools')}>
+            <h3 className="settings-section-title">
+              <ShieldOff size={18} className="settings-section-icon" />
+              工具管理
+            </h3>
+            <ChevronRight size={16} className={`settings-section-chevron ${!collapsedSections.tools ? 'open' : ''}`} />
+          </div>
+          <div className={`settings-section-body ${!collapsedSections.tools ? 'open' : ''}`}>
+            <div className="settings-item">
+              <div className="settings-item-info">
+                <p className="settings-item-label">禁用工具</p>
+                <p className="settings-item-description">
+                  当某个功能出现问题时，可以临时禁用它，不影响其他功能使用
+                </p>
+              </div>
+            </div>
+            <div className="settings-tools-grid">
+              {[
+                { id: 'npm', label: 'npm 搜索', icon: '📦' },
+                { id: 'maven', label: 'Maven 搜索', icon: '🔍' },
+                { id: 'docker', label: 'Docker Hub', icon: '🐳' },
+                { id: 'translator', label: 'AI 翻译', icon: '🤖' },
+                { id: 'updater', label: '自动更新', icon: '🔄' }
+              ].map((tool) => (
+                <div key={tool.id} className={`settings-tool-item ${settings.disabledTools.includes(tool.id) ? 'disabled' : ''}`}>
+                  <span className="settings-tool-name">
+                    <span style={{ fontSize: 16 }}>{tool.icon}</span>
+                    {tool.label}
+                  </span>
+                  <label className="settings-tool-toggle">
+                    <input
+                      type="checkbox"
+                      checked={!settings.disabledTools.includes(tool.id)}
+                      onChange={() => {
+                        const newDisabled = settings.disabledTools.includes(tool.id)
+                          ? settings.disabledTools.filter(t => t !== tool.id)
+                          : [...settings.disabledTools, tool.id]
+                        updateDisabledTools(newDisabled)
+                      }}
+                    />
+                    <span className="settings-toggle-slider" />
+                  </label>
+                </div>
+              ))}
+            </div>
+          </div>
+
           {/* 更新设置 */}
-          <div className="settings-section">
+          <div className="settings-section-header" onClick={() => toggleSection('updater')}>
             <h3 className="settings-section-title">
               <RefreshCw size={18} className="settings-section-icon" />
               更新
             </h3>
-
+            <ChevronRight size={16} className={`settings-section-chevron ${!collapsedSections.updater ? 'open' : ''}`} />
+          </div>
+          <div className={`settings-section-body ${!collapsedSections.updater ? 'open' : ''}`}>
             <div className="settings-item">
               <div className="settings-item-info">
                 <p className="settings-item-label">自动检查更新</p>

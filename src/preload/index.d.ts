@@ -24,6 +24,11 @@ export interface AppSettings {
   }
   npmRegistry: string
   mavenSearchUrl: string
+  proxy: {
+    enabled: boolean
+    url: string
+  }
+  disabledTools: string[]
 }
 
 export interface SettingsAPI {
@@ -39,6 +44,10 @@ export interface SettingsAPI {
   updateNpmRegistry: (npmRegistry: string) => Promise<AppSettings>
   getMavenSearchUrl: () => Promise<string>
   updateMavenSearchUrl: (url: string) => Promise<AppSettings>
+  getProxy: () => Promise<{ enabled: boolean; url: string }>
+  updateProxy: (updates: Partial<{ enabled: boolean; url: string }>) => Promise<AppSettings>
+  getDisabledTools: () => Promise<string[]>
+  updateDisabledTools: (disabledTools: string[]) => Promise<AppSettings>
   resetToDefaults: () => Promise<AppSettings>
 }
 

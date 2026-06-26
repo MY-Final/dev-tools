@@ -1,5 +1,5 @@
-import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
-import { Copy, Check, Search, Box, Terminal, Globe, Star, Download } from 'lucide-react'
+import { useState, useMemo, useCallback } from 'react'
+import { Copy, Check, Search, Box, Terminal } from 'lucide-react'
 import dockerCommands from '@renderer/tools/docker-cheat-sheet/docker-commands.json'
 
 interface DockerCommand {
@@ -40,24 +40,7 @@ const CONTAINER_ACTIONS: ContainerAction[] = [
   { command: 'docker cp', desc: '从容器复制文件', prefix: true, suffix: ':/path ./local-path' }
 ]
 
-type TabType = 'cheatsheet' | 'container' | 'dockerhub'
-
-interface DockerSearchResult {
-  name: string
-  description: string
-  stars: number
-  pulls: number
-  isOfficial: boolean
-  isAutomated: boolean
-  imageName: string
-}
-
-function formatCount(n: number): string {
-  if (n >= 1_000_000_000) return (n / 1_000_000_000).toFixed(1) + 'B'
-  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M'
-  if (n >= 1_000) return (n / 1_000).toFixed(1) + 'K'
-  return n.toString()
-}
+type TabType = 'cheatsheet' | 'container'
 
 export default function DockerCheatSheet(): React.JSX.Element {
   const [activeTab, setActiveTab] = useState<TabType>('cheatsheet')
@@ -65,37 +48,6 @@ export default function DockerCheatSheet(): React.JSX.Element {
   const [expandedCommand, setExpandedCommand] = useState<string | null>(null)
   const [copied, setCopied] = useState<string | null>(null)
   const [containerName, setContainerName] = useState('')
-
-  // Docker Hub search
-  const [hubQuery, setHubQuery] = useState('')
-  const [hubResults, setHubResults] = useState<DockerSearchResult[]>([])
-  const [hubLoading, setHubLoading] = useState(false)
-  const [hubError, setHubError] = useState('')
-  const [hubCopied, setHubCopied] = useState('')
-  const hubDebounce = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  const doHubSearch = useCallback(async (q: string) => {
-    if (!q.trim()) { setHubResults([]); setHubError(''); return }
-    setHubLoading(true); setHubError('')
-    try {
-      const res = await window.docker.search(q, 20)
-      if (res && res.length > 0) setHubResults(res)
-      else setHubError('未找到匹配的镜像')
-    } catch {
-      setHubError('搜索失败，请检查网络')
-    }
-    setHubLoading(false)
-  }, [])
-
-  useEffect(() => {
-    if (hubDebounce.current) clearTimeout(hubDebounce.current)
-    hubDebounce.current = setTimeout(() => doHubSearch(hubQuery), 300)
-    return () => { if (hubDebounce.current) clearTimeout(hubDebounce.current) }
-  }, [hubQuery, doHubSearch])
-
-  const copyHub = useCallback(async (text: string, key: string) => {
-    try { await navigator.clipboard.writeText(text); setHubCopied(key); setTimeout(() => setHubCopied(''), 1500) } catch { /* ignore */ }
-  }, [])
 
   const filteredCategories = useMemo(() => {
     if (!search.trim()) return DOCKER_COMMANDS
@@ -154,13 +106,6 @@ export default function DockerCheatSheet(): React.JSX.Element {
             onClick={() => setActiveTab('container')}
           >
             容器管理
-          </button>
-          <button
-            className={`mvn-tab ${activeTab === 'dockerhub' ? 'active' : ''}`}
-            onClick={() => setActiveTab('dockerhub')}
-          >
-            <Globe size={13} />
-            Docker Hub
           </button>
         </div>
 
@@ -251,7 +196,7 @@ export default function DockerCheatSheet(): React.JSX.Element {
               </div>
             )}
           </>
-        ) : activeTab === 'container' ? (
+        ) : (
           // Container Management Tab
           <div className="dcs-container-section">
             <div className="dcs-search">
@@ -287,37 +232,6 @@ export default function DockerCheatSheet(): React.JSX.Element {
                 )
               })}
             </div>
-          </div>
-        ) : (
-          <div className="dcs-dockerhub">
-            <div className="npm-search-area">
-              <Search size={16} className="npm-search-icon" />
-              <input className="npm-search-input" value={hubQuery} onChange={(e) => setHubQuery(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') doHubSearch(hubQuery); }} placeholder="搜索 Docker Hub 镜像..." />
-              {hubLoading && <Terminal size={16} className="npm-spin" />}
-            </div>
-            {hubError && <div className="npm-error">{hubError}</div>}
-            {!hubLoading && !hubError && hubQuery && hubResults.length === 0 && <div className="npm-empty">未找到匹配的镜像</div>}
-            {hubResults.map((img) => (
-              <div key={img.name} className="dcs-hub-item">
-                <div className="dcs-hub-header">
-                  <div className="dcs-hub-name">
-                    <span>{img.imageName}</span>
-                    {img.isOfficial && <span className="dcs-hub-badge">Official</span>}
-                  </div>
-                </div>
-                <div className="dcs-hub-desc">{img.description || '暂无描述'}</div>
-                <div className="dcs-hub-meta">
-                  <span><Star size={12} /> {formatCount(img.stars)}</span>
-                  <span><Download size={12} /> {formatCount(img.pulls)}</span>
-                </div>
-                <div className="dcs-hub-cmd">
-                  <code>docker pull {img.imageName}</code>
-                  <button className="dcs-copy-btn" onClick={() => copyHub('docker pull ' + img.imageName, img.name)}>
-                    {hubCopied === img.name ? <Check size={12} /> : <Copy size={12} />}
-                  </button>
-                </div>
-              </div>
-            ))}
           </div>
         )}
       </div>

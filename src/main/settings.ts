@@ -26,6 +26,11 @@ export interface AppSettings {
   }
   npmRegistry: string
   mavenSearchUrl: string
+  proxy: {
+    enabled: boolean
+    url: string
+  }
+  disabledTools: string[]
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -51,7 +56,12 @@ const DEFAULT_SETTINGS: AppSettings = {
     maxTokens: 4096
   },
   npmRegistry: '',
-  mavenSearchUrl: ''
+  mavenSearchUrl: '',
+  proxy: {
+    enabled: false,
+    url: ''
+  },
+  disabledTools: []
 }
 
 class SettingsStore {
@@ -84,7 +94,9 @@ class SettingsStore {
       updater: { ...DEFAULT_SETTINGS.updater, ...data.updater },
       translator: { ...DEFAULT_SETTINGS.translator, ...data.translator },
       npmRegistry: data.npmRegistry ?? '',
-      mavenSearchUrl: data.mavenSearchUrl ?? ''
+      mavenSearchUrl: data.mavenSearchUrl ?? '',
+      proxy: { ...DEFAULT_SETTINGS.proxy, ...data.proxy },
+      disabledTools: data.disabledTools ?? []
     }
   }
 
@@ -152,6 +164,18 @@ class SettingsStore {
 
   updateMavenSearchUrl(mavenSearchUrl: string): AppSettings {
     this.settings.mavenSearchUrl = mavenSearchUrl
+    this.save()
+    return this.getSettings()
+  }
+
+  updateProxy(updates: Partial<AppSettings['proxy']>): AppSettings {
+    this.settings.proxy = { ...this.settings.proxy, ...updates }
+    this.save()
+    return this.getSettings()
+  }
+
+  updateDisabledTools(disabledTools: string[]): AppSettings {
+    this.settings.disabledTools = disabledTools
     this.save()
     return this.getSettings()
   }
