@@ -83,20 +83,26 @@ function registerUpdaterHandlers(): void {
 }
 
 const MAVEN_SOURCES = [
-  'https://search.maven.org/solrsearch/select',
-  'https://maven.aliyun.com/repository/central'
+  'https://search.maven.org/solrsearch/select'
 ]
 
-async function mavenFetch(params: URLSearchParams): Promise<Response | null> {
-  for (const source of MAVEN_SOURCES) {
+async function mavenFetch(params: URLSearchParams, retries = 2): Promise<Response | null> {
+  for (let attempt = 0; attempt <= retries; attempt++) {
     try {
       const controller = new AbortController()
-      const timeout = setTimeout(() => controller.abort(), 8000)
-      const res = await fetch(`${source}?${params}`, { signal: controller.signal })
+      const timeout = setTimeout(() => controller.abort(), 15000)
+      const res = await fetch(`${MAVEN_SOURCES[0]}?${params}`, { signal: controller.signal })
       clearTimeout(timeout)
       if (res.ok) return res
+      if (res.status === 504 && attempt < retries) {
+        await new Promise(r => setTimeout(r, 1000 * (attempt + 1)))
+        continue
+      }
     } catch {
-      continue
+      if (attempt < retries) {
+        await new Promise(r => setTimeout(r, 1000 * (attempt + 1)))
+        continue
+      }
     }
   }
   return null
