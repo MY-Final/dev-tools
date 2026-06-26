@@ -148,7 +148,7 @@
   border-radius: 8px;
   padding: 6px;
   box-shadow: var(--shadow-lg);
-  z-index: 9999;
+  z-index: 200;
 }
 
 .nav-flyout-header {

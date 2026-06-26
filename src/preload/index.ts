@@ -26,6 +26,10 @@ export interface AppSettings {
   }
   npmRegistry: string
   mavenSearchUrl: string
+  proxy: {
+    enabled: boolean
+    url: string
+  }
 }
 
 export type UpdateStatus =

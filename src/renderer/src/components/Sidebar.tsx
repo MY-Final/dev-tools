@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useRef } from 'react'
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import {
   Home,
   Settings,
@@ -14,7 +14,8 @@ import {
   Monitor,
   FileText,
   BookMarked,
-  Lock
+  Lock,
+  Search
 } from 'lucide-react'
 import { tools } from '@renderer/tools/registry'
 import { cn } from '@renderer/lib/utils'
@@ -36,6 +37,7 @@ const categoryIcons: Record<string, React.ComponentType<{ size?: number; classNa
   开发工具: Wrench,
   文本工具: FileText,
   备忘录: BookMarked,
+  资源搜索: Search,
   __default: Wrench
 }
 
@@ -89,7 +91,7 @@ export default function Sidebar({
     const newTheme = theme === 'dark' ? 'light' : 'dark'
     updateAppearance({ theme: newTheme })
   }
-  // 按分类组织工具
+  // 按分类组织工具（tools 为静态导入，不变）
   const toolsByCategory = useMemo(() => {
     const grouped: Map<string, typeof tools> = new Map()
     for (const tool of tools) {
@@ -100,6 +102,7 @@ export default function Sidebar({
       grouped.get(category)!.push(tool)
     }
     return grouped
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const categoryEntries = useMemo(
@@ -155,9 +158,16 @@ export default function Sidebar({
     clearFlyoutTimer()
   }, [clearFlyoutTimer])
 
+  // unmount 时清理 flyout 定时器
+  useEffect(() => {
+    return () => clearFlyoutTimer()
+  }, [clearFlyoutTimer])
+
   const flyoutData = flyoutCategory
     ? categoryEntries.find(([name]) => name === flyoutCategory.name)
     : null
+
+  const flyoutTop = flyoutCategory ? flyoutCategory.top : 0
 
   return (
     <aside className={cn('sidebar', collapsed && 'sidebar-collapsed')}>
@@ -219,7 +229,6 @@ export default function Sidebar({
                         collapsed && 'collapsed'
                       )}
                       onClick={() => onNavigate(tool.id)}
-                      title={collapsed ? tool.name : undefined}
                     >
                       <Icon size={18} className="nav-icon" />
                       {!collapsed && (
@@ -283,7 +292,7 @@ export default function Sidebar({
       {collapsed && flyoutData && (
         <div
           className="nav-flyout"
-          style={{ top: flyoutData[1] ? flyoutCategory!.top : 0 }}
+          style={{ top: flyoutTop }}
           onMouseEnter={handleFlyoutEnter}
           onMouseLeave={handleFlyoutClose}
         >
