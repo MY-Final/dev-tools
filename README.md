@@ -5,7 +5,7 @@
 <br />
 
 <p align="center">
-  <img src="./dian.png" width="400" alt="Dev Tools 看板娘 · Dian" />
+  <img src="./dian.png" width="600" alt="Dev Tools 看板娘 · Dian" />
 </p>
 
 <br />
