@@ -169,6 +169,21 @@ export default function SettingsPage(): React.JSX.Element {
                 <span className="settings-toggle-slider" />
               </label>
             </div>
+
+            <div className="settings-item">
+              <div className="settings-item-info">
+                <p className="settings-item-label">工具描述</p>
+                <p className="settings-item-description">在侧边栏工具名称下方显示中文描述</p>
+              </div>
+              <label className="settings-toggle">
+                <input
+                  type="checkbox"
+                  checked={settings.appearance.showSidebarShortDesc}
+                  onChange={(e) => updateAppearance({ showSidebarShortDesc: e.target.checked })}
+                />
+                <span className="settings-toggle-slider" />
+              </label>
+            </div>
           </div>
 
           {/* 编辑器设置 */}

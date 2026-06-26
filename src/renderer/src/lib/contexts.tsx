@@ -5,6 +5,7 @@ export interface AppSettings {
     theme: 'light' | 'dark' | 'system'
     fontSize: 'small' | 'medium' | 'large'
     sidebarCollapsed: boolean
+    showSidebarShortDesc: boolean
   }
   editor: {
     jsonIndent: 2 | 4
@@ -34,7 +35,8 @@ const DEFAULT_SETTINGS: AppSettings = {
   appearance: {
     theme: 'dark',
     fontSize: 'medium',
-    sidebarCollapsed: false
+    sidebarCollapsed: false,
+    showSidebarShortDesc: true
   },
   editor: {
     jsonIndent: 2,

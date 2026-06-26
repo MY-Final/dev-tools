@@ -3,6 +3,7 @@ import type React from 'react'
 export interface ToolItem {
   id: string
   name: string
+  shortDesc: string
   desc: string
   icon: React.ComponentType<{ size?: number; className?: string }>
   category: string

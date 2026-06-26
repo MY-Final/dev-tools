@@ -2,6 +2,7 @@
   {
     "id": "data-size-converter",
     "name": "Data Size Converter",
+    "shortDesc": "数据大小转换",
     "desc": "数据大小单位转换，支持 Binary/Decimal 模式",
     "icon": "HardDrive",
     "category": "换算工具",
@@ -10,6 +11,7 @@
   {
     "id": "my-ip",
     "name": "我的 IP",
+    "shortDesc": "查看本机 IP",
     "desc": "查看本机内网 IP 地址",
     "icon": "Globe",
     "category": "网络工具",
@@ -18,6 +20,7 @@
   {
     "id": "device-info",
     "name": "设备信息",
+    "shortDesc": "设备与浏览器信息",
     "desc": "查看当前设备和浏览器运行环境",
     "icon": "Monitor",
     "category": "系统工具",
@@ -26,6 +29,7 @@
   {
     "id": "token-generator",
     "name": "Token Generator",
+    "shortDesc": "生成随机标识符",
     "desc": "生成 UUID、JWT、API Key 等随机标识符",
     "icon": "Key",
     "category": "编码/加密",
@@ -34,6 +38,7 @@
   {
     "id": "jwt-generator",
     "name": "JWT Generator",
+    "shortDesc": "JWT 生成与调试",
     "desc": "快速生成和调试 JSON Web Token",
     "icon": "Shield",
     "category": "编码/加密",
@@ -42,6 +47,7 @@
   {
     "id": "cron-generator",
     "name": "Cron Generator",
+    "shortDesc": "Cron 可视化",
     "desc": "可视化生成和解析 Cron 表达式",
     "icon": "Clock",
     "category": "开发工具",
@@ -50,6 +56,7 @@
   {
     "id": "json-formatter",
     "name": "JSON Formatter",
+    "shortDesc": "JSON 格式化",
     "desc": "格式化、压缩、校验 JSON 数据",
     "icon": "FileJson",
     "category": "开发工具",
@@ -58,6 +65,7 @@
   {
     "id": "url-codec",
     "name": "URL Codec",
+    "shortDesc": "URL 编解码",
     "desc": "URL 编码与解码，支持参数编码和完整 URL",
     "icon": "Link2",
     "category": "编码/加密",
@@ -66,6 +74,7 @@
   {
     "id": "hash-generator",
     "name": "Hash Generator",
+    "shortDesc": "哈希值生成",
     "desc": "生成 MD5、SHA-1、SHA-256、SHA-384、SHA-512 哈希值",
     "icon": "Hash",
     "category": "编码/加密",
@@ -74,6 +83,7 @@
   {
     "id": "password-generator",
     "name": "Password Generator",
+    "shortDesc": "随机密码生成",
     "desc": "生成高强度安全随机密码",
     "icon": "KeyRound",
     "category": "编码/加密",
@@ -82,6 +92,7 @@
   {
     "id": "jwt-decoder",
     "name": "JWT Decoder",
+    "shortDesc": "JWT 解析",
     "desc": "解析和检查 JWT Token",
     "icon": "ShieldCheck",
     "category": "编码/加密",
@@ -90,6 +101,7 @@
   {
     "id": "timestamp-converter",
     "name": "Timestamp Converter",
+    "shortDesc": "时间戳转换",
     "desc": "Unix 时间戳与日期时间双向转换",
     "icon": "CalendarClock",
     "category": "换算工具",
@@ -98,6 +110,7 @@
   {
     "id": "base64-codec",
     "name": "Base64 Codec",
+    "shortDesc": "Base64 编解码",
     "desc": "Base64 编码与解码，支持 URL Safe",
     "icon": "Binary",
     "category": "编码/加密",
@@ -106,6 +119,7 @@
   {
     "id": "keyboard-tester",
     "name": "Keyboard Tester",
+    "shortDesc": "键盘测试",
     "desc": "实时查看键盘按键的 KeyboardEvent 信息",
     "icon": "Keyboard",
     "category": "系统工具",
@@ -114,6 +128,7 @@
   {
     "id": "mouse-tester",
     "name": "Mouse Tester",
+    "shortDesc": "鼠标测试",
     "desc": "实时查看鼠标事件的 MouseEvent 信息",
     "icon": "MousePointer",
     "category": "系统工具",
@@ -122,6 +137,7 @@
   {
     "id": "port-generator",
     "name": "Port Generator",
+    "shortDesc": "随机端口生成",
     "desc": "生成随机网络端口号",
     "icon": "Zap",
     "category": "网络工具",
@@ -130,6 +146,7 @@
   {
     "id": "subnet-calculator",
     "name": "Subnet Calculator",
+    "shortDesc": "子网计算",
     "desc": "IPv4 子网计算器",
     "icon": "Network",
     "category": "网络工具",
@@ -138,6 +155,7 @@
   {
     "id": "ipv4-converter",
     "name": "IPv4 Converter",
+    "shortDesc": "IPv4 格式转换",
     "desc": "IPv4 地址与数字格式互相转换",
     "icon": "Globe",
     "category": "网络工具",
@@ -146,6 +164,7 @@
   {
     "id": "ip-range-expander",
     "name": "IP Range Expander",
+    "shortDesc": "IP 范围计算",
     "desc": "IP 范围转 CIDR 计算",
     "icon": "Network",
     "category": "网络工具",
@@ -154,6 +173,7 @@
   {
     "id": "text-analyzer",
     "name": "Text Analyzer",
+    "shortDesc": "文本统计分析",
     "desc": "实时分析文本统计信息",
     "icon": "AlignLeft",
     "category": "文本工具",
@@ -162,6 +182,7 @@
   {
     "id": "git-cheat-sheet",
     "name": "Git Cheat Sheet",
+    "shortDesc": "Git 命令速查",
     "desc": "Git 命令速查手册",
     "icon": "GitBranch",
     "category": "备忘录",
@@ -170,6 +191,7 @@
   {
     "id": "docker-cheat-sheet",
     "name": "Docker Cheat Sheet",
+    "shortDesc": "Docker 命令速查",
     "desc": "Docker 命令速查手册",
     "icon": "Box",
     "category": "备忘录",
@@ -178,6 +200,7 @@
   {
     "id": "maven-dependency",
     "name": "Maven Dependency",
+    "shortDesc": "Maven/Gradle 依赖",
     "desc": "快速生成 Maven / Gradle 依赖配置",
     "icon": "Package",
     "category": "资源搜索",
@@ -186,6 +209,7 @@
   {
     "id": "file-generator",
     "name": "File Generator",
+    "shortDesc": "测试文件生成",
     "desc": "生成指定大小的测试文件，用于上传限制测试",
     "icon": "FileUp",
     "category": "开发工具",
@@ -194,6 +218,7 @@
   {
     "id": "case-converter",
     "name": "Case Converter",
+    "shortDesc": "大小写转换",
     "desc": "文本大小写与命名格式实时转换",
     "icon": "CaseSensitive",
     "category": "文本工具",
@@ -202,6 +227,7 @@
   {
     "id": "env-vars",
     "name": "Environment Variables",
+    "shortDesc": "系统环境变量",
     "desc": "查看当前系统环境变量",
     "icon": "Terminal",
     "category": "系统工具",
@@ -210,6 +236,7 @@
   {
     "id": "ascii-table",
     "name": "ASCII Table",
+    "shortDesc": "ASCII 码表",
     "desc": "ASCII 码表完整对照（0–127）",
     "icon": "Table",
     "category": "备忘录",
@@ -218,6 +245,7 @@
   {
     "id": "unicode-inspector",
     "name": "Unicode Inspector",
+    "shortDesc": "Unicode 查询",
     "desc": "查看字符的 Unicode 详细信息",
     "icon": "Languages",
     "category": "文本工具",
@@ -226,6 +254,7 @@
   {
     "id": "npm-cheat-sheet",
     "name": "npm Cheat Sheet",
+    "shortDesc": "npm 命令速查",
     "desc": "npm / Yarn / pnpm 包管理器命令速查",
     "icon": "Package",
     "category": "备忘录",
@@ -234,6 +263,7 @@
   {
     "id": "linux-cheat-sheet",
     "name": "Linux Cheat Sheet",
+    "shortDesc": "Linux 命令速查",
     "desc": "Linux 常用命令速查手册",
     "icon": "Terminal",
     "category": "备忘录",
@@ -242,6 +272,7 @@
   {
     "id": "k8s-cheat-sheet",
     "name": "Kubernetes Cheat Sheet",
+    "shortDesc": "K8s 命令速查",
     "desc": "K8s 命令速查手册",
     "icon": "Ship",
     "category": "备忘录",
@@ -250,6 +281,7 @@
   {
     "id": "color-converter",
     "name": "Color Converter",
+    "shortDesc": "颜色格式转换",
     "desc": "颜色格式转换 HEX ↔ RGB ↔ HSL",
     "icon": "Palette",
     "category": "换算工具",
@@ -258,6 +290,7 @@
   {
     "id": "lorem-ipsum",
     "name": "Lorem Ipsum Generator",
+    "shortDesc": "占位文本生成",
     "desc": "生成虚拟占位文本，用于设计和排版",
     "icon": "TextQuote",
     "category": "文本工具",
@@ -266,6 +299,7 @@
   {
     "id": "regex-tester",
     "name": "Regex Tester",
+    "shortDesc": "正则测试",
     "desc": "正则表达式实时测试与替换",
     "icon": "Regex",
     "category": "开发工具",
@@ -274,6 +308,7 @@
   {
     "id": "diff-checker",
     "name": "Diff Checker",
+    "shortDesc": "文本差异对比",
     "desc": "逐行对比文本差异，高亮新增/删除/修改",
     "icon": "GitCompare",
     "category": "文本工具",
@@ -282,6 +317,7 @@
   {
     "id": "number-base",
     "name": "Number Base Converter",
+    "shortDesc": "进制转换",
     "desc": "进制转换 · 反码 · 补码（Bin/Oct/Dec/Hex）",
     "icon": "Sigma",
     "category": "换算工具",
@@ -290,6 +326,7 @@
   {
     "id": "unit-converter",
     "name": "Unit Converter",
+    "shortDesc": "单位换算",
     "desc": "长度/面积/体积/时间/角度/速度/温度/压力/热量/功率换算",
     "icon": "Ruler",
     "category": "换算工具",
@@ -298,6 +335,7 @@
   {
     "id": "timer-stopwatch",
     "name": "Timer & Stopwatch",
+    "shortDesc": "计时器",
     "desc": "秒表 · 倒计时 · 番茄钟 · 间歇训练计时器",
     "icon": "Timer",
     "category": "系统工具",
@@ -306,6 +344,7 @@
   {
     "id": "usb-viewer",
     "name": "USB Device Viewer",
+    "shortDesc": "USB 设备查看",
     "desc": "WebHID — 查看 USB HID 设备 VID/PID/集合/报告",
     "icon": "Usb",
     "category": "系统工具",
@@ -314,6 +353,7 @@
   {
     "id": "xpath-tester",
     "name": "XPath Tester",
+    "shortDesc": "XPath 测试",
     "desc": "XPath 表达式测试 — XML/HTML 节点查询",
     "icon": "Search",
     "category": "开发工具",
@@ -322,6 +362,7 @@
   {
     "id": "http-status-codes",
     "name": "HTTP Status Codes",
+    "shortDesc": "HTTP 状态码",
     "desc": "HTTP 状态码速查手册 (1xx–5xx)",
     "icon": "Server",
     "category": "备忘录",
@@ -330,6 +371,7 @@
   {
     "id": "regex-cheat-sheet",
     "name": "Regex Cheat Sheet",
+    "shortDesc": "正则语法速查",
     "desc": "正则表达式语法速查手册",
     "icon": "Regex",
     "category": "备忘录",
@@ -338,6 +380,7 @@
   {
     "id": "html-entities",
     "name": "HTML Entities",
+    "shortDesc": "HTML 实体字符",
     "desc": "HTML 实体字符速查手册 (&amp; &lt; &copy;)",
     "icon": "FileCode",
     "category": "备忘录",
@@ -346,6 +389,7 @@
   {
     "id": "sql-cheat-sheet",
     "name": "SQL Cheat Sheet",
+    "shortDesc": "SQL 语法速查",
     "desc": "SQL 常用语法速查手册 (SELECT/JOIN/DDL)",
     "icon": "Database",
     "category": "备忘录",
@@ -354,6 +398,7 @@
   {
     "id": "image-tools",
     "name": "Image Tools",
+    "shortDesc": "图片工具",
     "desc": "图片转 Base64 · 图片信息查看",
     "icon": "Image",
     "category": "换算工具",
@@ -362,6 +407,7 @@
   {
     "id": "data-converter",
     "name": "Data Format Converter",
+    "shortDesc": "数据格式互转",
     "desc": "CSV ↔ JSON ↔ XML 数据格式互转",
     "icon": "Repeat",
     "category": "开发工具",
@@ -370,6 +416,7 @@
   {
     "id": "uuid-decoder",
     "name": "UUID Decoder",
+    "shortDesc": "UUID 解析",
     "desc": "解析 UUID 版本、变体、时间戳与 MAC",
     "icon": "Fingerprint",
     "category": "编码/加密",
@@ -378,6 +425,7 @@
   {
     "id": "css-cheat-sheet",
     "name": "CSS Cheat Sheet",
+    "shortDesc": "CSS 速查",
     "desc": "Flexbox · Grid · 单位 · 选择器 · 动画速查",
     "icon": "Paintbrush",
     "category": "备忘录",
@@ -386,6 +434,7 @@
   {
     "id": "json-converter",
     "name": "JSON Converter",
+    "shortDesc": "JSON 格式转换",
     "desc": "JSON → TypeScript · TOML · XML · YAML",
     "icon": "Shuffle",
     "category": "开发工具",
@@ -394,6 +443,7 @@
   {
     "id": "gradient-generator",
     "name": "CSS Gradient Generator",
+    "shortDesc": "渐变生成器",
     "desc": "可视化渐变生成器（方向/颜色/CSS 代码）",
     "icon": "Palette",
     "category": "开发工具",
@@ -402,6 +452,7 @@
   {
     "id": "html-to-jsx",
     "name": "HTML to JSX",
+    "shortDesc": "HTML 转 JSX",
     "desc": "HTML 一键转 React JSX 语法",
     "icon": "Code",
     "category": "开发工具",
@@ -410,6 +461,7 @@
   {
     "id": "aes-des-encryptor",
     "name": "AES/DES Encryptor",
+    "shortDesc": "对称加解密",
     "desc": "对称加密/解密（AES-CBC/GCM/CTR/ECB、DES、3DES）",
     "icon": "ShieldCheck",
     "category": "编码/加密",
@@ -418,6 +470,7 @@
   {
     "id": "certificate-parser",
     "name": "Certificate Parser",
+    "shortDesc": "证书解析",
     "desc": "解析 PEM/X.509 证书：颁发者、有效期、SAN、指纹",
     "icon": "FileKey",
     "category": "编码/加密",
@@ -426,6 +479,7 @@
   {
     "id": "hmac-generator",
     "name": "HMAC Generator",
+    "shortDesc": "HMAC 签名",
     "desc": "HMAC-SHA256/512 签名生成",
     "icon": "Fingerprint",
     "category": "编码/加密",
@@ -434,6 +488,7 @@
   {
     "id": "ssh-key-generator",
     "name": "SSH Key Generator",
+    "shortDesc": "SSH 密钥生成",
     "desc": "生成 Ed25519/RSA 密钥对，显示公钥指纹",
     "icon": "KeyRound",
     "category": "编码/加密",
@@ -442,6 +497,7 @@
   {
     "id": "clipboard-manager",
     "name": "Clipboard Manager",
+    "shortDesc": "剪贴板历史",
     "desc": "剪贴板历史记录",
     "icon": "Clipboard",
     "category": "系统工具",
@@ -450,6 +506,7 @@
   {
     "id": "screen-info",
     "name": "Screen Info",
+    "shortDesc": "屏幕信息",
     "desc": "屏幕分辨率、DPI、色彩深度信息",
     "icon": "Monitor",
     "category": "系统工具",
@@ -458,6 +515,7 @@
   {
     "id": "storage-viewer",
     "name": "Browser Storage Viewer",
+    "shortDesc": "Storage 查看",
     "desc": "localStorage / sessionStorage 查看编辑",
     "icon": "Archive",
     "category": "系统工具",
@@ -466,6 +524,7 @@
   {
     "id": "timezone-converter",
     "name": "Timezone Converter",
+    "shortDesc": "时区转换",
     "desc": "多时区时间对照",
     "icon": "Globe",
     "category": "换算工具",
@@ -474,6 +533,7 @@
   {
     "id": "date-format-converter",
     "name": "Date Format Converter",
+    "shortDesc": "日期格式转换",
     "desc": "日期格式互转（ISO/Unix/RFC/自定义）",
     "icon": "Calendar",
     "category": "换算工具",
@@ -482,6 +542,7 @@
   {
     "id": "number-formatter",
     "name": "Number Formatter",
+    "shortDesc": "数字格式化",
     "desc": "数字格式化（千分位/货币/百分比/科学计数）",
     "icon": "Hash",
     "category": "换算工具",
@@ -490,6 +551,7 @@
   {
     "id": "translator",
     "name": "AI Translator",
+    "shortDesc": "AI 翻译",
     "desc": "基于 OpenAI 兼容 API 的多语言翻译（需配置 API Key）",
     "icon": "Languages",
     "category": "开发工具",
@@ -499,6 +561,7 @@
   {
     "id": "npm-search",
     "name": "npm Search",
+    "shortDesc": "npm 搜索",
     "desc": "搜索 npm 包，一键复制依赖配置",
     "icon": "PackageSearch",
     "category": "资源搜索",
@@ -508,6 +571,7 @@
   {
     "id": "dockerhub-search",
     "name": "Docker Hub Search",
+    "shortDesc": "Docker Hub 搜索",
     "desc": "搜索 Docker Hub 镜像，一键复制 docker pull 命令",
     "icon": "Container",
     "category": "资源搜索",

@@ -19,6 +19,32 @@
   flex-direction: column;
 }
 
+/* 页面切换加载状态 */
+.page-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  min-height: 200px;
+  color: var(--color-text-muted);
+  font-size: 14px;
+  gap: 10px;
+}
+
+.page-loading::before {
+  content: '';
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--color-border);
+  border-top-color: var(--color-accent-soft);
+  border-radius: 50%;
+  animation: page-loading-spin 0.6s linear infinite;
+}
+
+@keyframes page-loading-spin {
+  to { transform: rotate(360deg); }
+}
+
 /* ========================================
    通用按钮
    ======================================== */

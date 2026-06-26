@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback, useRef } from 'react'
 import {
   Home,
   Settings,
@@ -38,9 +38,6 @@ const categoryIcons: Record<string, React.ComponentType<{ size?: number; classNa
   备忘录: BookMarked,
   __default: Wrench
 }
-
-// 分类默认折叠状态
-const defaultCollapsedCategories: Record<string, boolean> = {}
 
 const navItems = [{ id: 'home', label: '首页', icon: Home }]
 
@@ -86,6 +83,7 @@ export default function Sidebar({
 }: SidebarProps): React.JSX.Element {
   const { settings, updateAppearance } = useSettings()
   const theme = settings.appearance.theme
+  const showShortDesc = settings.appearance.showSidebarShortDesc
 
   const handleToggleTheme = (): void => {
     const newTheme = theme === 'dark' ? 'light' : 'dark'
@@ -109,10 +107,15 @@ export default function Sidebar({
     [toolsByCategory]
   )
 
-  // 分类折叠状态
-  const [collapsedCategories, setCollapsedCategories] = useState<Record<string, boolean>>(
-    defaultCollapsedCategories
-  )
+  // 默认只展开第一个分类，其余折叠
+  const [collapsedCategories, setCollapsedCategories] = useState<Record<string, boolean>>(() => {
+    const entries = [...toolsByCategory.entries()]
+    const state: Record<string, boolean> = {}
+    entries.forEach(([category], index) => {
+      if (index > 0) state[category] = true
+    })
+    return state
+  })
 
   const toggleCategory = (category: string): void => {
     setCollapsedCategories((prev) => ({
@@ -120,6 +123,41 @@ export default function Sidebar({
       [category]: !prev[category]
     }))
   }
+
+  // 侧边栏收起时悬浮显示分类工具菜单
+  const [flyoutCategory, setFlyoutCategory] = useState<{ name: string; top: number } | null>(null)
+  const flyoutTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const clearFlyoutTimer = useCallback((): void => {
+    if (flyoutTimerRef.current !== null) {
+      clearTimeout(flyoutTimerRef.current)
+      flyoutTimerRef.current = null
+    }
+  }, [])
+
+  const handleCategoryMouseEnter = useCallback(
+    (category: string, e: React.MouseEvent<HTMLDivElement>): void => {
+      clearFlyoutTimer()
+      const rect = e.currentTarget.getBoundingClientRect()
+      setFlyoutCategory({ name: category, top: rect.top })
+    },
+    [clearFlyoutTimer]
+  )
+
+  const handleFlyoutClose = useCallback((): void => {
+    flyoutTimerRef.current = setTimeout(() => {
+      setFlyoutCategory(null)
+      flyoutTimerRef.current = null
+    }, 200)
+  }, [])
+
+  const handleFlyoutEnter = useCallback((): void => {
+    clearFlyoutTimer()
+  }, [clearFlyoutTimer])
+
+  const flyoutData = flyoutCategory
+    ? categoryEntries.find(([name]) => name === flyoutCategory.name)
+    : null
 
   return (
     <aside className={cn('sidebar', collapsed && 'sidebar-collapsed')}>
@@ -156,15 +194,20 @@ export default function Sidebar({
                 </button>
               )}
 
-              {/* 收起时显示分类图标 */}
+              {/* 收起时显示分类图标 + 悬浮弹出菜单 */}
               {collapsed && (
-                <div className="nav-category-collapsed" title={category}>
+                <div
+                  className="nav-category-collapsed"
+                  title={category}
+                  onMouseEnter={(e) => handleCategoryMouseEnter(category, e)}
+                  onMouseLeave={handleFlyoutClose}
+                >
                   <CategoryIcon size={14} />
                 </div>
               )}
 
-              {/* 工具列表 */}
-              {(!isCategoryCollapsed || collapsed) &&
+              {/* 工具列表 — 收起侧边栏时不显示工具按钮 */}
+              {!collapsed && !isCategoryCollapsed &&
                 categoryTools.map((tool) => {
                   const Icon = tool.icon
                   return (
@@ -179,7 +222,12 @@ export default function Sidebar({
                       title={collapsed ? tool.name : undefined}
                     >
                       <Icon size={18} className="nav-icon" />
-                      {!collapsed && <span className="nav-label">{tool.name}</span>}
+                      {!collapsed && (
+                        <div className="nav-label-wrapper">
+                          <span className="nav-label">{tool.name}</span>
+                          {showShortDesc && <span className="nav-desc">{tool.shortDesc}</span>}
+                        </div>
+                      )}
                       {collapsed && <span className="nav-tooltip">{tool.name}</span>}
                     </button>
                   )
@@ -230,6 +278,40 @@ export default function Sidebar({
           {collapsed && <span className="nav-tooltip">展开</span>}
         </button>
       </div>
+
+      {/* 收起时悬停弹出的分类工具菜单（fixed 避免被 overflow:hidden 裁剪） */}
+      {collapsed && flyoutData && (
+        <div
+          className="nav-flyout"
+          style={{ top: flyoutData[1] ? flyoutCategory!.top : 0 }}
+          onMouseEnter={handleFlyoutEnter}
+          onMouseLeave={handleFlyoutClose}
+        >
+          <div className="nav-flyout-header">
+            {(() => {
+              const Icon = categoryIcons[flyoutData[0]] || categoryIcons.__default
+              return <Icon size={14} />
+            })()}
+            <span>{flyoutData[0]}</span>
+          </div>
+          {flyoutData[1].map((tool) => {
+            const ToolIcon = tool.icon
+            return (
+              <button
+                key={tool.id}
+                className={cn('nav-flyout-item', currentPage === tool.id && 'active')}
+                onClick={() => {
+                  onNavigate(tool.id)
+                  setFlyoutCategory(null)
+                }}
+              >
+                <ToolIcon size={16} />
+                <span className="nav-flyout-label">{tool.name}</span>
+              </button>
+            )
+          })}
+        </div>
+      )}
     </aside>
   )
 }

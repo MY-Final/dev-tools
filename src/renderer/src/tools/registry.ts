@@ -5,6 +5,7 @@ import toolsData from './tools.json'
 interface ToolConfig {
   id: string
   name: string
+  shortDesc: string
   desc: string
   icon: string
   category: string
@@ -15,6 +16,7 @@ interface ToolConfig {
 export const tools: ToolItem[] = (toolsData as ToolConfig[]).map((tool) => ({
   id: tool.id,
   name: tool.name,
+  shortDesc: tool.shortDesc,
   desc: tool.desc,
   icon: getIcon(tool.icon),
   category: tool.category,

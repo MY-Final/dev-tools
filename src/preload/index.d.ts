@@ -5,6 +5,7 @@ export interface AppSettings {
     theme: 'light' | 'dark' | 'system'
     fontSize: 'small' | 'medium' | 'large'
     sidebarCollapsed: boolean
+    showSidebarShortDesc: boolean
   }
   editor: {
     jsonIndent: 2 | 4
