@@ -39,9 +39,7 @@ https://github.com/user-attachments/assets/6e9e5535-cc74-43aa-846e-67590db01b71
 
 <br />
 
-<p align="center">
-  <img src="https://count.getloli.com/@MY-Final?name=MY-Final&theme=minecraft&padding=6&offset=0&align=top&scale=1&pixelated=1&darkmode=auto" alt="访问计数" />
-</p>
+![dev-tools](https://count.getloli.com/@MY-Final_dev-tools?name=dev-tools&theme=minecraft&padding=6&offset=0&align=top&scale=1&pixelated=1&darkmode=auto)
 
 ---
 
@@ -203,5 +201,5 @@ npm run format        # Prettier 格式化
 <p align="center">
   <sub>Built with ❤️ by <a href="https://github.com/MY-Final">MY-Final</a></sub>
   <br />
-  <img src="https://count.getloli.com/@MY-Final?name=MY-Final&theme=minecraft&padding=6&offset=0&align=top&scale=1&pixelated=1&darkmode=auto" alt="访问计数" />
+  ![dev-tools](https://count.getloli.com/@MY-Final_dev-tools?name=dev-tools&theme=minecraft&padding=6&offset=0&align=top&scale=1&pixelated=1&darkmode=auto)
 </p>
