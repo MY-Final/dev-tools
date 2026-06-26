@@ -28,7 +28,6 @@ export interface AppSettings {
     enabled: boolean
     url: string
   }
-  disabledTools: string[]
 }
 
 export interface SettingsAPI {
@@ -46,8 +45,6 @@ export interface SettingsAPI {
   updateMavenSearchUrl: (url: string) => Promise<AppSettings>
   getProxy: () => Promise<{ enabled: boolean; url: string }>
   updateProxy: (updates: Partial<{ enabled: boolean; url: string }>) => Promise<AppSettings>
-  getDisabledTools: () => Promise<string[]>
-  updateDisabledTools: (disabledTools: string[]) => Promise<AppSettings>
   resetToDefaults: () => Promise<AppSettings>
 }
 

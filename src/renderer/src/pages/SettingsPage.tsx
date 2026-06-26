@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Settings, Palette, RotateCcw, RefreshCw, Download, FileText, X, ChevronRight, Wifi, ShieldOff } from 'lucide-react'
+import { Settings, Palette, RotateCcw, RefreshCw, Download, FileText, X, ChevronRight, Wifi } from 'lucide-react'
 import { useSettings } from '@renderer/lib/contexts'
 import { useUpdater } from '@renderer/lib/updater-context'
 import '../styles/settings.css'
 
 export default function SettingsPage(): React.JSX.Element {
-  const { settings, updateAppearance, updateEditor, updateUpdater, updateTranslator, updateNpmRegistry, updateMavenSearchUrl, updateProxy, updateDisabledTools, resetToDefaults } = useSettings()
+  const { settings, updateAppearance, updateEditor, updateUpdater, updateTranslator, updateNpmRegistry, updateMavenSearchUrl, updateProxy, resetToDefaults } = useSettings()
   const {
     status,
     version,
@@ -32,7 +32,6 @@ export default function SettingsPage(): React.JSX.Element {
     npm: false,
     maven: false,
     proxy: false,
-    tools: false,
     updater: false
   })
 
@@ -440,53 +439,6 @@ export default function SettingsPage(): React.JSX.Element {
           </div>
 
           {/* 工具禁用 */}
-          <div className="settings-section-header" onClick={() => toggleSection('tools')}>
-            <h3 className="settings-section-title">
-              <ShieldOff size={18} className="settings-section-icon" />
-              工具管理
-            </h3>
-            <ChevronRight size={16} className={`settings-section-chevron ${!collapsedSections.tools ? 'open' : ''}`} />
-          </div>
-          <div className={`settings-section-body ${!collapsedSections.tools ? 'open' : ''}`}>
-            <div className="settings-item">
-              <div className="settings-item-info">
-                <p className="settings-item-label">禁用工具</p>
-                <p className="settings-item-description">
-                  当某个功能出现问题时，可以临时禁用它，不影响其他功能使用
-                </p>
-              </div>
-            </div>
-            <div className="settings-tools-grid">
-              {[
-                { id: 'npm', label: 'npm 搜索', icon: '📦' },
-                { id: 'maven', label: 'Maven 搜索', icon: '🔍' },
-                { id: 'docker', label: 'Docker Hub', icon: '🐳' },
-                { id: 'translator', label: 'AI 翻译', icon: '🤖' },
-                { id: 'updater', label: '自动更新', icon: '🔄' }
-              ].map((tool) => (
-                <div key={tool.id} className={`settings-tool-item ${settings.disabledTools.includes(tool.id) ? 'disabled' : ''}`}>
-                  <span className="settings-tool-name">
-                    <span style={{ fontSize: 16 }}>{tool.icon}</span>
-                    {tool.label}
-                  </span>
-                  <label className="settings-tool-toggle">
-                    <input
-                      type="checkbox"
-                      checked={!settings.disabledTools.includes(tool.id)}
-                      onChange={() => {
-                        const newDisabled = settings.disabledTools.includes(tool.id)
-                          ? settings.disabledTools.filter(t => t !== tool.id)
-                          : [...settings.disabledTools, tool.id]
-                        updateDisabledTools(newDisabled)
-                      }}
-                    />
-                    <span className="settings-toggle-slider" />
-                  </label>
-                </div>
-              ))}
-            </div>
-          </div>
-
           {/* 更新设置 */}
           <div className="settings-section-header" onClick={() => toggleSection('updater')}>
             <h3 className="settings-section-title">

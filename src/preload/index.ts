@@ -64,10 +64,6 @@ const settingsAPI = {
     ipcRenderer.invoke('settings:get-proxy'),
   updateProxy: (updates: Partial<{ enabled: boolean; url: string }>): Promise<AppSettings> =>
     ipcRenderer.invoke('settings:update-proxy', updates),
-  getDisabledTools: (): Promise<string[]> =>
-    ipcRenderer.invoke('settings:get-disabled-tools'),
-  updateDisabledTools: (disabledTools: string[]): Promise<AppSettings> =>
-    ipcRenderer.invoke('settings:update-disabled-tools', disabledTools),
   resetToDefaults: (): Promise<AppSettings> => ipcRenderer.invoke('settings:reset')
 }
 

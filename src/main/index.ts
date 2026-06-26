@@ -68,14 +68,6 @@ function registerSettingsHandlers(): void {
     return settingsStore.updateProxy(updates)
   })
 
-  ipcMain.handle('settings:get-disabled-tools', () => {
-    return settingsStore.getSettings().disabledTools
-  })
-
-  ipcMain.handle('settings:update-disabled-tools', (_event, disabledTools: string[]) => {
-    return settingsStore.updateDisabledTools(disabledTools)
-  })
-
   ipcMain.handle('settings:get-translator', () => {
     return settingsStore.getTranslator()
   })

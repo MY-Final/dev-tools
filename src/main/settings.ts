@@ -30,7 +30,6 @@ export interface AppSettings {
     enabled: boolean
     url: string
   }
-  disabledTools: string[]
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -60,8 +59,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   proxy: {
     enabled: false,
     url: ''
-  },
-  disabledTools: []
+  }
 }
 
 class SettingsStore {
@@ -95,8 +93,7 @@ class SettingsStore {
       translator: { ...DEFAULT_SETTINGS.translator, ...data.translator },
       npmRegistry: data.npmRegistry ?? '',
       mavenSearchUrl: data.mavenSearchUrl ?? '',
-      proxy: { ...DEFAULT_SETTINGS.proxy, ...data.proxy },
-      disabledTools: data.disabledTools ?? []
+      proxy: { ...DEFAULT_SETTINGS.proxy, ...data.proxy }
     }
   }
 
@@ -170,12 +167,6 @@ class SettingsStore {
 
   updateProxy(updates: Partial<AppSettings['proxy']>): AppSettings {
     this.settings.proxy = { ...this.settings.proxy, ...updates }
-    this.save()
-    return this.getSettings()
-  }
-
-  updateDisabledTools(disabledTools: string[]): AppSettings {
-    this.settings.disabledTools = disabledTools
     this.save()
     return this.getSettings()
   }
