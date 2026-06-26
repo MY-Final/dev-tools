@@ -1,6 +1,12 @@
 # Dev Tools
 
-一站式开发工具箱 — 62 个实用开发工具，基于 Electron + React + TypeScript 构建。
+一站式开发工具箱 — **62 个实用开发工具**。
+
+> 🚀 **Web 版** — 纯浏览器运行，无需安装，一键部署到 Vercel
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Flumia1998%2Fdev-tools)
+
+---
 
 ## 工具列表
 

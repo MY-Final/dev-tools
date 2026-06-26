@@ -6,3 +6,4 @@ out
 *.log*
 /plan.md
 .reasonix/
+.vercel

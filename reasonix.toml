@@ -1,2 +1,0 @@
-[permissions]
-allow = ["Edit", "Bash(cd D:\\Repos\\dev-tools && npm run typecheck 2>&1)"]
