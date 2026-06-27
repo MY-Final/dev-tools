@@ -12,6 +12,7 @@ interface ToolConfig {
   categoryIcon: string
   isNew?: boolean
   usage?: string
+  tags?: string[]
 }
 
 export const tools: ToolItem[] = (toolsData as ToolConfig[]).map((tool) => ({
@@ -23,5 +24,6 @@ export const tools: ToolItem[] = (toolsData as ToolConfig[]).map((tool) => ({
   category: tool.category,
   categoryIcon: getIcon(tool.categoryIcon),
   isNew: tool.isNew,
-  usage: tool.usage
+  usage: tool.usage,
+  tags: tool.tags
 }))
