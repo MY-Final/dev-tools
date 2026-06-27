@@ -167,6 +167,36 @@ const dockerAPI = {
     ipcRenderer.invoke('docker:tags', imageName)
 }
 
+// WebSocket Proxy API
+const wsProxyAPI = {
+  connect: (opts: { url: string; headers?: Record<string, string>; protocols?: string[] }): Promise<{ id: number; error?: string }> =>
+    ipcRenderer.invoke('ws-proxy:connect', opts),
+  send: (opts: { id: number; message: string }): Promise<{ ok?: boolean; error?: string }> =>
+    ipcRenderer.invoke('ws-proxy:send', opts),
+  disconnect: (id: number): Promise<{ ok: boolean }> =>
+    ipcRenderer.invoke('ws-proxy:disconnect', id),
+  onOpen: (callback: (data: { id: number }) => void): (() => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, data: { id: number }): void => callback(data)
+    ipcRenderer.on('ws-proxy:open', handler)
+    return () => ipcRenderer.removeListener('ws-proxy:open', handler)
+  },
+  onMessage: (callback: (data: { id: number; data: string }) => void): (() => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, data: { id: number; data: string }): void => callback(data)
+    ipcRenderer.on('ws-proxy:message', handler)
+    return () => ipcRenderer.removeListener('ws-proxy:message', handler)
+  },
+  onClose: (callback: (data: { id: number; code: number; reason: string }) => void): (() => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, data: { id: number; code: number; reason: string }): void => callback(data)
+    ipcRenderer.on('ws-proxy:close', handler)
+    return () => ipcRenderer.removeListener('ws-proxy:close', handler)
+  },
+  onError: (callback: (data: { id: number; error: string }) => void): (() => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, data: { id: number; error: string }): void => callback(data)
+    ipcRenderer.on('ws-proxy:error', handler)
+    return () => ipcRenderer.removeListener('ws-proxy:error', handler)
+  }
+}
+
 interface DockerTagResult {
   name: string
   digest: string
@@ -190,6 +220,7 @@ if (process.contextIsolated) {
     contextBridge.exposeInMainWorld('translator', translatorAPI)
     contextBridge.exposeInMainWorld('npm', npmAPI)
     contextBridge.exposeInMainWorld('docker', dockerAPI)
+    contextBridge.exposeInMainWorld('wsProxy', wsProxyAPI)
   } catch (error) {
     console.error(error)
   }
@@ -210,4 +241,6 @@ if (process.contextIsolated) {
   window.npm = npmAPI
   // @ts-ignore (define in dts)
   window.docker = dockerAPI
+  // @ts-ignore (define in dts)
+  window.wsProxy = wsProxyAPI
 }

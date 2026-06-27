@@ -11,6 +11,7 @@ import {
   getCurrentVersion,
   shouldAutoCheck
 } from './updater'
+import WebSocket from 'ws'
 
 function registerSettingsHandlers(): void {
   ipcMain.handle('settings:get', () => {
@@ -444,8 +445,8 @@ function registerDockerHandlers(): void {
   ipcMain.handle('docker:tags', async (_event, imageName: string) => {
     try {
       const path = imageName.includes('/')
-        ? imageName  // e.g. jupyter/datascience-notebook
-        : 'library/' + imageName  // official image
+        ? imageName
+        : 'library/' + imageName
       const res = await fetch(`https://hub.docker.com/v2/repositories/${path}/tags?page_size=50`)
       if (!res.ok) return []
       const data = await res.json()
@@ -461,6 +462,70 @@ function registerDockerHandlers(): void {
     } catch {
       return []
     }
+  })
+}
+
+// ── WebSocket Proxy (with custom headers support) ──────────────
+
+let wsProxyIdCounter = 0
+const wsProxyConnections = new Map<number, WebSocket>()
+
+function registerWsProxyHandlers(): void {
+  ipcMain.handle('ws-proxy:connect', (_event, opts: { url: string; headers?: Record<string, string>; protocols?: string[] }) => {
+    const id = ++wsProxyIdCounter
+    try {
+      const ws = opts.protocols && opts.protocols.length > 0
+        ? new WebSocket(opts.url, opts.protocols, { headers: opts.headers })
+        : new WebSocket(opts.url, { headers: opts.headers })
+
+      ws.onopen = () => {
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.send('ws-proxy:open', { id })
+        }
+      }
+      ws.onmessage = (event) => {
+        const data = typeof event.data === 'string' ? event.data : '[Binary]'
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.send('ws-proxy:message', { id, data })
+        }
+      }
+      ws.onclose = (event) => {
+        wsProxyConnections.delete(id)
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.send('ws-proxy:close', { id, code: event.code, reason: event.reason || '' })
+        }
+      }
+      ws.onerror = () => {
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.send('ws-proxy:error', { id, error: '连接错误' })
+        }
+      }
+
+      wsProxyConnections.set(id, ws)
+      return { id }
+    } catch (err) {
+      return { id: -1, error: (err as Error).message }
+    }
+  })
+
+  ipcMain.handle('ws-proxy:send', (_event, opts: { id: number; message: string }) => {
+    const ws = wsProxyConnections.get(opts.id)
+    if (!ws || ws.readyState !== WebSocket.OPEN) return { error: '连接未打开' }
+    try {
+      ws.send(opts.message)
+      return { ok: true }
+    } catch (err) {
+      return { error: (err as Error).message }
+    }
+  })
+
+  ipcMain.handle('ws-proxy:disconnect', (_event, id: number) => {
+    const ws = wsProxyConnections.get(id)
+    if (ws) {
+      ws.close()
+      wsProxyConnections.delete(id)
+    }
+    return { ok: true }
   })
 }
 
@@ -563,6 +628,9 @@ app.whenReady().then(() => {
 
   // Register docker handlers
   registerDockerHandlers()
+
+  // Register WebSocket proxy handlers
+  registerWsProxyHandlers()
 
   createWindow()
 

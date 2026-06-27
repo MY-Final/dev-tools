@@ -37,7 +37,8 @@
     "lucide-react": "^1.21.0",
     "node-forge": "^1.4.0",
     "react-json-view-lite": "^2.5.0",
-    "tailwind-merge": "^3.6.0"
+    "tailwind-merge": "^3.6.0",
+    "ws": "^8.21.0"
   },
   "devDependencies": {
     "@electron-toolkit/eslint-config-prettier": "^3.0.0",

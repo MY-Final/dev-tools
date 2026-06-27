@@ -131,6 +131,16 @@ export interface DockerAPI {
   getTags: (imageName: string) => Promise<DockerTagResult[]>
 }
 
+export interface WsProxyAPI {
+  connect: (opts: { url: string; headers?: Record<string, string>; protocols?: string[] }) => Promise<{ id: number; error?: string }>
+  send: (opts: { id: number; message: string }) => Promise<{ ok?: boolean; error?: string }>
+  disconnect: (id: number) => Promise<{ ok: boolean }>
+  onOpen: (callback: (data: { id: number }) => void) => () => void
+  onMessage: (callback: (data: { id: number; data: string }) => void) => () => void
+  onClose: (callback: (data: { id: number; code: number; reason: string }) => void) => () => void
+  onError: (callback: (data: { id: number; error: string }) => void) => () => void
+}
+
 export interface DockerTagResult {
   name: string
   digest: string
@@ -151,5 +161,6 @@ declare global {
     translator: TranslatorAPI
     npm: NpmAPI
     docker: DockerAPI
+    wsProxy: WsProxyAPI
   }
 }
