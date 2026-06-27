@@ -1,11 +1,13 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Settings, Palette, RotateCcw, RefreshCw, Download, FileText, X, ChevronRight, Wifi } from 'lucide-react'
+import { Settings, Palette, RotateCcw, RefreshCw, Download, FileText, X, ChevronRight, Wifi, Keyboard } from 'lucide-react'
 import { useSettings } from '@renderer/lib/contexts'
 import { useUpdater } from '@renderer/lib/updater-context'
+import { formatShortcut } from '@renderer/lib/shortcuts'
+import ShortcutRecorder from '@renderer/components/ShortcutRecorder'
 import '../styles/settings.css'
 
 export default function SettingsPage(): React.JSX.Element {
-  const { settings, updateAppearance, updateEditor, updateUpdater, updateTranslator, updateNpmRegistry, updateMavenSearchUrl, updateProxy, resetToDefaults } = useSettings()
+  const { settings, updateAppearance, updateEditor, updateUpdater, updateTranslator, updateNpmRegistry, updateMavenSearchUrl, updateProxy, updateShortcuts, resetToDefaults } = useSettings()
   const {
     status,
     version,
@@ -32,6 +34,7 @@ export default function SettingsPage(): React.JSX.Element {
     npm: false,
     maven: false,
     proxy: false,
+    shortcuts: false,
     updater: false
   })
 
@@ -450,6 +453,68 @@ export default function SettingsPage(): React.JSX.Element {
                 onChange={(e) => updateProxy({ url: e.target.value })}
                 placeholder="http://127.0.0.1:7890"
               />
+            </div>
+          </div>
+
+          {/* 快捷键设置 */}
+          <div className="settings-section-header" onClick={() => toggleSection('shortcuts')}>
+            <h3 className="settings-section-title">
+              <Keyboard size={18} className="settings-section-icon" />
+              快捷键
+            </h3>
+            <ChevronRight size={16} className={`settings-section-chevron ${!collapsedSections.shortcuts ? 'open' : ''}`} />
+          </div>
+          <div className={`settings-section-body ${!collapsedSections.shortcuts ? 'open' : ''}`}>
+            <div className="settings-item settings-item-column">
+              <div className="settings-item-info">
+                <p className="settings-item-label">自定义全局快捷键</p>
+                <p className="settings-item-description">
+                  点击按钮后按下组合键即可修改，Esc 取消录制。
+                  修改后即时生效，无需重启。
+                </p>
+              </div>
+            </div>
+
+            <div className="settings-item" style={{ display: 'block' }}>
+              <table className="shortcuts-table">
+                <tbody>
+                  <tr>
+                    <td>切换侧边栏</td>
+                    <td><kbd>{formatShortcut(settings.shortcuts.toggleSidebar)}</kbd></td>
+                    <td>
+                      <ShortcutRecorder
+                        value={settings.shortcuts.toggleSidebar}
+                        onChange={(v) => updateShortcuts({ toggleSidebar: v })}
+                      />
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>打开设置</td>
+                    <td><kbd>{formatShortcut(settings.shortcuts.openSettings)}</kbd></td>
+                    <td>
+                      <ShortcutRecorder
+                        value={settings.shortcuts.openSettings}
+                        onChange={(v) => updateShortcuts({ openSettings: v })}
+                      />
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>返回首页</td>
+                    <td><kbd>{formatShortcut(settings.shortcuts.goHome)}</kbd></td>
+                    <td>
+                      <ShortcutRecorder
+                        value={settings.shortcuts.goHome}
+                        onChange={(v) => updateShortcuts({ goHome: v })}
+                      />
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>命令面板</td>
+                    <td><kbd>{navigator.platform.includes('Mac') ? '⌘ + K' : 'Ctrl + K'}</kbd></td>
+                    <td><span className="settings-item-description">全局快捷键（不可修改）</span></td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
 

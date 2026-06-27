@@ -68,6 +68,10 @@ function registerSettingsHandlers(): void {
     return settingsStore.updateProxy(updates)
   })
 
+  ipcMain.handle('settings:update-shortcuts', (_event, updates: Partial<AppSettings['shortcuts']>) => {
+    return settingsStore.updateShortcuts(updates)
+  })
+
   ipcMain.handle('settings:get-translator', () => {
     return settingsStore.getTranslator()
   })

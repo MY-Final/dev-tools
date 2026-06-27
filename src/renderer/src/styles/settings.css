@@ -806,3 +806,87 @@
 .settings-tool-toggle:hover .settings-toggle-slider {
   box-shadow: 0 0 0 4px var(--color-accent-soft-subtle);
 }
+
+/* ── Shortcut Recorder ───────────────── */
+
+.shortcut-recorder {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-editor-bg);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+  color: var(--color-text);
+  transition: all 0.15s ease;
+  min-width: 120px;
+  text-align: center;
+  justify-content: center;
+}
+
+.shortcut-recorder:hover {
+  border-color: var(--color-border-hover);
+  background: var(--color-surface-hover);
+}
+
+.shortcut-recorder.recording {
+  border-color: var(--color-accent-soft);
+  box-shadow: 0 0 0 3px var(--color-accent-soft-subtle);
+  color: var(--color-accent-soft);
+}
+
+.shortcut-recorder kbd {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: 2px 6px;
+  white-space: nowrap;
+}
+
+.shortcut-recorder.recording kbd {
+  color: var(--color-accent-soft);
+  border-color: var(--color-accent-soft);
+}
+
+.shortcut-recorder-hint {
+  font-size: 11px;
+  color: var(--color-accent-soft);
+  animation: pulse 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.shortcuts-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.shortcuts-table td {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 14px;
+}
+
+.shortcuts-table td:first-child {
+  font-weight: 500;
+  color: var(--color-text);
+  width: 160px;
+}
+
+.shortcuts-table td:nth-child(2) {
+  color: var(--color-text-muted);
+  width: 200px;
+}
+
+.shortcuts-table td:last-child {
+  text-align: right;
+}

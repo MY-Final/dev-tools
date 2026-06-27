@@ -29,6 +29,17 @@ export interface AppSettings {
     enabled: boolean
     url: string
   }
+  shortcuts: {
+    toggleSidebar: string
+    openSettings: string
+    goHome: string
+  }
+}
+
+const DEFAULT_SHORTCUTS = {
+  toggleSidebar: 'Alt+b',
+  openSettings: 'Ctrl+,',
+  goHome: 'Escape'
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -59,7 +70,8 @@ const DEFAULT_SETTINGS: AppSettings = {
   proxy: {
     enabled: false,
     url: ''
-  }
+  },
+  shortcuts: { ...DEFAULT_SHORTCUTS }
 }
 
 interface SettingsContextType {
@@ -72,6 +84,7 @@ interface SettingsContextType {
   updateNpmRegistry: (npmRegistry: string) => Promise<void>
   updateMavenSearchUrl: (url: string) => Promise<void>
   updateProxy: (updates: Partial<{ enabled: boolean; url: string }>) => Promise<void>
+  updateShortcuts: (updates: Partial<AppSettings['shortcuts']>) => Promise<void>
   resetToDefaults: () => Promise<void>
 }
 
@@ -158,6 +171,15 @@ export function SettingsProvider({ children }: { children: ReactNode }): React.J
     }
   }, [])
 
+  const updateShortcuts = useCallback(async (updates: Partial<AppSettings['shortcuts']>) => {
+    try {
+      const updated = await window.api.updateShortcuts(updates)
+      setSettings(updated)
+    } catch {
+      // 忽略错误
+    }
+  }, [])
+
   const resetToDefaults = useCallback(async () => {
     try {
       const reset = await window.api.resetToDefaults()
@@ -169,7 +191,7 @@ export function SettingsProvider({ children }: { children: ReactNode }): React.J
 
   return (
     <SettingsContext.Provider
-      value={{ settings, loading, updateAppearance, updateEditor, updateUpdater, updateTranslator, updateNpmRegistry, updateMavenSearchUrl, updateProxy, resetToDefaults }}
+      value={{ settings, loading, updateAppearance, updateEditor, updateUpdater, updateTranslator, updateNpmRegistry, updateMavenSearchUrl, updateProxy, updateShortcuts, resetToDefaults }}
     >
       {children}
     </SettingsContext.Provider>

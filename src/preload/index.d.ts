@@ -29,6 +29,11 @@ export interface AppSettings {
     enabled: boolean
     url: string
   }
+  shortcuts: {
+    toggleSidebar: string
+    openSettings: string
+    goHome: string
+  }
 }
 
 export interface SettingsAPI {
@@ -46,6 +51,7 @@ export interface SettingsAPI {
   updateMavenSearchUrl: (url: string) => Promise<AppSettings>
   getProxy: () => Promise<{ enabled: boolean; url: string }>
   updateProxy: (updates: Partial<{ enabled: boolean; url: string }>) => Promise<AppSettings>
+  updateShortcuts: (updates: Partial<AppSettings['shortcuts']>) => Promise<AppSettings>
   resetToDefaults: () => Promise<AppSettings>
 }
 

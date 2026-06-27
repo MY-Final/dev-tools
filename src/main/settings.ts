@@ -31,6 +31,17 @@ export interface AppSettings {
     enabled: boolean
     url: string
   }
+  shortcuts: {
+    toggleSidebar: string
+    openSettings: string
+    goHome: string
+  }
+}
+
+const DEFAULT_SHORTCUTS = {
+  toggleSidebar: 'Alt+b',
+  openSettings: 'Ctrl+,',
+  goHome: 'Escape'
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -61,7 +72,8 @@ const DEFAULT_SETTINGS: AppSettings = {
   proxy: {
     enabled: false,
     url: ''
-  }
+  },
+  shortcuts: { ...DEFAULT_SHORTCUTS }
 }
 
 class SettingsStore {
@@ -95,7 +107,8 @@ class SettingsStore {
       translator: { ...DEFAULT_SETTINGS.translator, ...data.translator },
       npmRegistry: data.npmRegistry ?? '',
       mavenSearchUrl: data.mavenSearchUrl ?? '',
-      proxy: { ...DEFAULT_SETTINGS.proxy, ...data.proxy }
+      proxy: { ...DEFAULT_SETTINGS.proxy, ...data.proxy },
+      shortcuts: { ...DEFAULT_SETTINGS.shortcuts, ...data.shortcuts }
     }
   }
 
@@ -169,6 +182,12 @@ class SettingsStore {
 
   updateProxy(updates: Partial<AppSettings['proxy']>): AppSettings {
     this.settings.proxy = { ...this.settings.proxy, ...updates }
+    this.save()
+    return this.getSettings()
+  }
+
+  updateShortcuts(updates: Partial<AppSettings['shortcuts']>): AppSettings {
+    this.settings.shortcuts = { ...this.settings.shortcuts, ...updates }
     this.save()
     return this.getSettings()
   }

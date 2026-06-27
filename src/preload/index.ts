@@ -30,6 +30,11 @@ export interface AppSettings {
     enabled: boolean
     url: string
   }
+  shortcuts: {
+    toggleSidebar: string
+    openSettings: string
+    goHome: string
+  }
 }
 
 export type UpdateStatus =
@@ -69,6 +74,8 @@ const settingsAPI = {
     ipcRenderer.invoke('settings:get-proxy'),
   updateProxy: (updates: Partial<{ enabled: boolean; url: string }>): Promise<AppSettings> =>
     ipcRenderer.invoke('settings:update-proxy', updates),
+  updateShortcuts: (updates: Partial<AppSettings['shortcuts']>): Promise<AppSettings> =>
+    ipcRenderer.invoke('settings:update-shortcuts', updates),
   resetToDefaults: (): Promise<AppSettings> => ipcRenderer.invoke('settings:reset')
 }
 

@@ -7,10 +7,12 @@ import SettingsPage from '@renderer/pages/SettingsPage'
 import { getPageComponent } from '@renderer/pages/registry'
 import { SettingsProvider, useSettings } from '@renderer/lib/contexts'
 import { UpdaterProvider } from '@renderer/lib/updater-context'
+import { matchShortcut } from '@renderer/lib/shortcuts'
 
 function AppContent(): React.JSX.Element {
   const { settings, updateAppearance } = useSettings()
   const [currentPage, setCurrentPage] = useState('home')
+  const shortcuts = settings.shortcuts
 
   // 应用主题
   useEffect(() => {
@@ -33,7 +35,7 @@ function AppContent(): React.JSX.Element {
     updateAppearance({ sidebarCollapsed: !settings.appearance.sidebarCollapsed })
   }, [settings.appearance.sidebarCollapsed, updateAppearance])
 
-  // 全局快捷键
+  // 全局快捷键（从设置中读取）
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent): void => {
       // 在输入框中不处理快捷键
@@ -41,22 +43,22 @@ function AppContent(): React.JSX.Element {
       const isInput =
         target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable
 
-      // Alt+B: 切换侧边栏
-      if (e.altKey && e.key === 'b') {
+      // 切换侧边栏
+      if (matchShortcut(shortcuts.toggleSidebar, e)) {
         e.preventDefault()
         updateAppearance({ sidebarCollapsed: !settings.appearance.sidebarCollapsed })
         return
       }
 
-      // Ctrl+,: 打开设置
-      if ((e.ctrlKey || e.metaKey) && e.key === ',') {
+      // 打开设置
+      if (matchShortcut(shortcuts.openSettings, e)) {
         e.preventDefault()
         setCurrentPage('settings')
         return
       }
 
-      // Esc: 返回首页（非输入框中且不在首页）
-      if (e.key === 'Escape' && !isInput && currentPage !== 'home') {
+      // 返回首页（非输入框中）
+      if (matchShortcut(shortcuts.goHome, e) && !isInput && currentPage !== 'home') {
         setCurrentPage('home')
         return
       }
@@ -64,7 +66,7 @@ function AppContent(): React.JSX.Element {
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [settings.appearance.sidebarCollapsed, currentPage, updateAppearance, setCurrentPage])
+  }, [shortcuts, settings.appearance.sidebarCollapsed, currentPage, updateAppearance])
 
   // ── Render ──────────────────────────────────────────────────
   const renderPage = (): React.JSX.Element => {
