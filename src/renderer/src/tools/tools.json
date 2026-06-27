@@ -4,6 +4,7 @@
     "name": "Data Size Converter",
     "shortDesc": "数据大小转换",
     "desc": "数据大小单位转换，支持 Binary/Decimal 模式",
+    "usage": "输入数值和单位即可实时转换。Binary 模式（1KB=1024B）适用于内存/文件大小；Decimal 模式（1KB=1000B）适用于硬盘容量。",
     "icon": "HardDrive",
     "category": "换算工具",
     "categoryIcon": "Code"
@@ -13,6 +14,7 @@
     "name": "我的 IP",
     "shortDesc": "查看本机 IP",
     "desc": "查看本机内网 IP 地址",
+    "usage": "打开页面自动显示本机局域网 IP。适用于快速获取本机地址以配置防火墙、端口转发或分享给同网段同事。",
     "icon": "Globe",
     "category": "网络工具",
     "categoryIcon": "Globe"
@@ -22,6 +24,7 @@
     "name": "设备信息",
     "shortDesc": "设备与浏览器信息",
     "desc": "查看当前设备和浏览器运行环境",
+    "usage": "打开即显示操作系统、浏览器版本、屏幕分辨率、语言等环境信息。适用于排查兼容性问题或了解用户环境。",
     "icon": "Monitor",
     "category": "系统工具",
     "categoryIcon": "Monitor"
@@ -31,6 +34,7 @@
     "name": "Token Generator",
     "shortDesc": "生成随机标识符",
     "desc": "生成 UUID、JWT、API Key 等随机标识符",
+    "usage": "选择 Token 类型后点击生成按钮即可一键复制。适用于创建测试用 API Key、会话 ID 或数据库主键。",
     "icon": "Key",
     "category": "编码/加密",
     "categoryIcon": "Lock"
@@ -40,6 +44,7 @@
     "name": "JWT Generator",
     "shortDesc": "JWT 生成与调试",
     "desc": "快速生成和调试 JSON Web Token",
+    "usage": "填写 Payload（JSON）、选择算法并输入密钥即可生成 JWT。支持 HS256/HS384/HS512 等对称算法，适用于 API 认证测试。",
     "icon": "Shield",
     "category": "编码/加密",
     "categoryIcon": "Lock"
@@ -49,6 +54,7 @@
     "name": "Cron Generator",
     "shortDesc": "Cron 可视化",
     "desc": "可视化生成和解析 Cron 表达式",
+    "usage": "通过下拉菜单选择分钟/小时/日/月/周即可生成 Cron 表达式，也可粘贴现有表达式反解析。适用于配置 Linux crontab 或 K8s CronJob。",
     "icon": "Clock",
     "category": "开发工具",
     "categoryIcon": "Wrench"
@@ -58,6 +64,7 @@
     "name": "JSON Formatter",
     "shortDesc": "JSON 格式化",
     "desc": "格式化、压缩、校验 JSON 数据",
+    "usage": "粘贴 JSON 文本自动格式化并高亮。支持缩进调整（2/4/6/8空格）、压缩、树形视图、JSONPath 查询。适用于阅读 API 响应或排查 JSON 语法错误。",
     "icon": "FileJson",
     "category": "开发工具",
     "categoryIcon": "Wrench"
@@ -67,6 +74,7 @@
     "name": "URL Codec",
     "shortDesc": "URL 编解码",
     "desc": "URL 编码与解码，支持参数编码和完整 URL",
+    "usage": "输入文本即可编码/解码 URL 字符串。支持全 URL 模式和参数模式。适用于处理含中文或特殊字符的 URL 参数。",
     "icon": "Link2",
     "category": "编码/加密",
     "categoryIcon": "Lock"
@@ -76,6 +84,7 @@
     "name": "Hash Generator",
     "shortDesc": "哈希值生成",
     "desc": "生成 MD5、SHA-1、SHA-256、SHA-384、SHA-512 哈希值",
+    "usage": "输入文本或上传文件即可生成哈希值。支持文本模式和文件模式。适用于校验下载文件完整性或密码哈希。",
     "icon": "Hash",
     "category": "编码/加密",
     "categoryIcon": "Lock"
@@ -85,6 +94,7 @@
     "name": "Password Generator",
     "shortDesc": "随机密码生成",
     "desc": "生成高强度安全随机密码",
+    "usage": "设置长度和字符类型（大小写字母/数字/符号）后点击生成，可批量生成多个密码。适用于创建数据库密码、API Key 等安全凭证。",
     "icon": "KeyRound",
     "category": "编码/加密",
     "categoryIcon": "Lock"
@@ -94,6 +104,7 @@
     "name": "JWT Decoder",
     "shortDesc": "JWT 解析",
     "desc": "解析和检查 JWT Token",
+    "usage": "粘贴 JWT 字符串自动解析 Header/Payload/Signature。显示过期时间、签发者、主题等字段，并提示是否已过期。适用于调试认证流程。",
     "icon": "ShieldCheck",
     "category": "编码/加密",
     "categoryIcon": "Lock"
@@ -103,6 +114,7 @@
     "name": "Timestamp Converter",
     "shortDesc": "时间戳转换",
     "desc": "Unix 时间戳与日期时间双向转换",
+    "usage": "输入时间戳（秒/毫秒）转换为可读日期，或选择日期转换为时间戳，支持实时显示当前时间戳。适用于日志分析和 API 调试。",
     "icon": "CalendarClock",
     "category": "换算工具",
     "categoryIcon": "Code"
@@ -112,6 +124,7 @@
     "name": "Base64 Codec",
     "shortDesc": "Base64 编解码",
     "desc": "Base64 编码与解码，支持 URL Safe",
+    "usage": "粘贴文本即可编码为 Base64 或解码 Base64 字符串。支持标准模式和 URL Safe 模式。适用于处理 Data URI 或 API 请求中的编码数据。",
     "icon": "Binary",
     "category": "编码/加密",
     "categoryIcon": "Lock"
@@ -121,6 +134,7 @@
     "name": "Keyboard Tester",
     "shortDesc": "键盘测试",
     "desc": "实时查看键盘按键的 KeyboardEvent 信息",
+    "usage": "按下任意键即可查看 key、code、keyCode 等事件属性。适用于调试键盘快捷键、验证键位映射或前端开发中的键盘事件处理。",
     "icon": "Keyboard",
     "category": "系统工具",
     "categoryIcon": "Monitor"
@@ -130,6 +144,7 @@
     "name": "Mouse Tester",
     "shortDesc": "鼠标测试",
     "desc": "实时查看鼠标事件的 MouseEvent 信息",
+    "usage": "移动/点击鼠标即可查看坐标、按钮、修饰键等事件详情。适用于调试鼠标交互或测试鼠标按键功能。",
     "icon": "MousePointer",
     "category": "系统工具",
     "categoryIcon": "Monitor"
@@ -139,6 +154,7 @@
     "name": "Port Generator",
     "shortDesc": "随机端口生成",
     "desc": "生成随机网络端口号",
+    "usage": "设置端口范围后点击生成，可批量生成多个不重复端口。适用于开发时为服务分配端口、配置 Docker 端口映射。",
     "icon": "Zap",
     "category": "网络工具",
     "categoryIcon": "Globe"
@@ -148,6 +164,7 @@
     "name": "Subnet Calculator",
     "shortDesc": "子网计算",
     "desc": "IPv4 子网计算器",
+    "usage": "输入 IP 地址和子网掩码（或 CIDR 前缀），自动计算网络地址、广播地址、可用 IP 范围等信息。适用于网络规划和运维。",
     "icon": "Network",
     "category": "网络工具",
     "categoryIcon": "Globe"
@@ -157,6 +174,7 @@
     "name": "IPv4 Converter",
     "shortDesc": "IPv4 格式转换",
     "desc": "IPv4 地址与数字格式互相转换",
+    "usage": "输入 IPv4 地址（如 192.168.1.1）转换为十进制数字，或输入数字转换回 IP 地址。适用于数据库存储 IP 或网络编程。",
     "icon": "Globe",
     "category": "网络工具",
     "categoryIcon": "Globe"
@@ -166,6 +184,7 @@
     "name": "IP Range Expander",
     "shortDesc": "IP 范围计算",
     "desc": "IP 范围转 CIDR 计算",
+    "usage": "输入起始 IP 和结束 IP，自动计算对应的 CIDR 列表。适用于将 IP 范围转换为防火墙规则或负载均衡器配置。",
     "icon": "Network",
     "category": "网络工具",
     "categoryIcon": "Globe"
@@ -175,6 +194,7 @@
     "name": "Text Analyzer",
     "shortDesc": "文本统计分析",
     "desc": "实时分析文本统计信息",
+    "usage": "粘贴或输入文本，自动统计字符数、单词数、行数、字节数等。适用于写文章时统计字数或检查文本长度限制。",
     "icon": "AlignLeft",
     "category": "文本工具",
     "categoryIcon": "FileText"
@@ -184,6 +204,7 @@
     "name": "Git Cheat Sheet",
     "shortDesc": "Git 命令速查",
     "desc": "Git 命令速查手册",
+    "usage": "按分类浏览 Git 常用命令，支持搜索。涵盖分支管理、暂存、回退、标签、远程操作等。适用于 Git 新手学习或老手快速回忆。",
     "icon": "GitBranch",
     "category": "备忘录",
     "categoryIcon": "BookMarked"
@@ -193,6 +214,7 @@
     "name": "Docker Cheat Sheet",
     "shortDesc": "Docker 命令速查",
     "desc": "Docker 命令速查手册",
+    "usage": "按分类浏览 Docker 常用命令，涵盖容器管理、镜像操作、网络、卷、Docker Compose 等。适用于日常 Docker 运维参考。",
     "icon": "Box",
     "category": "备忘录",
     "categoryIcon": "BookMarked"
@@ -202,6 +224,7 @@
     "name": "Maven Dependency",
     "shortDesc": "Maven/Gradle 依赖",
     "desc": "快速生成 Maven / Gradle 依赖配置",
+    "usage": "搜索 Java 库名称，选择版本后自动生成 Maven 或 Gradle 依赖 XML/Kotlin 代码，一键复制到项目中。适用于快速引入第三方库。",
     "icon": "Package",
     "category": "资源搜索",
     "categoryIcon": "Search"
@@ -211,6 +234,7 @@
     "name": "File Generator",
     "shortDesc": "测试文件生成",
     "desc": "生成指定大小的测试文件，用于上传限制测试",
+    "usage": "输入文件大小（如 10MB）即时生成测试文件并下载。适用于测试上传接口的文件大小限制或带宽测试。",
     "icon": "FileUp",
     "category": "开发工具",
     "categoryIcon": "Wrench"
@@ -220,6 +244,7 @@
     "name": "Case Converter",
     "shortDesc": "大小写转换",
     "desc": "文本大小写与命名格式实时转换",
+    "usage": "输入文本即可转换为 camelCase、PascalCase、snake_case、kebab-case 等格式。适用于变量命名风格统一。",
     "icon": "CaseSensitive",
     "category": "文本工具",
     "categoryIcon": "FileText"
@@ -229,6 +254,7 @@
     "name": "Environment Variables",
     "shortDesc": "系统环境变量",
     "desc": "查看当前系统环境变量",
+    "usage": "打开即显示本机所有环境变量，支持搜索和过滤。适用于排查环境配置问题，如 JAVA_HOME、PATH 等关键变量。",
     "icon": "Terminal",
     "category": "系统工具",
     "categoryIcon": "Monitor"
@@ -238,6 +264,7 @@
     "name": "ASCII Table",
     "shortDesc": "ASCII 码表",
     "desc": "ASCII 码表完整对照（0–127）",
+    "usage": "浏览 ASCII 码表，查看十进制/十六进制/八进制/二进制数值及对应字符。适用于字符编码调试和数据协议开发。",
     "icon": "Table",
     "category": "备忘录",
     "categoryIcon": "BookMarked"
@@ -247,6 +274,7 @@
     "name": "Unicode Inspector",
     "shortDesc": "Unicode 查询",
     "desc": "查看字符的 Unicode 详细信息",
+    "usage": "输入任意字符即可查看其 Unicode 码点、UTF-8/UTF-16 编码、HTML 实体等信息。适用于处理多语言文本或排查乱码问题。",
     "icon": "Languages",
     "category": "文本工具",
     "categoryIcon": "FileText"
@@ -256,6 +284,7 @@
     "name": "npm Cheat Sheet",
     "shortDesc": "npm 命令速查",
     "desc": "npm / Yarn / pnpm 包管理器命令速查",
+    "usage": "浏览 npm、Yarn、pnpm 常用命令对比速查表。涵盖安装、卸载、更新、发布等操作。适用于多包管理工具切换时快速查阅。",
     "icon": "Package",
     "category": "备忘录",
     "categoryIcon": "BookMarked"
@@ -265,6 +294,7 @@
     "name": "Linux Cheat Sheet",
     "shortDesc": "Linux 命令速查",
     "desc": "Linux 常用命令速查手册",
+    "usage": "按分类浏览 Linux 常用命令（文件操作/权限/进程/网络等），支持搜索。适用于服务器运维和 Shell 脚本编写参考。",
     "icon": "Terminal",
     "category": "备忘录",
     "categoryIcon": "BookMarked"
@@ -274,6 +304,7 @@
     "name": "Kubernetes Cheat Sheet",
     "shortDesc": "K8s 命令速查",
     "desc": "K8s 命令速查手册",
+    "usage": "按分类浏览 kubectl 常用命令，涵盖 Pod 管理、部署、服务、配置等。适用于 K8s 日常运维和故障排查。",
     "icon": "Ship",
     "category": "备忘录",
     "categoryIcon": "BookMarked"
@@ -283,6 +314,7 @@
     "name": "Color Converter",
     "shortDesc": "颜色格式转换",
     "desc": "颜色格式转换 HEX ↔ RGB ↔ HSL",
+    "usage": "输入 HEX（如 #3b82f6）即可转换为 RGB、HSL 格式，支持颜色选择器取色。适用于 UI 设计稿还原和前端样式编写。",
     "icon": "Palette",
     "category": "换算工具",
     "categoryIcon": "Code"
@@ -292,6 +324,7 @@
     "name": "Lorem Ipsum Generator",
     "shortDesc": "占位文本生成",
     "desc": "生成虚拟占位文本，用于设计和排版",
+    "usage": "设置段落数和字数后点击生成，支持中文乱数假文和拉丁文 Lorem Ipsum。适用于 UI 设计填充占位内容。",
     "icon": "TextQuote",
     "category": "文本工具",
     "categoryIcon": "FileText"
@@ -301,6 +334,7 @@
     "name": "Regex Tester",
     "shortDesc": "正则测试",
     "desc": "正则表达式实时测试与替换",
+    "usage": "输入正则表达式和测试文本，实时高亮匹配结果并显示捕获组。支持替换模式和常用标志（g/i/m）。适用于编写和调试正则表达式。",
     "icon": "Regex",
     "category": "开发工具",
     "categoryIcon": "Wrench"
@@ -310,6 +344,7 @@
     "name": "Diff Checker",
     "shortDesc": "文本差异对比",
     "desc": "逐行对比文本差异，高亮新增/删除/修改",
+    "usage": "粘贴两段文本到左右面板，自动逐行对比差异。新增行高亮绿色，删除行高亮红色。适用于对比配置文件或代码变更。",
     "icon": "GitCompare",
     "category": "文本工具",
     "categoryIcon": "FileText"
@@ -319,6 +354,7 @@
     "name": "Number Base Converter",
     "shortDesc": "进制转换",
     "desc": "进制转换 · 反码 · 补码（Bin/Oct/Dec/Hex）",
+    "usage": "输入任意进制数值实时显示其他进制结果，支持原码/反码/补码显示。适用于计算机底层编程和嵌入式开发。",
     "icon": "Sigma",
     "category": "换算工具",
     "categoryIcon": "Calculator"
@@ -328,6 +364,7 @@
     "name": "Unit Converter",
     "shortDesc": "单位换算",
     "desc": "长度/面积/体积/时间/角度/速度/温度/压力/热量/功率换算",
+    "usage": "选择单位类别（长度/温度/速度等），输入数值即可换算。支持公制和英制单位。适用于日常单位换算需求。",
     "icon": "Ruler",
     "category": "换算工具",
     "categoryIcon": "Calculator"
@@ -337,6 +374,7 @@
     "name": "Timer & Stopwatch",
     "shortDesc": "计时器",
     "desc": "秒表 · 倒计时 · 番茄钟 · 间歇训练计时器",
+    "usage": "支持秒表、倒计时和番茄钟模式。番茄钟默认 25 分钟专注 + 5 分钟休息。适用于时间管理和会议计时。",
     "icon": "Timer",
     "category": "系统工具",
     "categoryIcon": "Monitor"
@@ -346,6 +384,7 @@
     "name": "USB Device Viewer",
     "shortDesc": "USB 设备查看",
     "desc": "WebHID — 查看 USB HID 设备 VID/PID/集合/报告",
+    "usage": "点击连接 USB 设备后查看 HID 设备详情（VID/PID/报告描述符）。适用于 USB 外设开发和调试。",
     "icon": "Usb",
     "category": "系统工具",
     "categoryIcon": "Monitor"
@@ -355,6 +394,7 @@
     "name": "XPath Tester",
     "shortDesc": "XPath 测试",
     "desc": "XPath 表达式测试 — XML/HTML 节点查询",
+    "usage": "粘贴 XML/HTML 文档，输入 XPath 表达式即可查询匹配节点。适用于爬虫开发和 XML 数据处理。",
     "icon": "Search",
     "category": "开发工具",
     "categoryIcon": "Wrench"
@@ -364,6 +404,7 @@
     "name": "HTTP Status Codes",
     "shortDesc": "HTTP 状态码",
     "desc": "HTTP 状态码速查手册 (1xx–5xx)",
+    "usage": "按分类浏览 HTTP 状态码（1xx–5xx），查看含义、使用场景和 RFC 引用。适用于接口开发时快速查阅。",
     "icon": "Server",
     "category": "备忘录",
     "categoryIcon": "BookMarked"
@@ -373,6 +414,7 @@
     "name": "Regex Cheat Sheet",
     "shortDesc": "正则语法速查",
     "desc": "正则表达式语法速查手册",
+    "usage": "浏览正则表达式常用语法（字符类/量词/断言/标志等），附带示例说明。适用于编写正则时的快速参考。",
     "icon": "Regex",
     "category": "备忘录",
     "categoryIcon": "BookMarked"
@@ -382,6 +424,7 @@
     "name": "HTML Entities",
     "shortDesc": "HTML 实体字符",
     "desc": "HTML 实体字符速查手册 (&amp; &lt; &copy;)",
+    "usage": "浏览 HTML 实体字符表，查看字符、实体名称和实体编号。适用于编写 HTML 模板或处理转义字符。",
     "icon": "FileCode",
     "category": "备忘录",
     "categoryIcon": "BookMarked"
@@ -391,6 +434,7 @@
     "name": "SQL Cheat Sheet",
     "shortDesc": "SQL 语法速查",
     "desc": "SQL 常用语法速查手册 (SELECT/JOIN/DDL)",
+    "usage": "按分类浏览 SQL 命令（查询/连接/DDL/DML/函数），附带语法示例。适用于数据库操作时的快速参考。",
     "icon": "Database",
     "category": "备忘录",
     "categoryIcon": "BookMarked"
@@ -400,6 +444,7 @@
     "name": "Image Tools",
     "shortDesc": "图片工具",
     "desc": "图片转 Base64 · 图片信息查看",
+    "usage": "拖入图片即可转为 Base64 Data URI 或查看图片尺寸、格式、文件大小等元信息。适用于前端 Base64 图片嵌入。",
     "icon": "Image",
     "category": "换算工具",
     "categoryIcon": "Calculator"
@@ -409,6 +454,7 @@
     "name": "Data Format Converter",
     "shortDesc": "数据格式互转",
     "desc": "CSV ↔ JSON ↔ XML 数据格式互转",
+    "usage": "粘贴数据即可在 CSV、JSON、XML 之间互转。适用于接口数据格式迁移或数据处理。",
     "icon": "Repeat",
     "category": "开发工具",
     "categoryIcon": "Wrench"
@@ -418,6 +464,7 @@
     "name": "UUID Decoder",
     "shortDesc": "UUID 解析",
     "desc": "解析 UUID 版本、变体、时间戳与 MAC",
+    "usage": "粘贴 UUID 自动解析其版本（v1/v4 等）、变体、时间戳等信息。适用于排查 UUID 相关问题。",
     "icon": "Fingerprint",
     "category": "编码/加密",
     "categoryIcon": "Lock"
@@ -427,6 +474,7 @@
     "name": "CSS Cheat Sheet",
     "shortDesc": "CSS 速查",
     "desc": "Flexbox · Grid · 单位 · 选择器 · 动画速查",
+    "usage": "浏览 CSS 布局速查（Flexbox/Grid 图示）、单位对照、选择器语法等。适用于前端开发时的快速参考。",
     "icon": "Paintbrush",
     "category": "备忘录",
     "categoryIcon": "BookMarked"
@@ -436,6 +484,7 @@
     "name": "JSON Converter",
     "shortDesc": "JSON 格式转换",
     "desc": "JSON → TypeScript · TOML · XML · YAML",
+    "usage": "粘贴 JSON 数据后选择目标格式即可转换。支持 TypeScript 接口定义、TOML、XML、YAML 等格式。适用于配置文件格式转换。",
     "icon": "Shuffle",
     "category": "开发工具",
     "categoryIcon": "Wrench"
@@ -445,6 +494,7 @@
     "name": "CSS Gradient Generator",
     "shortDesc": "渐变生成器",
     "desc": "可视化渐变生成器（方向/颜色/CSS 代码）",
+    "usage": "可视化编辑渐变色（线性/径向），调整方向和色标，自动生成 CSS background 代码。适用于前端 UI 设计。",
     "icon": "Palette",
     "category": "开发工具",
     "categoryIcon": "Wrench"
@@ -454,6 +504,7 @@
     "name": "HTML to JSX",
     "shortDesc": "HTML 转 JSX",
     "desc": "HTML 一键转 React JSX 语法",
+    "usage": "粘贴 HTML 代码自动转换为 JSX 语法（class→className、style 字符串→对象等）。适用于将设计稿 HTML 迁移到 React 项目。",
     "icon": "Code",
     "category": "开发工具",
     "categoryIcon": "Wrench"
@@ -463,6 +514,7 @@
     "name": "AES/DES Encryptor",
     "shortDesc": "对称加解密",
     "desc": "对称加密/解密（AES-CBC/GCM/CTR/ECB、DES、3DES）",
+    "usage": "选择加密算法和模式，输入密钥和明文即可加密/解密。支持 AES（CBC/GCM/CTR/ECB）和 DES/3DES。适用于数据加解密测试。",
     "icon": "ShieldCheck",
     "category": "编码/加密",
     "categoryIcon": "Lock"
@@ -472,6 +524,7 @@
     "name": "Certificate Parser",
     "shortDesc": "证书解析",
     "desc": "解析 PEM/X.509 证书：颁发者、有效期、SAN、指纹",
+    "usage": "粘贴 PEM 格式证书内容，自动解析颁发者、有效期、SAN 域名、指纹等信息。适用于排查 HTTPS 证书问题。",
     "icon": "FileKey",
     "category": "编码/加密",
     "categoryIcon": "Lock"
@@ -481,6 +534,7 @@
     "name": "HMAC Generator",
     "shortDesc": "HMAC 签名",
     "desc": "HMAC-SHA256/512 签名生成",
+    "usage": "输入消息和密钥，选择算法（SHA256/SHA512）生成 HMAC 签名。适用于 API 签名验证和消息认证码生成。",
     "icon": "Fingerprint",
     "category": "编码/加密",
     "categoryIcon": "Lock"
@@ -490,6 +544,7 @@
     "name": "SSH Key Generator",
     "shortDesc": "SSH 密钥生成",
     "desc": "生成 Ed25519/RSA 密钥对，显示公钥指纹",
+    "usage": "选择密钥类型（Ed25519/RSA），点击生成即可获得公私钥对和指纹。适用于配置 Git SSH 或服务器免密登录。",
     "icon": "KeyRound",
     "category": "编码/加密",
     "categoryIcon": "Lock"
@@ -499,6 +554,7 @@
     "name": "Clipboard Manager",
     "shortDesc": "剪贴板历史",
     "desc": "剪贴板历史记录",
+    "usage": "自动记录复制内容，支持搜索和点击回填。适用于频繁复制粘贴场景，快速找回之前复制过的内容。",
     "icon": "Clipboard",
     "category": "系统工具",
     "categoryIcon": "Monitor"
@@ -508,6 +564,7 @@
     "name": "Screen Info",
     "shortDesc": "屏幕信息",
     "desc": "屏幕分辨率、DPI、色彩深度信息",
+    "usage": "打开即显示当前屏幕分辨率、DPI、色彩深度、像素比等信息。适用于前端适配和多屏开发时了解显示参数。",
     "icon": "Monitor",
     "category": "系统工具",
     "categoryIcon": "Monitor"
@@ -517,6 +574,7 @@
     "name": "Browser Storage Viewer",
     "shortDesc": "Storage 查看",
     "desc": "localStorage / sessionStorage 查看编辑",
+    "usage": "查看和编辑浏览器 localStorage/sessionStorage 数据。适用于调试前端存储逻辑或手动修改缓存数据。",
     "icon": "Archive",
     "category": "系统工具",
     "categoryIcon": "Monitor"
@@ -526,6 +584,7 @@
     "name": "Timezone Converter",
     "shortDesc": "时区转换",
     "desc": "多时区时间对照",
+    "usage": "选择源时区和目标时区，输入时间即可转换。适用于跨国团队协作时计算对方当地时间。",
     "icon": "Globe",
     "category": "换算工具",
     "categoryIcon": "Calculator"
@@ -535,6 +594,7 @@
     "name": "Date Format Converter",
     "shortDesc": "日期格式转换",
     "desc": "日期格式互转（ISO/Unix/RFC/自定义）",
+    "usage": "输入日期字符串自动识别格式，或选择目标格式转换。支持 ISO 8601、RFC 2822、Unix 时间戳和自定义格式。",
     "icon": "Calendar",
     "category": "换算工具",
     "categoryIcon": "Calculator"
@@ -544,6 +604,7 @@
     "name": "Number Formatter",
     "shortDesc": "数字格式化",
     "desc": "数字格式化（千分位/货币/百分比/科学计数）",
+    "usage": "输入数字即可格式化为千分位、货币、百分比、科学计数等表示形式。适用于报表数据展示和国际化数字格式。",
     "icon": "Hash",
     "category": "换算工具",
     "categoryIcon": "Calculator"
@@ -553,6 +614,7 @@
     "name": "AI Translator",
     "shortDesc": "AI 翻译",
     "desc": "基于 OpenAI 兼容 API 的多语言翻译（需配置 API Key）",
+    "usage": "在设置中配置 API Key 和 Base URL 后即可使用。支持任意语言互译，可自定义翻译 Prompt。适用于技术文档翻译。",
     "icon": "Languages",
     "category": "开发工具",
     "categoryIcon": "Wrench",
@@ -563,6 +625,7 @@
     "name": "npm Search",
     "shortDesc": "npm 搜索",
     "desc": "搜索 npm 包，一键复制依赖配置",
+    "usage": "搜索 npm 包名称，查看版本信息，一键复制安装命令或 package.json 依赖配置。适用于快速引入前端依赖。",
     "icon": "PackageSearch",
     "category": "资源搜索",
     "categoryIcon": "Search",
@@ -573,6 +636,7 @@
     "name": "Docker Hub Search",
     "shortDesc": "Docker Hub 搜索",
     "desc": "搜索 Docker Hub 镜像，一键复制 docker pull 命令",
+    "usage": "搜索 Docker 镜像名称，查看 Stars/Pulls 等信息，一键复制 docker pull 命令。适用于快速部署中间件或服务。",
     "icon": "Container",
     "category": "资源搜索",
     "categoryIcon": "Search",

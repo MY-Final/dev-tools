@@ -61,6 +61,7 @@
 @import '../styles/translator.css';
 @import '../styles/npm-search.css';
 @import '../styles/dockerhub-search.css';
+@import '../styles/tool-help.css';
 
 @tailwind base;
 @tailwind components;
