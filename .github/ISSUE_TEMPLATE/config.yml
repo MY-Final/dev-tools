@@ -1,5 +1,10 @@
 blank_issues_enabled: false
+
 contact_links:
-  - name: 项目文档
+  - name: 📖 项目文档
     url: https://github.com/MY-Final/dev-tools#readme
-    about: 在提交 Issue 前，请先查阅项目文档
+    about: 提交 Issue 前，请先阅读项目文档。
+
+  - name: ⭐ 已有功能建议
+    url: https://github.com/MY-Final/dev-tools/issues?q=is%3Aissue+label%3Aenhancement
+    about: 查看是否已有相同的功能建议，避免重复提交。
