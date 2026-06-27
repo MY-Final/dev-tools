@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import {
   Radio, Plug, PlugZap, Send, Trash2, Copy, Check,
-  Plus, X, KeyRound, Code, Shield, List, SendHorizonal
+  Plus, X, KeyRound, Code, Shield, SendHorizonal
 } from 'lucide-react'
 import '../styles/websocket-tester.css'
 
@@ -74,6 +74,23 @@ export default function WebSocketTester(): React.JSX.Element {
     logEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [logs])
 
+  const addLog = useCallback((entry: LogEntry) => {
+    setLogs((prev) => [...prev, entry])
+  }, [])
+
+  const sendAutoAuth = useCallback(() => {
+    if (!autoAuthMsg.trim() || autoAuthedRef.current) return
+    autoAuthedRef.current = true
+    const msg = autoAuthMsg.trim()
+    if (connectionMode === 'proxy' && proxyId) {
+      window.wsProxy.send({ id: proxyId, message: msg })
+    } else if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      wsRef.current.send(msg)
+    }
+    addLog({ type: 'sent', timestamp: getTimestamp(), message: msg })
+    addLog({ type: 'system', timestamp: getTimestamp(), message: '已发送认证消息' })
+  }, [autoAuthMsg, connectionMode, proxyId, addLog])
+
   // Proxy event listeners
   useEffect(() => {
     if (connectionMode !== 'proxy') return
@@ -100,23 +117,6 @@ export default function WebSocketTester(): React.JSX.Element {
     }))
     return () => cleanups.forEach((fn) => fn())
   }, [connectionMode, sendAutoAuth, addLog])
-
-  const addLog = useCallback((entry: LogEntry) => {
-    setLogs((prev) => [...prev, entry])
-  }, [])
-
-  const sendAutoAuth = useCallback(() => {
-    if (!autoAuthMsg.trim() || autoAuthedRef.current) return
-    autoAuthedRef.current = true
-    const msg = autoAuthMsg.trim()
-    if (connectionMode === 'proxy' && proxyId) {
-      window.wsProxy.send({ id: proxyId, message: msg })
-    } else if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      wsRef.current.send(msg)
-    }
-    addLog({ type: 'sent', timestamp: getTimestamp(), message: msg })
-    addLog({ type: 'system', timestamp: getTimestamp(), message: '已发送认证消息' })
-  }, [autoAuthMsg, connectionMode, proxyId, addLog])
 
   const updateParam = useCallback((index: number, field: 'key' | 'value', val: string) => {
     setParams((prev) => { const next = [...prev]; next[index] = { ...next[index], [field]: val }; return next })
