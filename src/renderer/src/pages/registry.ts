@@ -76,7 +76,10 @@ const pageMap: Record<string, React.LazyExoticComponent<ComponentType>> = {
   'dockerhub-search': lazy(() => import('./DockerHubSearch')),
   'websocket-tester': lazy(() => import('./WebSocketTester')),
   'cors-checker': lazy(() => import('./CorsChecker')),
-  'user-agent-parser': lazy(() => import('./UserAgentParser'))
+  'user-agent-parser': lazy(() => import('./UserAgentParser')),
+  'markdown-preview': lazy(() => import('./MarkdownPreview')),
+  'csv-editor': lazy(() => import('./CsvEditor')),
+  'xml-formatter': lazy(() => import('./XmlFormatter'))
 }
 
 export function getPageComponent(id: string): React.LazyExoticComponent<ComponentType> | null {
