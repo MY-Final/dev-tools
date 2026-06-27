@@ -1,5 +1,5 @@
-blank_issues_enabled: true
+blank_issues_enabled: false
 contact_links:
-  - name: 📖 项目文档
-    url: https://github.com/your-org/dev-tools#readme
+  - name: 项目文档
+    url: https://github.com/MY-Final/dev-tools#readme
     about: 在提交 Issue 前，请先查阅项目文档

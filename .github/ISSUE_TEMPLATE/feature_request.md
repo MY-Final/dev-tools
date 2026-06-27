@@ -1,9 +1,9 @@
 ---
-name: ✨ 功能建议
+name: 功能建议
 description: 为这个项目提一个想法或建议
 title: "[Feature] "
-labels: ["enhancement"]
-assignees: []
+labels:
+  - enhancement
 ---
 
 **这个功能请求是否与某个问题相关？请描述。**

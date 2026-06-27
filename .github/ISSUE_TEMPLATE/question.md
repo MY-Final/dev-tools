@@ -1,9 +1,9 @@
 ---
-name: ❓ 使用问题 / 咨询
+name: 使用问题 / 咨询
 description: 提问或寻求帮助
 title: "[Question] "
-labels: ["question"]
-assignees: []
+labels:
+  - question
 ---
 
 **问题描述**

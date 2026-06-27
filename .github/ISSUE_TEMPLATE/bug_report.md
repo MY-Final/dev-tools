@@ -1,9 +1,9 @@
 ---
-name: 🐛 Bug 报告
+name: Bug 报告
 description: 提交 Bug 帮助我们改进
 title: "[Bug] "
-labels: ["bug"]
-assignees: []
+labels:
+  - bug
 ---
 
 **描述 Bug**
