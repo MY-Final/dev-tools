@@ -1,5 +1,5 @@
-import { useState, useMemo, useCallback } from 'react'
-import { Table, Copy, Check, Plus, Trash2 } from 'lucide-react'
+import { useState, useMemo, useCallback, useRef } from 'react'
+import { Table, Copy, Check, Plus, Trash2, Upload } from 'lucide-react'
 import '../styles/csv-editor.css'
 
 interface CSVData {
@@ -85,6 +85,8 @@ export default function CsvEditor(): React.JSX.Element {
   const [copied, setCopied] = useState<'csv' | 'json' | null>(null)
   const [editingCell, setEditingCell] = useState<{ row: number; col: number } | null>(null)
   const [editValue, setEditValue] = useState('')
+  const [fileName, setFileName] = useState('')
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const data = useMemo(() => parseCSV(input), [input])
 
@@ -149,6 +151,29 @@ export default function CsvEditor(): React.JSX.Element {
     }
   }, [data])
 
+  const handleImportFile = useCallback(() => {
+    fileInputRef.current?.click()
+  }, [])
+
+  const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setFileName(file.name)
+
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      const text = event.target?.result as string
+      if (text) {
+        setInput(text)
+      }
+    }
+    reader.readAsText(file, 'UTF-8')
+
+    // Reset so same file can be re-imported
+    e.target.value = ''
+  }, [])
+
   return (
     <div className="csv-page">
       <div className="csv-card">
@@ -162,10 +187,13 @@ export default function CsvEditor(): React.JSX.Element {
         <div className="csv-section">
           <div className="csv-section-header">
             <span className="csv-section-label">CSV 原始文本</span>
-            <button className="csv-btn" onClick={() => setInput('name,age,city\nAlice,30,NYC\nBob,25,LA\nCharlie,35,SF')}>
-              <Copy size={12} />
-              重置示例
-            </button>
+            <div className="csv-section-actions">
+              {fileName && <span className="csv-file-name" title={fileName}>{fileName}</span>}
+              <button className="csv-btn" onClick={() => setInput('name,age,city\nAlice,30,NYC\nBob,25,LA\nCharlie,35,SF')}>
+                <Copy size={12} />
+                重置示例
+              </button>
+            </div>
           </div>
           <textarea
             className="csv-textarea"
@@ -178,6 +206,17 @@ export default function CsvEditor(): React.JSX.Element {
 
         {/* Actions */}
         <div className="csv-actions">
+          <button className="csv-btn csv-btn-accent" onClick={handleImportFile}>
+            <Upload size={13} />
+            导入 CSV
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".csv,.tsv,.txt"
+            style={{ display: 'none' }}
+            onChange={handleFileChange}
+          />
           <button className="csv-btn csv-btn-primary" onClick={handleCopyCSV}>
             {copied === 'csv' ? <Check size={13} /> : <Copy size={13} />}
             {copied === 'csv' ? '已复制 CSV' : '复制 CSV'}
@@ -249,7 +288,8 @@ export default function CsvEditor(): React.JSX.Element {
 
         {data.headers.length === 0 && (
           <div className="csv-empty">
-            <p>粘贴 CSV 数据以查看表格</p>
+            <Upload size={32} className="csv-empty-icon" />
+            <p>粘贴 CSV 数据或点击「导入 CSV」选择文件</p>
           </div>
         )}
       </div>
