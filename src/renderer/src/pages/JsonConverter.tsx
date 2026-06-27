@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from 'react'
-import { Copy, Check, RotateCcw } from 'lucide-react'
+import { Copy, Check, RotateCcw, ArrowRight } from 'lucide-react'
 import '../styles/json-converter.css'
 
 type ConvertMode = 'ts' | 'toml' | 'xml' | 'yaml'
@@ -17,77 +17,82 @@ const MODES: ModeDef[] = [
   { id: 'yaml', label: 'JSON → YAML', outputLabel: 'YAML' },
 ]
 
-const SAMPLE_TS = `{
-  "name": "Alice",
-  "age": 30,
-  "email": "alice@ex.com",
-  "isActive": true,
-  "roles": ["admin", "user"],
-  "address": {
-    "city": "NYC",
-    "zip": "10001"
-  }
-}`
+const SAMPLE_TS = JSON.stringify({
+  name: 'Alice',
+  age: 30,
+  email: 'alice@ex.com',
+  isActive: true,
+  roles: ['admin', 'user'],
+  address: { city: 'NYC', zip: '10001' }
+}, null, 2)
 
-const SAMPLE_TOML = `{
-  "title": "TOML Example",
-  "owner": {
-    "name": "Tom",
-    "dob": "1979-05-27"
-  },
-  "database": {
-    "server": "192.168.1.1",
-    "ports": [8001, 8001, 8002],
-    "connection_max": 5000,
-    "enabled": true
+const SAMPLE_TOML = JSON.stringify({
+  title: 'TOML Example',
+  owner: { name: 'Tom', dob: '1979-05-27' },
+  database: {
+    server: '192.168.1.1',
+    ports: [8001, 8001, 8002],
+    connection_max: 5000,
+    enabled: true
   }
-}`
+}, null, 2)
 
-const SAMPLE_YAML = `{
-  "name": "Alice",
-  "age": 30,
-  "roles": ["admin", "user"],
-  "active": true,
-  "score": null,
-  "config": {
-    "theme": "dark",
-    "notifications": false
-  }
-}`
+const SAMPLE_YAML = JSON.stringify({
+  name: 'Alice',
+  age: 30,
+  roles: ['admin', 'user'],
+  active: true,
+  score: null,
+  config: { theme: 'dark', notifications: false }
+}, null, 2)
+
+const SAMPLES: Record<ConvertMode, string> = {
+  ts: SAMPLE_TS,
+  toml: SAMPLE_TOML,
+  xml: SAMPLE_TS,
+  yaml: SAMPLE_YAML,
+}
 
 // ── JSON to TypeScript ─────────────────────────────────────────
 
-function jsonToTS(obj: unknown, name = 'Root'): string {
-  if (obj === null || obj === undefined) return `type ${name} = null`
-  if (typeof obj !== 'object') return `type ${name} = ${typeof obj}`
-
-  if (Array.isArray(obj)) {
-    if (obj.length === 0) return `type ${name} = unknown[]`
-    const itemTypes = [...new Set(obj.map((item) => jsonToTS(item, name + 'Item')))]
-    return `type ${name} = ${itemTypes.join(' | ')}[]`
-  }
-
-  const entries = Object.entries(obj as Record<string, unknown>)
-  if (entries.length === 0) return `type ${name} = Record<string, unknown>`
-
-  const props = entries.map(([key, val]) => {
-    const typeName = toPascalCase(key) + 'Type'
-    let typeStr = jsonToTS(val, typeName)
-    // Clean up: if typeStr is a full type definition, extract just the name
-    if (typeStr.startsWith('type ')) {
-      const match = typeStr.match(/^type (\w+) = (.+)$/)
-      if (match && match[1] !== name) {
-        typeStr = match[2]
-      }
-    }
-    return `  ${key}: ${typeStr}`
-  })
-
-  return `interface ${name} {\n${props.join('\n')}\n}`
-}
-
 function toPascalCase(s: string): string {
   return s.replace(/[^a-zA-Z0-9]+(.)/g, (_, c) => c.toUpperCase()).replace(/^[a-z]/, (c) => c.toUpperCase())
+}
+
+function jsonToTS(obj: unknown, name = 'Root'): string {
+  const interfaces: string[] = []
+
+  function convert(val: unknown, typeName: string): string {
+    if (val === null || val === undefined) return 'null'
+    if (typeof val === 'string') return 'string'
+    if (typeof val === 'number') return 'number'
+    if (typeof val === 'boolean') return 'boolean'
+
+    if (Array.isArray(val)) {
+      if (val.length === 0) return 'unknown[]'
+      const itemTypes = [...new Set(val.map((item) => convert(item, typeName + 'Item')))]
+      return itemTypes.length === 1 ? `${itemTypes[0]}[]` : `(${itemTypes.join(' | ')})[]`
+    }
+
+    // Object — generate an interface
+    const entries = Object.entries(val as Record<string, unknown>)
+    if (entries.length === 0) return 'Record<string, unknown>'
+
+    // Check if this type already has an interface (avoid duplicates)
+    if (!interfaces.some((iface) => iface.startsWith(`interface ${typeName}`))) {
+      const props = entries.map(([key, v]) => {
+        const propTypeName = toPascalCase(key) || 'Prop'
+        const typeRef = convert(v, propTypeName + 'Type')
+        return `  ${key}: ${typeRef}`
+      })
+      interfaces.push(`interface ${typeName} {\n${props.join('\n')}\n}`)
+    }
+
+    return typeName
+  }
+
+  convert(obj, name)
+  return interfaces.join('\n\n')
 }
 
 // ── JSON to XML ────────────────────────────────────────────────
@@ -100,11 +105,9 @@ function jsonToXml(json: string): string {
 function valToXml(val: unknown, tag: string): string {
   if (val === null || val === undefined) return `<${tag} />`
   if (typeof val !== 'object') return `<${tag}>${escXml(String(val))}</${tag}>`
-
   if (Array.isArray(val)) {
     return val.map((item) => objToXml(item as Record<string, unknown>, tag.slice(0, -1) || 'item')).join('\n')
   }
-
   return objToXml(val as Record<string, unknown>, tag)
 }
 
@@ -136,18 +139,15 @@ function escXml(s: string): string {
 function jsonToToml(obj: unknown, prefix = ''): string {
   if (obj === null || obj === undefined) return ''
   if (typeof obj !== 'object') return `${prefix}= ${formatTomlValue(obj)}\n`
-
   if (Array.isArray(obj)) {
     if (obj.every((i) => typeof i !== 'object' || i === null)) {
       return `${prefix}= [${obj.map((i) => formatTomlValue(i)).join(', ')}]\n`
     }
     return obj.map((item) => jsonToToml(item, prefix)).join('')
   }
-
   const entries = Object.entries(obj as Record<string, unknown>)
   const primitives: string[] = []
   const tables: string[] = []
-
   for (const [k, v] of entries) {
     if (v === null || v === undefined) continue
     if (typeof v !== 'object' || (Array.isArray(v) && v.every((i) => typeof i !== 'object'))) {
@@ -156,7 +156,6 @@ function jsonToToml(obj: unknown, prefix = ''): string {
       tables.push(formatTomlTable(k, v, prefix ? prefix + '.' + k : k))
     }
   }
-
   let out = prefix ? `[${prefix}]\n` : ''
   out += primitives.join('\n')
   if (primitives.length > 0) out += '\n'
@@ -174,9 +173,7 @@ function formatTomlValue(v: unknown): string {
 
 function formatTomlTable(key: string, val: unknown, path: string): string {
   if (typeof val !== 'object') return `${key}= ${formatTomlValue(val)}\n`
-  if (Array.isArray(val)) {
-    return val.map((item) => formatTomlTable(key, item, path)).join('\n')
-  }
+  if (Array.isArray(val)) return val.map((item) => formatTomlTable(key, item, path)).join('\n')
   return jsonToToml(val, path)
 }
 
@@ -186,14 +183,11 @@ function jsonToYaml(obj: unknown, indent = 0): string {
   const pad = '  '.repeat(indent)
   if (obj === null || obj === undefined) return 'null'
   if (typeof obj === 'string') {
-    if (obj.includes('\n') || obj.includes(': ') || obj.includes('#')) {
-      return JSON.stringify(obj)
-    }
+    if (obj.includes('\n') || obj.includes(': ') || obj.includes('#')) return JSON.stringify(obj)
     return obj
   }
   if (typeof obj === 'boolean') return obj ? 'true' : 'false'
   if (typeof obj === 'number') return String(obj)
-
   if (Array.isArray(obj)) {
     if (obj.length === 0) return '[]'
     return obj.map((item) => {
@@ -203,26 +197,15 @@ function jsonToYaml(obj: unknown, indent = 0): string {
       return '\n' + pad + '- ' + jsonToYaml(item, indent)
     }).join('').trimStart()
   }
-
   const entries = Object.entries(obj as Record<string, unknown>)
   if (entries.length === 0) return '{}'
-
   return entries.map(([k, v]) => {
-    if (typeof v === 'object' && v !== null && !Array.isArray(v)) {
-      return `${k}:\n` + jsonToYaml(v, indent + 1)
-    }
+    if (typeof v === 'object' && v !== null && !Array.isArray(v)) return `${k}:\n` + jsonToYaml(v, indent + 1)
     return `${k}: ${jsonToYaml(v, indent)}`
   }).join('\n')
 }
 
 // ── Component ──────────────────────────────────────────────────
-
-const SAMPLES: Record<ConvertMode, string> = {
-  ts: SAMPLE_TS,
-  toml: SAMPLE_TOML,
-  xml: SAMPLE_TS,
-  yaml: SAMPLE_YAML,
-}
 
 export default function JsonConverter(): React.JSX.Element {
   const [mode, setMode] = useState<ConvertMode>('ts')
@@ -234,14 +217,13 @@ export default function JsonConverter(): React.JSX.Element {
   const { output, error } = useMemo(() => {
     if (!input.trim()) return { output: '', error: null }
     try {
-      // Validate JSON first
-      JSON.parse(input)
+      const parsed = JSON.parse(input)
       let result = ''
       switch (mode) {
-        case 'ts': result = jsonToTS(JSON.parse(input)); break
-        case 'toml': result = jsonToToml(JSON.parse(input)).trim(); break
+        case 'ts': result = jsonToTS(parsed); break
+        case 'toml': result = jsonToToml(parsed).trim(); break
         case 'xml': result = jsonToXml(input); break
-        case 'yaml': result = jsonToYaml(JSON.parse(input)); break
+        case 'yaml': result = jsonToYaml(parsed); break
       }
       return { output: result, error: null }
     } catch (err) {
@@ -253,46 +235,78 @@ export default function JsonConverter(): React.JSX.Element {
   const clear = useCallback(() => setInput(''), [])
   const copy = useCallback(async () => {
     if (!output) return
-    try { await navigator.clipboard.writeText(output); setCopied(true); setTimeout(() => setCopied(false), 1500) } catch { /* ignore */ }
+    try {
+      await navigator.clipboard.writeText(output)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1500)
+    } catch { /* ignore */ }
   }, [output])
 
   return (
     <div className="jc-page">
-      <div className="jc-card">
-        <div className="jc-header">
-          <h2 className="jc-title">JSON Converter</h2>
-          <p className="jc-subtitle">JSON → TypeScript · TOML · XML · YAML</p>
-        </div>
+      {/* Mode tabs */}
+      <div className="jc-tabs">
+        {MODES.map((m) => (
+          <button
+            key={m.id}
+            className={`jc-tab ${mode === m.id ? 'active' : ''}`}
+            onClick={() => { setMode(m.id); setInput('') }}
+          >
+            {m.label}
+          </button>
+        ))}
+      </div>
 
-        <div className="jc-tabs">
-          {MODES.map((m) => (
-            <button key={m.id} className={`jc-tab ${mode === m.id ? 'active' : ''}`} onClick={() => { setMode(m.id); setInput('') }}>{m.label}</button>
-          ))}
-        </div>
-
+      {/* Split panes */}
+      <div className="jc-panes">
+        {/* Input */}
         <div className="jc-pane">
           <div className="jc-pane-header">
-            <span className="jc-pane-label">JSON</span>
-            <button className="jc-btn-ghost" onClick={loadSample}>示例</button>
+            <span className="jc-pane-label">
+              <span className="jc-label-dot" style={{ background: '#06b6d4' }} />
+              JSON
+            </span>
+            <button className="jc-btn-ghost" onClick={loadSample}>加载示例</button>
           </div>
-          <textarea className="jc-textarea" value={input} onChange={(e) => setInput(e.target.value)} placeholder="粘贴 JSON..." rows={6} spellCheck={false} />
+          <textarea
+            className="jc-textarea"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="在此粘贴 JSON 数据..."
+            spellCheck={false}
+          />
         </div>
 
-        <div className="jc-actions">
-          <button className="jc-btn jc-btn-ghost" onClick={clear}><RotateCcw size={13} />清空</button>
+        {/* Arrow connector */}
+        <div className="jc-arrow">
+          <ArrowRight size={18} />
         </div>
 
-        {error && <div className="jc-error">{error}</div>}
-
-        {output && (
-          <div className="jc-pane">
-            <div className="jc-pane-header">
-              <span className="jc-pane-label">{modeDef.outputLabel}</span>
-              <button className="jc-btn-ghost" onClick={copy}>{copied ? <Check size={13} /> : <Copy size={13} />}{copied ? '已复制' : '复制'}</button>
+        {/* Output */}
+        <div className="jc-pane">
+          <div className="jc-pane-header">
+            <span className="jc-pane-label">
+              <span className="jc-label-dot" style={{ background: '#22c55e' }} />
+              {modeDef.outputLabel}
+            </span>
+            <div className="jc-pane-actions">
+              <button className="jc-btn-ghost" onClick={clear}>
+                <RotateCcw size={12} /> 清空
+              </button>
+              {output && (
+                <button className="jc-btn-ghost" onClick={copy}>
+                  {copied ? <Check size={12} /> : <Copy size={12} />}
+                  {copied ? '已复制' : '复制'}
+                </button>
+              )}
             </div>
-            <pre className="jc-output">{output}</pre>
           </div>
-        )}
+          {error ? (
+            <div className="jc-error">{error}</div>
+          ) : (
+            <pre className="jc-output">{output || <span className="jc-placeholder">转换结果将显示在这里</span>}</pre>
+          )}
+        </div>
       </div>
     </div>
   )
