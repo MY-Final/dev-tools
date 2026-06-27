@@ -150,19 +150,90 @@
 # 安装依赖
 npm install
 
-# 开发模式
+# 开发模式（Electron 桌面端）
 npm run dev
+
+# 开发模式（Web 浏览器端 — 纯前端，所有工具可用）
+npm run dev:web
 
 # 构建安装包
 npm run build:win     # Windows
 npm run build:mac     # macOS
 npm run build:linux   # Linux
 
+# 构建 Web 版（纯静态文件，输出到 web-dist/）
+npm run build:web
+
 # 代码质量
 npm run typecheck     # TypeScript 类型检查
 npm run lint          # ESLint
 npm run format        # Prettier 格式化
 ```
+
+## 🌐 Web 版 & Vercel 部署
+
+Dev Tools 支持构建为纯静态页面，部署到 Vercel / 云服务器等任意静态托管平台。
+
+### 在线体验
+
+访问 → **https://dev-tools-pi.vercel.app**
+
+> 部分依赖 Electron 原生能力的工具（如内网 IP、Maven 依赖搜索）在 Web 版不可用，会提示下载桌面版。
+
+### 部署到 Vercel
+
+**方法一：Vercel CLI（推荐）**
+
+```bash
+# 1. 构建
+npm run build:web
+
+# 2. 安装 Vercel CLI
+npm i -g vercel
+
+# 3. 部署 web-dist/ 目录
+npx vercel deploy --prod ./web-dist
+```
+
+**方法二：GitHub 自动部署**
+
+在项目根目录创建 `vercel.json`（已内置 `web/vite.config.ts`，无需额外配置）：
+
+```json
+{
+  "buildCommand": "npm run build:web",
+  "outputDirectory": "web-dist",
+  "framework": null
+}
+```
+
+然后在 [Vercel Dashboard](https://vercel.com) 导入 GitHub 仓库即可：
+
+1. 点击「Add New → Project」
+2. 选择 `dev-tools` 仓库
+3. Framework Preset 选 **Other**
+4. Build Command 填 `npm run build:web`
+5. Output Directory 填 `web-dist`
+6. 点击「Deploy」
+
+### 部署到任意静态服务器
+
+```bash
+npm run build:web
+# 将 web-dist/ 目录上传到你的 Nginx / Caddy / S3 等
+```
+
+### Web 版已知限制
+
+| 功能 | 状态 |
+|------|------|
+| 纯前端工具（格式化/转换/哈希等 50+ 工具） | ✅ 完全可用 |
+| npm / Maven / Docker 搜索 | ✅ 可用（浏览器直接 fetch） |
+| AI 翻译 | ✅ 可用（需自己配置 API Key） |
+| WebSocket 测试 | ✅ 可用（浏览器原生 WebSocket） |
+| 内网 IP | ❌ 提示下载桌面版 |
+| 环境变量 | ❌ 不可用（返回空数据） |
+| 自动更新 | ❌ 不可用（按钮无效果） |
 
 ## 📦 下载
 
