@@ -35,6 +35,7 @@ export interface AppSettings {
     openSettings: string
     goHome: string
   }
+  favorites: string[]
 }
 
 export type UpdateStatus =
@@ -76,6 +77,8 @@ const settingsAPI = {
     ipcRenderer.invoke('settings:update-proxy', updates),
   updateShortcuts: (updates: Partial<AppSettings['shortcuts']>): Promise<AppSettings> =>
     ipcRenderer.invoke('settings:update-shortcuts', updates),
+  updateFavorites: (toolId: string): Promise<AppSettings> =>
+    ipcRenderer.invoke('settings:update-favorites', toolId),
   getSettingsPath: (): Promise<string> =>
     ipcRenderer.invoke('settings:get-path'),
   resetToDefaults: (): Promise<AppSettings> => ipcRenderer.invoke('settings:reset')

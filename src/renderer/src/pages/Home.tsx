@@ -1,7 +1,8 @@
 import { useState, useMemo } from 'react'
-import { Search, Zap, Layers, ArrowRight } from 'lucide-react'
+import { Search, Zap, Layers, ArrowRight, Star } from 'lucide-react'
 import { tools } from '@renderer/tools/registry'
 import type { ToolItem } from '@renderer/types/tool'
+import { useSettings } from '@renderer/lib/contexts'
 import '../styles/home.css'
 
 // ── Category accent colors ─────────────────────────────────────
@@ -21,6 +22,8 @@ interface HomeProps {
 }
 
 export default function Home({ onSelectTool }: HomeProps): React.JSX.Element {
+  const { settings, updateFavorites } = useSettings()
+  const favorites = settings.favorites
   const [search, setSearch] = useState('')
 
   const filteredTools = useMemo(() => {
@@ -131,6 +134,16 @@ export default function Home({ onSelectTool }: HomeProps): React.JSX.Element {
                           <span className="home-tool-desc">{t.desc}</span>
                         </div>
                         <ArrowRight size={14} className="home-tool-arrow" />
+                        <button
+                          className={`home-tool-star ${favorites.includes(t.id) ? 'active' : ''}`}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            updateFavorites(t.id)
+                          }}
+                          title={favorites.includes(t.id) ? '取消收藏' : '收藏'}
+                        >
+                          <Star size={14} fill={favorites.includes(t.id) ? 'currentColor' : 'none'} />
+                        </button>
                         {t.isNew && <span className="home-tool-badge">NEW</span>}
                       </button>
                     )

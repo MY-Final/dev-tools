@@ -292,3 +292,31 @@
 .sidebar.sidebar-collapsed .nav-icon-btn:hover .nav-tooltip {
   opacity: 1;
 }
+
+/* 收藏区样式 */
+.nav-favorites-header {
+  cursor: default;
+}
+
+.nav-favorites-icon {
+  color: #eab308;
+}
+
+.nav-favorites-collapsed {
+  color: #eab308;
+}
+
+.nav-favorites-collapsed:hover {
+  color: #fbbf24;
+}
+
+.nav-category-count {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  background: var(--color-background);
+  padding: 1px 6px;
+  border-radius: 8px;
+  font-family: 'JetBrains Mono', monospace;
+  margin-left: auto;
+}

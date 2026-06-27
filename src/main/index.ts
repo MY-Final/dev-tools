@@ -72,6 +72,10 @@ function registerSettingsHandlers(): void {
     return settingsStore.updateShortcuts(updates)
   })
 
+  ipcMain.handle('settings:update-favorites', (_event, toolId: string) => {
+    return settingsStore.updateFavorites(toolId)
+  })
+
   ipcMain.handle('settings:get-path', () => {
     return settingsStore.getFilePath()
   })

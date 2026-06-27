@@ -15,7 +15,8 @@ import {
   FileText,
   BookMarked,
   Lock,
-  Search
+  Search,
+  Star
 } from 'lucide-react'
 import { tools } from '@renderer/tools/registry'
 import { cn } from '@renderer/lib/utils'
@@ -86,6 +87,7 @@ export default function Sidebar({
   const { settings, updateAppearance } = useSettings()
   const theme = settings.appearance.theme
   const showShortDesc = settings.appearance.showSidebarShortDesc
+  const favorites = settings.favorites
 
   const handleToggleTheme = (): void => {
     const newTheme = theme === 'dark' ? 'light' : 'dark'
@@ -108,6 +110,12 @@ export default function Sidebar({
   const categoryEntries = useMemo(
     () => [...toolsByCategory.entries()],
     [toolsByCategory]
+  )
+
+  // 收藏工具列表（按收藏顺序，过滤掉已不存在的工具）
+  const favoriteTools = useMemo(
+    () => favorites.map((id) => tools.find((t) => t.id === id)).filter(Boolean) as typeof tools,
+    [favorites]
   )
 
   // 默认只展开第一个分类，其余折叠
@@ -164,7 +172,9 @@ export default function Sidebar({
   }, [clearFlyoutTimer])
 
   const flyoutData = flyoutCategory
-    ? categoryEntries.find(([name]) => name === flyoutCategory.name)
+    ? flyoutCategory.name === '__favorites__'
+      ? (['收藏', favoriteTools] as [string, typeof tools])
+      : categoryEntries.find(([name]) => name === flyoutCategory.name) ?? null
     : null
 
   const flyoutTop = flyoutCategory ? flyoutCategory.top : 0
@@ -184,6 +194,50 @@ export default function Sidebar({
             />
           ))}
         </div>
+
+        {/* 收藏 */}
+        {favoriteTools.length > 0 && (
+          <div className="nav-group">
+            {!collapsed && (
+              <div className="nav-category-header nav-favorites-header">
+                <Star size={14} className="nav-category-icon nav-favorites-icon" />
+                <span className="nav-category-label">收藏</span>
+                <span className="nav-category-count">{favoriteTools.length}</span>
+              </div>
+            )}
+            {collapsed && (
+              <div
+                className="nav-category-collapsed nav-favorites-collapsed"
+                title="收藏"
+                onMouseEnter={(e) => handleCategoryMouseEnter('__favorites__', e)}
+                onMouseLeave={handleFlyoutClose}
+              >
+                <Star size={14} />
+              </div>
+            )}
+            {!collapsed &&
+              favoriteTools.map((tool) => {
+                const Icon = tool.icon
+                return (
+                  <button
+                    key={tool.id}
+                    className={cn(
+                      'nav-icon-btn',
+                      currentPage === tool.id && 'active',
+                      collapsed && 'collapsed'
+                    )}
+                    onClick={() => onNavigate(tool.id)}
+                  >
+                    <Icon size={18} className="nav-icon" />
+                    <div className="nav-label-wrapper">
+                      <span className="nav-label">{tool.name}</span>
+                      {showShortDesc && <span className="nav-desc">{tool.shortDesc}</span>}
+                    </div>
+                  </button>
+                )
+              })}
+          </div>
+        )}
 
         {/* 工具分类 */}
         {categoryEntries.map(([category, categoryTools]) => {

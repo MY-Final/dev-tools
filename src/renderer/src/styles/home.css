@@ -347,6 +347,44 @@
   font-family: 'JetBrains Mono', monospace;
 }
 
+/* Favorite star button */
+.home-tool-star {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  border-radius: 6px;
+  opacity: 0;
+  transition: all 0.2s ease;
+  z-index: 2;
+}
+
+.home-tool-card:hover .home-tool-star {
+  opacity: 1;
+}
+
+.home-tool-star:hover {
+  color: #eab308;
+  background: rgba(234, 179, 8, 0.1);
+}
+
+.home-tool-star.active {
+  opacity: 1;
+  color: #eab308;
+}
+
+.home-tool-star.active:hover {
+  color: #fbbf24;
+}
+
 /* ── Empty state ────────────────────────── */
 
 .home-empty {
