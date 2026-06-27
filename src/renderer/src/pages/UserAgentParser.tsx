@@ -17,20 +17,20 @@ function parseUA(ua: string): UAResult | null {
   // Browser
   let browserName = '未知'
   let browserVersion = ''
-  const browserPatterns: [RegExp, string, number?][] = [
-    /Edge\/([\d.]+)/, 'Edge',
-    /Edg\/([\d.]+)/, 'Edge (Chromium)',
-    /OPR\/([\d.]+)/, 'Opera',
-    /Chrome\/([\d.]+)/, 'Chrome',
-    /Firefox\/([\d.]+)/, 'Firefox',
-    /Safari\/([\d.]+)/, 'Safari',
-    /MSIE ([\d.]+)/, 'IE',
-    /Trident\/.*rv:([\d.]+)/, 'IE',
+  const browserPatterns: [RegExp, string][] = [
+    [/Edge\/([\d.]+)/, 'Edge'],
+    [/Edg\/([\d.]+)/, 'Edge (Chromium)'],
+    [/OPR\/([\d.]+)/, 'Opera'],
+    [/Chrome\/([\d.]+)/, 'Chrome'],
+    [/Firefox\/([\d.]+)/, 'Firefox'],
+    [/Safari\/([\d.]+)/, 'Safari'],
+    [/MSIE ([\d.]+)/, 'IE'],
+    [/Trident\/.*rv:([\d.]+)/, 'IE'],
   ]
-  for (let i = 0; i < browserPatterns.length; i += 2) {
-    const m = s.match(browserPatterns[i] as RegExp)
+  for (const [re, name] of browserPatterns) {
+    const m = s.match(re)
     if (m) {
-      browserName = browserPatterns[i + 1] as string
+      browserName = name
       browserVersion = m[1]
       break
     }
@@ -112,12 +112,7 @@ function parseUA(ua: string): UAResult | null {
     const m = s.match(/Android ([\d.]+); (.+?)(?: Build\/|\)) ?/)
     if (m) {
       const raw = m[2].replace(/; /g, ' ')
-      if (raw.includes('/')) {
-        const parts = raw.split('/')
-        // Some UAs have vendor/model format
-      } else {
-        deviceModel = raw
-      }
+      deviceModel = raw
     }
   } else if (/Windows/.test(s)) {
     deviceType = '桌面'
@@ -134,13 +129,13 @@ function parseUA(ua: string): UAResult | null {
   // Try to extract device vendor from common patterns
   if (!deviceVendor) {
     const vendorPatterns: [RegExp, string][] = [
-      /Samsung/i, 'Samsung',
-      /Xiaomi|Mi \d/i, 'Xiaomi',
-      /Huawei|Honor/i, 'Huawei',
-      /OPPO|A\d{2,3}/, 'OPPO',
-      /vivo/i, 'Vivo',
-      /Nexus|Pixel/, 'Google',
-      /SM-[A-Z]/, 'Samsung',
+      [/Samsung/i, 'Samsung'],
+      [/Xiaomi|Mi \d/i, 'Xiaomi'],
+      [/Huawei|Honor/i, 'Huawei'],
+      [/OPPO|A\d{2,3}/, 'OPPO'],
+      [/vivo/i, 'Vivo'],
+      [/Nexus|Pixel/, 'Google'],
+      [/SM-[A-Z]/, 'Samsung'],
     ]
     for (const [p, name] of vendorPatterns) {
       if (p.test(s)) {

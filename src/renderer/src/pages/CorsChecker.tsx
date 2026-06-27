@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import { ShieldOff, Send, AlertTriangle, CheckCircle, Info, Copy, Check, RotateCcw } from 'lucide-react'
+import { ShieldOff, Send, AlertTriangle, CheckCircle, Info, Copy, Check } from 'lucide-react'
 import '../styles/cors-checker.css'
 
 interface CorsResult {

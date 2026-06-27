@@ -11,16 +11,9 @@ function formatXML(xml: string, indent: number): string {
     throw new Error('无效的 XML：必须以 < 开头')
   }
 
-  let formatted = ''
   let depth = 0
   const indentStr = ' '.repeat(indent)
   let i = 0
-  let inTag = false
-  let inCloseTag = false
-  let tagName = ''
-  let isComment = false
-  let isCDATA = false
-  let textBuffer = ''
 
   // Tokenize and format
   const tokens: string[] = []
@@ -209,7 +202,7 @@ export default function XmlFormatter(): React.JSX.Element {
     try {
       await navigator.clipboard.writeText(output || input)
       setCopied(true)
-      setTimeout(() => setCopied(null), 1500)
+      setTimeout(() => setCopied(false), 1500)
     } catch {
       // silently fail
     }
