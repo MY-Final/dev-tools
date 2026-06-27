@@ -196,6 +196,8 @@
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: 8px;
+  max-height: 240px;
+  overflow-y: auto;
 }
 
 .wst-auth-section-title {
@@ -509,7 +511,7 @@
   display: flex;
   flex-direction: column;
   gap: 3px;
-  min-height: 0;
+  min-height: 100px;
 }
 
 .wst-log-empty {

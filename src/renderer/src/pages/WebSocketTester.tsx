@@ -65,6 +65,10 @@ export default function WebSocketTester(): React.JSX.Element {
   const wsRef = useRef<WebSocket | null>(null)
   const logEndRef = useRef<HTMLDivElement>(null)
   const autoAuthedRef = useRef(false)
+  const proxyIdRef = useRef<number | null>(null)
+
+  // Keep proxyIdRef in sync
+  proxyIdRef.current = proxyId
 
   useEffect(() => {
     logEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -75,27 +79,27 @@ export default function WebSocketTester(): React.JSX.Element {
     if (connectionMode !== 'proxy') return
     const cleanups: (() => void)[] = []
     cleanups.push(window.wsProxy.onOpen(({ id }) => {
-      if (id !== proxyId) return
+      if (id !== proxyIdRef.current) return
       setConnected(true)
       addLog({ type: 'system', timestamp: getTimestamp(), message: '连接成功' })
       sendAutoAuth()
     }))
     cleanups.push(window.wsProxy.onMessage(({ id, data: msg }) => {
-      if (id !== proxyId) return
+      if (id !== proxyIdRef.current) return
       addLog({ type: 'received', timestamp: getTimestamp(), message: msg })
     }))
     cleanups.push(window.wsProxy.onClose(({ id, code, reason }) => {
-      if (id !== proxyId) return
+      if (id !== proxyIdRef.current) return
       setConnected(false)
       setProxyId(null)
       addLog({ type: 'system', timestamp: getTimestamp(), message: `关闭: 代码=${code} 原因="${reason || '无'}"` })
     }))
     cleanups.push(window.wsProxy.onError(({ id, error }) => {
-      if (id !== proxyId) return
+      if (id !== proxyIdRef.current) return
       addLog({ type: 'error', timestamp: getTimestamp(), message: `代理连接错误: ${error}` })
     }))
     return () => cleanups.forEach((fn) => fn())
-  }, [proxyId, connectionMode])
+  }, [connectionMode, sendAutoAuth, addLog])
 
   const addLog = useCallback((entry: LogEntry) => {
     setLogs((prev) => [...prev, entry])
