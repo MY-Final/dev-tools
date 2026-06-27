@@ -144,6 +144,12 @@
   <img src="https://img.shields.io/badge/electron--updater-auto--update-8940FA?style=flat-square" alt="electron-updater" />
 </p>
 
+<p align="center">
+  <a href="https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FMY-Final%2Fdev-tools">
+    <img src="https://vercel.com/button" alt="Deploy with Vercel" />
+  </a>
+</p>
+
 ## 🚀 开发
 
 ```bash
