@@ -4,37 +4,129 @@ import '../styles/markdown-preview.css'
 
 // Simple Markdown parser — supports GFM subset
 function parseMarkdown(md: string): string {
-  let html = md
-    // Escape HTML
+  const lines = md.split('\n')
+  const out: string[] = []
+  let i = 0
+
+  while (i < lines.length) {
+    const line = lines[i]
+
+    // Code blocks (fenced)
+    if (/^```/.test(line)) {
+      const codeLines: string[] = []
+      i++
+      while (i < lines.length && !/^```/.test(lines[i])) {
+        codeLines.push(lines[i])
+        i++
+      }
+      i++ // skip closing ```
+      out.push(`<pre><code>${codeLines.join('\n')}</code></pre>`)
+      continue
+    }
+
+    // Headings
+    if (/^#{1,6} /.test(line)) {
+      const level = line.match(/^(#+)/)![1].length
+      const text = line.slice(level + 1)
+      out.push(`<h${level}>${text}</h${level}>`)
+      i++
+      continue
+    }
+
+    // Horizontal rule
+    if (/^---$/.test(line)) {
+      out.push('<hr>')
+      i++
+      continue
+    }
+
+    // Unordered list (consecutive items)
+    if (/^[\*\-] /.test(line)) {
+      const items: string[] = []
+      while (i < lines.length && /^[\*\-] /.test(lines[i])) {
+        items.push(lines[i].replace(/^[\*\-] /, ''))
+        i++
+      }
+      out.push('<ul>' + items.map((item) => `<li>${item}</li>`).join('') + '</ul>')
+      continue
+    }
+
+    // Ordered list (consecutive items)
+    if (/^\d+\. /.test(line)) {
+      const items: string[] = []
+      while (i < lines.length && /^\d+\. /.test(lines[i])) {
+        items.push(lines[i].replace(/^\d+\. /, ''))
+        i++
+      }
+      out.push('<ol>' + items.map((item) => `<li>${item}</li>`).join('') + '</ol>')
+      continue
+    }
+
+    // Table
+    if (/^\|/.test(line) && /\|$/.test(line)) {
+      const rows: string[][] = []
+      while (i < lines.length && /^\|/.test(lines[i]) && /\|$/.test(lines[i])) {
+        const cells = lines[i]
+          .split('|')
+          .filter((_, idx, arr) => idx > 0 && idx < arr.length - 1) // skip first/last empty
+          .map((c) => c.trim())
+        rows.push(cells)
+        i++
+      }
+      if (rows.length > 0) {
+        // Skip separator row (|---|)
+        const headerRow = rows[0]
+        const dataRows = rows.slice(1).filter((r) => !r[0]?.includes('---'))
+        out.push(
+          '<table><thead><tr>' +
+            headerRow.map((h) => `<th>${h}</th>`).join('') +
+            '</tr></thead><tbody>' +
+            dataRows.map((r) => '<tr>' + r.map((c) => `<td>${c}</td>`).join('') + '</tr>').join('') +
+            '</tbody></table>'
+        )
+      }
+      continue
+    }
+
+    // Blockquote
+    if (/^&gt; /.test(line)) {
+      const quotes: string[] = []
+      while (i < lines.length && /^&gt; /.test(lines[i])) {
+        quotes.push(lines[i].replace(/^&gt; /, ''))
+        i++
+      }
+      out.push('<blockquote>' + quotes.join('<br>') + '</blockquote>')
+      continue
+    }
+
+    // Empty line = paragraph break
+    if (line.trim() === '') {
+      i++
+      continue
+    }
+
+    // Regular paragraph line
+    i++
+    out.push('<p>' + line + '</p>')
+  }
+
+  let html = out
+    .join('\n')
+    // Escape HTML entities
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
-
-  // Code blocks (fenced)
-  html = html.replace(/```(\w*)\n([\s\S]*?)```/g, (_match: string, _lang: string, code: string) => {
-    const escaped = code
-      .replace(/&amp;/g, '&')
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-    return `<pre><code>${escaped}</code></pre>`
-  })
+    // But revert inside <pre><code>
+    .replace(/<pre><code>([\s\S]*?)<\/code><\/pre>/g, (_m: string, code: string) => {
+      return '<pre><code>' + code
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        + '</code></pre>'
+    })
 
   // Inline code
   html = html.replace(/`([^`]+)`/g, '<code>$1</code>')
-
-  // Headings
-  html = html.replace(/^###### (.+)$/gm, '<h6>$1</h6>')
-  html = html.replace(/^##### (.+)$/gm, '<h5>$1</h5>')
-  html = html.replace(/^#### (.+)$/gm, '<h4>$1</h4>')
-  html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>')
-  html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>')
-  html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>')
-
-  // Horizontal rules
-  html = html.replace(/^---$/gm, '<hr>')
-
-  // Blockquotes
-  html = html.replace(/^&gt; (.+)$/gm, '<blockquote>$1</blockquote>')
 
   // Images
   html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" loading="lazy">')
@@ -52,25 +144,6 @@ function parseMarkdown(md: string): string {
 
   // Strikethrough
   html = html.replace(/~~(.+?)~~/g, '<del>$1</del>')
-
-  // Unordered lists
-  html = html.replace(/^[\*\-] (.+)$/gm, '<li>$1</li>')
-
-  // Ordered lists
-  html = html.replace(/^\d+\. (.+)$/gm, '<li>$1</li>')
-
-  // Tables
-  html = html.replace(
-    /^\|(.+)\|$/gm,
-    (_match: string, content: string) => {
-      const cells = content.split('|').map((c: string) => c.trim())
-      return `<tr>${cells.map((c: string) => `<td>${c}</td>`).join('')}</tr>`
-    }
-  )
-
-  // Paragraphs
-  html = html.replace(/\n\n/g, '</p><p>')
-  html = '<p>' + html + '</p>'
 
   return html
 }
