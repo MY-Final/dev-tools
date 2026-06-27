@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
-import { Radio, Plug, PlugZap, Send, Trash2, Copy, Check, ServerCrash } from 'lucide-react'
+import { Radio, Plug, PlugZap, Send, Trash2, Copy, Check, Plus, X, KeyRound, Code } from 'lucide-react'
 import '../styles/websocket-tester.css'
 
 interface LogEntry {
@@ -8,12 +8,33 @@ interface LogEntry {
   message: string
 }
 
+interface KeyValuePair {
+  key: string
+  value: string
+}
+
 function getTimestamp(): string {
   return new Date().toLocaleTimeString('zh-CN', { hour12: false })
 }
 
+function buildUrl(base: string, params: KeyValuePair[]): string {
+  const filtered = params.filter((p) => p.key.trim())
+  if (filtered.length === 0) return base.trim()
+  const searchParams = new URLSearchParams()
+  for (const p of filtered) {
+    searchParams.append(p.key.trim(), p.value)
+  }
+  const separator = base.includes('?') ? '&' : '?'
+  return base.trim() + separator + searchParams.toString()
+}
+
 export default function WebSocketTester(): React.JSX.Element {
   const [url, setUrl] = useState('ws://localhost:8080')
+  const [subprotocol, setSubprotocol] = useState('')
+  const [showAuth, setShowAuth] = useState(false)
+  const [params, setParams] = useState<KeyValuePair[]>([
+    { key: 'token', value: '' }
+  ])
   const [connected, setConnected] = useState(false)
   const [inputMsg, setInputMsg] = useState('')
   const [logs, setLogs] = useState<LogEntry[]>([])
@@ -21,7 +42,6 @@ export default function WebSocketTester(): React.JSX.Element {
   const wsRef = useRef<WebSocket | null>(null)
   const logEndRef = useRef<HTMLDivElement>(null)
 
-  // Auto-scroll logs
   useEffect(() => {
     logEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [logs])
@@ -30,21 +50,56 @@ export default function WebSocketTester(): React.JSX.Element {
     setLogs((prev) => [...prev, entry])
   }, [])
 
+  const updateParam = useCallback((index: number, field: 'key' | 'value', val: string) => {
+    setParams((prev) => {
+      const next = [...prev]
+      next[index] = { ...next[index], [field]: val }
+      return next
+    })
+  }, [])
+
+  const addParam = useCallback(() => {
+    setParams((prev) => [...prev, { key: '', value: '' }])
+  }, [])
+
+  const removeParam = useCallback((index: number) => {
+    setParams((prev) => prev.filter((_, i) => i !== index))
+  }, [])
+
   const handleConnect = useCallback(() => {
     if (!url.trim()) return
     setLogs([])
+
+    const finalUrl = buildUrl(url, params)
+    const protocols = subprotocol.trim() ? subprotocol.trim().split(',').map((s) => s.trim()).filter(Boolean) : undefined
+
     try {
-      const ws = new WebSocket(url.trim())
+      const ws = protocols && protocols.length > 0
+        ? new WebSocket(finalUrl, protocols)
+        : new WebSocket(finalUrl)
+
+      addLog({ type: 'system', timestamp: getTimestamp(), message: `正在连接 ${finalUrl}` })
+      if (protocols && protocols.length > 0) {
+        addLog({ type: 'system', timestamp: getTimestamp(), message: `子协议: ${protocols.join(', ')}` })
+      }
+      if (params.some((p) => p.key.trim())) {
+        const qs = params.filter((p) => p.key.trim()).map((p) => `${p.key}=${p.value || '(空)'}`).join(', ')
+        addLog({ type: 'system', timestamp: getTimestamp(), message: `查询参数: ${qs}` })
+      }
+
       ws.onopen = () => {
         setConnected(true)
-        addLog({ type: 'system', timestamp: getTimestamp(), message: `已连接到 ${url.trim()}` })
+        addLog({ type: 'system', timestamp: getTimestamp(), message: '连接成功' })
       }
-      ws.onclose = () => {
+      ws.onclose = (event) => {
         setConnected(false)
-        addLog({ type: 'system', timestamp: getTimestamp(), message: '连接已关闭' })
+        const reason = event.code > 0
+          ? `关闭代码=${event.code} 原因="${event.reason || '无'}"`
+          : '连接已关闭'
+        addLog({ type: 'system', timestamp: getTimestamp(), message: reason })
       }
       ws.onerror = () => {
-        addLog({ type: 'error', timestamp: getTimestamp(), message: '连接错误' })
+        addLog({ type: 'error', timestamp: getTimestamp(), message: '连接错误 — 请检查 URL/网络/认证参数' })
       }
       ws.onmessage = (event) => {
         const raw = event.data
@@ -55,7 +110,7 @@ export default function WebSocketTester(): React.JSX.Element {
     } catch (err) {
       addLog({ type: 'error', timestamp: getTimestamp(), message: `连接失败: ${(err as Error).message}` })
     }
-  }, [url, addLog])
+  }, [url, params, subprotocol, addLog])
 
   const handleDisconnect = useCallback(() => {
     if (wsRef.current) {
@@ -114,10 +169,79 @@ export default function WebSocketTester(): React.JSX.Element {
         )}
       </div>
 
+      {/* Auth toggle */}
+      <button
+        className={`wst-auth-toggle ${showAuth ? 'expanded' : ''}`}
+        onClick={() => setShowAuth((prev) => !prev)}
+      >
+        <KeyRound size={14} />
+        <span>认证参数</span>
+        <span className="wst-auth-hint">Token / 子协议 / 查询参数</span>
+      </button>
+
+      {/* Auth panel */}
+      {showAuth && (
+        <div className="wst-auth-panel">
+          {/* Subprotocol */}
+          <div className="wst-auth-row">
+            <Code size={14} className="wst-auth-row-icon" />
+            <span className="wst-auth-row-label">子协议</span>
+            <input
+              className="wst-auth-input"
+              type="text"
+              value={subprotocol}
+              onChange={(e) => setSubprotocol(e.target.value)}
+              placeholder="多个用逗号分隔，如 chat, superchat"
+              disabled={connected}
+            />
+          </div>
+
+          {/* Query params */}
+          <div className="wst-auth-header">
+            <span className="wst-auth-row-label">查询参数</span>
+            <button className="wst-btn wst-btn-param-add" onClick={addParam}>
+              <Plus size={12} /> 添加
+            </button>
+          </div>
+          {params.map((p, idx) => (
+            <div key={idx} className="wst-param-row">
+              <input
+                className="wst-param-key"
+                type="text"
+                value={p.key}
+                onChange={(e) => updateParam(idx, 'key', e.target.value)}
+                placeholder="参数名 (如 token)"
+                disabled={connected}
+              />
+              <span className="wst-param-eq">=</span>
+              <input
+                className="wst-param-val"
+                type={p.key.toLowerCase().includes('token') || p.key.toLowerCase().includes('key') || p.key.toLowerCase().includes('secret') ? 'password' : 'text'}
+                value={p.value}
+                onChange={(e) => updateParam(idx, 'value', e.target.value)}
+                placeholder="值"
+                disabled={connected}
+              />
+              <button className="wst-btn-remove" onClick={() => removeParam(idx)} disabled={connected}>
+                <X size={12} />
+              </button>
+            </div>
+          ))}
+          <div className="wst-auth-note">
+            认证参数会自动拼接到 URL 上。连接后可在日志中查看完整请求信息。
+          </div>
+        </div>
+      )}
+
       {/* Status */}
       <div className={`wst-status ${connected ? 'connected' : 'disconnected'}`}>
         <span className="wst-status-dot" />
         {connected ? '已连接' : '未连接'}
+        {connected && wsRef.current && (
+          <span className="wst-status-protocol">
+            子协议: {wsRef.current.protocol || '无'}
+          </span>
+        )}
       </div>
 
       {/* Send area */}

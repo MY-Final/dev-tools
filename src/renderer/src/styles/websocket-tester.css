@@ -5,11 +5,13 @@
 .wst-page {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
   padding: 16px;
   height: 100%;
   box-sizing: border-box;
 }
+
+/* ── URL Bar ──────────────────────────── */
 
 .wst-url-bar {
   display: flex;
@@ -36,6 +38,8 @@
 .wst-url-input:disabled {
   opacity: 0.6;
 }
+
+/* ── Buttons ──────────────────────────── */
 
 .wst-btn {
   display: inline-flex;
@@ -96,13 +100,222 @@
   background: var(--color-surface-hover);
 }
 
+/* ── Auth toggle ──────────────────────── */
+
+.wst-auth-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 8px 12px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.15s ease;
+  font-family: inherit;
+  text-align: left;
+}
+
+.wst-auth-toggle:hover {
+  border-color: var(--color-accent-soft);
+  color: var(--color-accent-soft);
+}
+
+.wst-auth-toggle.expanded {
+  border-color: var(--color-accent-soft);
+  color: var(--color-accent-soft);
+  background: var(--color-accent-soft-subtle);
+}
+
+.wst-auth-hint {
+  color: var(--color-text-muted);
+  font-size: 11px;
+  font-weight: 400;
+  margin-left: auto;
+}
+
+/* ── Auth panel ───────────────────────── */
+
+.wst-auth-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+}
+
+.wst-auth-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.wst-auth-row-icon {
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+.wst-auth-row-label {
+  font-size: 12px;
+  color: var(--color-text);
+  font-weight: 500;
+  flex-shrink: 0;
+  min-width: 56px;
+}
+
+.wst-auth-input {
+  flex: 1;
+  padding: 6px 10px;
+  background: var(--color-background);
+  border: 1.5px solid var(--color-border);
+  border-radius: 6px;
+  color: var(--color-text);
+  font-size: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.wst-auth-input:focus {
+  border-color: var(--color-accent-soft);
+}
+
+.wst-auth-input:disabled {
+  opacity: 0.6;
+}
+
+.wst-auth-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 4px;
+  border-top: 1px solid var(--color-border);
+}
+
+.wst-btn-param-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.wst-btn-param-add:hover {
+  background: var(--color-surface-hover);
+  color: var(--color-accent-soft);
+  border-color: var(--color-accent-soft);
+}
+
+.wst-param-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.wst-param-key {
+  flex: 1;
+  padding: 6px 10px;
+  background: var(--color-background);
+  border: 1.5px solid var(--color-border);
+  border-radius: 6px;
+  color: var(--color-text);
+  font-size: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.wst-param-key:focus {
+  border-color: var(--color-accent-soft);
+}
+
+.wst-param-key:disabled {
+  opacity: 0.6;
+}
+
+.wst-param-eq {
+  color: var(--color-text-muted);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.wst-param-val {
+  flex: 2;
+  padding: 6px 10px;
+  background: var(--color-background);
+  border: 1.5px solid var(--color-border);
+  border-radius: 6px;
+  color: var(--color-text);
+  font-size: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.wst-param-val:focus {
+  border-color: var(--color-accent-soft);
+}
+
+.wst-param-val:disabled {
+  opacity: 0.6;
+}
+
+.wst-btn-remove {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.wst-btn-remove:hover:not(:disabled) {
+  color: var(--color-danger);
+  border-color: var(--color-danger);
+}
+
+.wst-btn-remove:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.wst-auth-note {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  padding: 4px 0 0;
+  line-height: 1.5;
+}
+
+/* ── Status ───────────────────────────── */
+
 .wst-status {
   display: flex;
   align-items: center;
   gap: 6px;
   font-size: 12px;
   font-weight: 500;
-  padding: 6px 0;
+  padding: 4px 0;
 }
 
 .wst-status-dot {
@@ -127,6 +340,14 @@
 .wst-status.disconnected {
   color: var(--color-text-muted);
 }
+
+.wst-status-protocol {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+
+/* ── Send area ────────────────────────── */
 
 .wst-send-area {
   display: flex;
@@ -160,12 +381,14 @@
   opacity: 0.6;
 }
 
+/* ── Logs ─────────────────────────────── */
+
 .wst-log-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 6px 0;
-  border-bottom: 1px solid var(--color-border);
+  border-top: 1px solid var(--color-border);
 }
 
 .wst-log-title {
@@ -179,7 +402,7 @@
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
   min-height: 0;
 }
 
@@ -202,7 +425,7 @@
   display: flex;
   align-items: flex-start;
   gap: 8px;
-  padding: 6px 10px;
+  padding: 5px 10px;
   border-radius: 6px;
   font-size: 12px;
   font-family: 'JetBrains Mono', monospace;
