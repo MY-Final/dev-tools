@@ -5,6 +5,10 @@ import type { ToolItem } from '@renderer/types/tool'
 import { useSettings } from '@renderer/lib/contexts'
 import '../styles/home.css'
 
+// ── Tags ──────────────────────────────────────────────────────
+
+const ALL_TAGS = ['前端', '后端', '运维', '通用', '安全', '网络']
+
 // ── Category accent colors ─────────────────────────────────────
 
 const CATEGORY_ACCENTS: Record<string, string> = {
@@ -25,17 +29,24 @@ export default function Home({ onSelectTool }: HomeProps): React.JSX.Element {
   const { settings, updateFavorites } = useSettings()
   const favorites = settings.favorites
   const [search, setSearch] = useState('')
+  const [selectedTag, setSelectedTag] = useState<string | null>(null)
 
   const filteredTools = useMemo(() => {
-    if (!search.trim()) return tools
-    const q = search.toLowerCase()
-    return tools.filter(
-      (t) =>
-        t.name.toLowerCase().includes(q) ||
-        t.desc.toLowerCase().includes(q) ||
-        t.category.toLowerCase().includes(q)
-    )
-  }, [search])
+    let list = tools
+    if (search.trim()) {
+      const q = search.toLowerCase()
+      list = list.filter(
+        (t) =>
+          t.name.toLowerCase().includes(q) ||
+          t.desc.toLowerCase().includes(q) ||
+          t.category.toLowerCase().includes(q)
+      )
+    }
+    if (selectedTag) {
+      list = list.filter((t) => t.tags?.includes(selectedTag))
+    }
+    return list
+  }, [search, selectedTag])
 
   const categories = useMemo(() => {
     const grouped: Map<string, { tools: ToolItem[]; icon: ToolItem['categoryIcon'] }> = new Map()
@@ -102,6 +113,25 @@ export default function Home({ onSelectTool }: HomeProps): React.JSX.Element {
                 {filteredTools.length} 个结果
               </span>
             )}
+          </div>
+
+          {/* Tag filter */}
+          <div className="home-tags">
+            <button
+              className={`home-tag ${selectedTag === null ? 'active' : ''}`}
+              onClick={() => setSelectedTag(null)}
+            >
+              全部
+            </button>
+            {ALL_TAGS.map((tag) => (
+              <button
+                key={tag}
+                className={`home-tag ${selectedTag === tag ? 'active' : ''}`}
+                onClick={() => setSelectedTag(selectedTag === tag ? null : tag)}
+              >
+                {tag}
+              </button>
+            ))}
           </div>
         </div>
       </section>
