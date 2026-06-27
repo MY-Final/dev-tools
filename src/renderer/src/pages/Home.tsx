@@ -14,8 +14,22 @@ const CATEGORY_ACCENTS: Record<string, string> = {
   '编码/加密': 'accent-orange',
   '开发工具': 'accent-cyan',
   '文本工具': 'accent-pink',
-  '备忘录': 'accent-yellow'
+  '备忘录': 'accent-yellow',
+  '资源搜索': 'accent-teal'
 }
+
+// ── Tag accent colors ──────────────────────────────────────────
+
+const TAG_ACCENTS: Record<string, string> = {
+  '前端': 'tag-blue',
+  '后端': 'tag-green',
+  '运维': 'tag-orange',
+  '通用': 'tag-purple'
+}
+
+// ── All available tags (derived from tools) ────────────────────
+
+const ALL_TAGS = ['前端', '后端', '运维', '通用']
 
 interface HomeProps {
   onSelectTool: (id: string) => void
@@ -25,17 +39,30 @@ export default function Home({ onSelectTool }: HomeProps): React.JSX.Element {
   const { settings, updateFavorites } = useSettings()
   const favorites = settings.favorites
   const [search, setSearch] = useState('')
+  const [activeTag, setActiveTag] = useState<string | null>(null)
 
   const filteredTools = useMemo(() => {
-    if (!search.trim()) return tools
-    const q = search.toLowerCase()
-    return tools.filter(
-      (t) =>
-        t.name.toLowerCase().includes(q) ||
-        t.desc.toLowerCase().includes(q) ||
-        t.category.toLowerCase().includes(q)
-    )
-  }, [search])
+    let result = tools
+
+    // Tag filter
+    if (activeTag) {
+      result = result.filter((t) => t.tags?.includes(activeTag))
+    }
+
+    // Search filter
+    if (search.trim()) {
+      const q = search.toLowerCase()
+      result = result.filter(
+        (t) =>
+          t.name.toLowerCase().includes(q) ||
+          t.desc.toLowerCase().includes(q) ||
+          t.category.toLowerCase().includes(q) ||
+          t.tags?.some((tag) => tag.toLowerCase().includes(q))
+      )
+    }
+
+    return result
+  }, [search, activeTag])
 
   const categories = useMemo(() => {
     const grouped: Map<string, { tools: ToolItem[]; icon: ToolItem['categoryIcon'] }> = new Map()
@@ -101,6 +128,29 @@ export default function Home({ onSelectTool }: HomeProps): React.JSX.Element {
               <span className="home-search-result">
                 {filteredTools.length} 个结果
               </span>
+            )}
+          </div>
+
+          {/* Tag filter */}
+          <div className="home-tags">
+            {ALL_TAGS.map((tag) => {
+              const count = tools.filter((t) => t.tags?.includes(tag)).length
+              const isActive = activeTag === tag
+              return (
+                <button
+                  key={tag}
+                  className={`home-tag ${TAG_ACCENTS[tag] || ''} ${isActive ? 'active' : ''}`}
+                  onClick={() => setActiveTag(isActive ? null : tag)}
+                >
+                  <span className="home-tag-label">{tag}</span>
+                  <span className="home-tag-count">{count}</span>
+                </button>
+              )
+            })}
+            {activeTag && (
+              <button className="home-tag-clear" onClick={() => setActiveTag(null)}>
+                清除筛选
+              </button>
             )}
           </div>
         </div>

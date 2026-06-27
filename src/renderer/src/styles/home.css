@@ -174,6 +174,91 @@
   pointer-events: none;
 }
 
+/* ── Tag filter ──────────────────────────── */
+
+.home-tags {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+
+.home-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 16px;
+  border-radius: 20px;
+  border: 1.5px solid var(--color-border);
+  background: var(--color-surface);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  transition: all 0.2s ease;
+}
+
+.home-tag:hover {
+  border-color: var(--color-border-hover);
+  color: var(--color-text);
+}
+
+.home-tag-label {
+  white-space: nowrap;
+}
+
+.home-tag-count {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  background: var(--color-background);
+  border-radius: 8px;
+  padding: 1px 7px;
+  font-family: 'JetBrains Mono', monospace;
+  min-width: 18px;
+  text-align: center;
+}
+
+.home-tag.active {
+  color: #fff;
+  border-color: transparent;
+}
+
+.home-tag.active .home-tag-count {
+  background: rgba(255, 255, 255, 0.25);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* Tag color accents */
+.home-tag.tag-blue.active { background: #3b82f6; border-color: #3b82f6; }
+.home-tag.tag-green.active { background: #22c55e; border-color: #22c55e; }
+.home-tag.tag-orange.active { background: #f97316; border-color: #f97316; }
+.home-tag.tag-purple.active { background: #a855f7; border-color: #a855f7; }
+
+.home-tag.tag-blue:hover:not(.active) { border-color: #3b82f6; color: #3b82f6; }
+.home-tag.tag-green:hover:not(.active) { border-color: #22c55e; color: #22c55e; }
+.home-tag.tag-orange:hover:not(.active) { border-color: #f97316; color: #f97316; }
+.home-tag.tag-purple:hover:not(.active) { border-color: #a855f7; color: #a855f7; }
+
+.home-tag-clear {
+  padding: 6px 14px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  font-family: inherit;
+  transition: color 0.2s ease;
+}
+
+.home-tag-clear:hover {
+  color: var(--color-text);
+}
+
 /* ── Tools section ──────────────────────── */
 
 .home-tools-section {

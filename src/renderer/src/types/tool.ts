@@ -9,5 +9,6 @@ export interface ToolItem {
   icon: React.ComponentType<{ size?: number; className?: string }>
   category: string
   categoryIcon: React.ComponentType<{ size?: number; className?: string }>
+  tags?: string[]
   isNew?: boolean
 }

@@ -7,7 +7,8 @@
     "usage": "输入数值和单位即可实时转换。Binary 模式（1KB=1024B）适用于内存/文件大小；Decimal 模式（1KB=1000B）适用于硬盘容量。",
     "icon": "HardDrive",
     "category": "换算工具",
-    "categoryIcon": "Code"
+    "categoryIcon": "Code",
+    "tags": ["后端", "通用"]
   },
   {
     "id": "my-ip",
@@ -17,7 +18,8 @@
     "usage": "打开页面自动显示本机局域网 IP。适用于快速获取本机地址以配置防火墙、端口转发或分享给同网段同事。",
     "icon": "Globe",
     "category": "网络工具",
-    "categoryIcon": "Globe"
+    "categoryIcon": "Globe",
+    "tags": ["运维", "通用"]
   },
   {
     "id": "device-info",
@@ -27,7 +29,8 @@
     "usage": "打开即显示操作系统、浏览器版本、屏幕分辨率、语言等环境信息。适用于排查兼容性问题或了解用户环境。",
     "icon": "Monitor",
     "category": "系统工具",
-    "categoryIcon": "Monitor"
+    "categoryIcon": "Monitor",
+    "tags": ["前端", "通用"]
   },
   {
     "id": "token-generator",
@@ -37,7 +40,8 @@
     "usage": "选择 Token 类型后点击生成按钮即可一键复制。适用于创建测试用 API Key、会话 ID 或数据库主键。",
     "icon": "Key",
     "category": "编码/加密",
-    "categoryIcon": "Lock"
+    "categoryIcon": "Lock",
+    "tags": ["后端", "通用"]
   },
   {
     "id": "jwt-generator",
@@ -47,7 +51,8 @@
     "usage": "填写 Payload（JSON）、选择算法并输入密钥即可生成 JWT。支持 HS256/HS384/HS512 等对称算法，适用于 API 认证测试。",
     "icon": "Shield",
     "category": "编码/加密",
-    "categoryIcon": "Lock"
+    "categoryIcon": "Lock",
+    "tags": ["后端"]
   },
   {
     "id": "cron-generator",
@@ -57,7 +62,8 @@
     "usage": "通过下拉菜单选择分钟/小时/日/月/周即可生成 Cron 表达式，也可粘贴现有表达式反解析。适用于配置 Linux crontab 或 K8s CronJob。",
     "icon": "Clock",
     "category": "开发工具",
-    "categoryIcon": "Wrench"
+    "categoryIcon": "Wrench",
+    "tags": ["运维", "后端"]
   },
   {
     "id": "json-formatter",
@@ -67,7 +73,8 @@
     "usage": "粘贴 JSON 文本自动格式化并高亮。支持缩进调整（2/4/6/8空格）、压缩、树形视图、JSONPath 查询。适用于阅读 API 响应或排查 JSON 语法错误。",
     "icon": "FileJson",
     "category": "开发工具",
-    "categoryIcon": "Wrench"
+    "categoryIcon": "Wrench",
+    "tags": ["前端", "后端", "通用"]
   },
   {
     "id": "url-codec",
@@ -77,7 +84,8 @@
     "usage": "输入文本即可编码/解码 URL 字符串。支持全 URL 模式和参数模式。适用于处理含中文或特殊字符的 URL 参数。",
     "icon": "Link2",
     "category": "编码/加密",
-    "categoryIcon": "Lock"
+    "categoryIcon": "Lock",
+    "tags": ["前端", "通用"]
   },
   {
     "id": "hash-generator",
@@ -87,7 +95,8 @@
     "usage": "输入文本或上传文件即可生成哈希值。支持文本模式和文件模式。适用于校验下载文件完整性或密码哈希。",
     "icon": "Hash",
     "category": "编码/加密",
-    "categoryIcon": "Lock"
+    "categoryIcon": "Lock",
+    "tags": ["后端", "通用"]
   },
   {
     "id": "password-generator",
@@ -97,7 +106,8 @@
     "usage": "设置长度和字符类型（大小写字母/数字/符号）后点击生成，可批量生成多个密码。适用于创建数据库密码、API Key 等安全凭证。",
     "icon": "KeyRound",
     "category": "编码/加密",
-    "categoryIcon": "Lock"
+    "categoryIcon": "Lock",
+    "tags": ["通用"]
   },
   {
     "id": "jwt-decoder",
@@ -107,7 +117,8 @@
     "usage": "粘贴 JWT 字符串自动解析 Header/Payload/Signature。显示过期时间、签发者、主题等字段，并提示是否已过期。适用于调试认证流程。",
     "icon": "ShieldCheck",
     "category": "编码/加密",
-    "categoryIcon": "Lock"
+    "categoryIcon": "Lock",
+    "tags": ["后端"]
   },
   {
     "id": "timestamp-converter",
@@ -117,7 +128,8 @@
     "usage": "输入时间戳（秒/毫秒）转换为可读日期，或选择日期转换为时间戳，支持实时显示当前时间戳。适用于日志分析和 API 调试。",
     "icon": "CalendarClock",
     "category": "换算工具",
-    "categoryIcon": "Code"
+    "categoryIcon": "Code",
+    "tags": ["后端", "通用"]
   },
   {
     "id": "base64-codec",
@@ -127,7 +139,8 @@
     "usage": "粘贴文本即可编码为 Base64 或解码 Base64 字符串。支持标准模式和 URL Safe 模式。适用于处理 Data URI 或 API 请求中的编码数据。",
     "icon": "Binary",
     "category": "编码/加密",
-    "categoryIcon": "Lock"
+    "categoryIcon": "Lock",
+    "tags": ["前端", "通用"]
   },
   {
     "id": "keyboard-tester",
@@ -137,7 +150,8 @@
     "usage": "按下任意键即可查看 key、code、keyCode 等事件属性。适用于调试键盘快捷键、验证键位映射或前端开发中的键盘事件处理。",
     "icon": "Keyboard",
     "category": "系统工具",
-    "categoryIcon": "Monitor"
+    "categoryIcon": "Monitor",
+    "tags": ["前端", "通用"]
   },
   {
     "id": "mouse-tester",
@@ -147,7 +161,8 @@
     "usage": "移动/点击鼠标即可查看坐标、按钮、修饰键等事件详情。适用于调试鼠标交互或测试鼠标按键功能。",
     "icon": "MousePointer",
     "category": "系统工具",
-    "categoryIcon": "Monitor"
+    "categoryIcon": "Monitor",
+    "tags": ["前端", "通用"]
   },
   {
     "id": "port-generator",
@@ -157,7 +172,8 @@
     "usage": "设置端口范围后点击生成，可批量生成多个不重复端口。适用于开发时为服务分配端口、配置 Docker 端口映射。",
     "icon": "Zap",
     "category": "网络工具",
-    "categoryIcon": "Globe"
+    "categoryIcon": "Globe",
+    "tags": ["运维", "后端"]
   },
   {
     "id": "subnet-calculator",
@@ -167,7 +183,8 @@
     "usage": "输入 IP 地址和子网掩码（或 CIDR 前缀），自动计算网络地址、广播地址、可用 IP 范围等信息。适用于网络规划和运维。",
     "icon": "Network",
     "category": "网络工具",
-    "categoryIcon": "Globe"
+    "categoryIcon": "Globe",
+    "tags": ["运维"]
   },
   {
     "id": "ipv4-converter",
@@ -177,7 +194,8 @@
     "usage": "输入 IPv4 地址（如 192.168.1.1）转换为十进制数字，或输入数字转换回 IP 地址。适用于数据库存储 IP 或网络编程。",
     "icon": "Globe",
     "category": "网络工具",
-    "categoryIcon": "Globe"
+    "categoryIcon": "Globe",
+    "tags": ["运维"]
   },
   {
     "id": "ip-range-expander",
@@ -187,7 +205,8 @@
     "usage": "输入起始 IP 和结束 IP，自动计算对应的 CIDR 列表。适用于将 IP 范围转换为防火墙规则或负载均衡器配置。",
     "icon": "Network",
     "category": "网络工具",
-    "categoryIcon": "Globe"
+    "categoryIcon": "Globe",
+    "tags": ["运维"]
   },
   {
     "id": "text-analyzer",
@@ -197,7 +216,8 @@
     "usage": "粘贴或输入文本，自动统计字符数、单词数、行数、字节数等。适用于写文章时统计字数或检查文本长度限制。",
     "icon": "AlignLeft",
     "category": "文本工具",
-    "categoryIcon": "FileText"
+    "categoryIcon": "FileText",
+    "tags": ["通用"]
   },
   {
     "id": "git-cheat-sheet",
@@ -207,7 +227,8 @@
     "usage": "按分类浏览 Git 常用命令，支持搜索。涵盖分支管理、暂存、回退、标签、远程操作等。适用于 Git 新手学习或老手快速回忆。",
     "icon": "GitBranch",
     "category": "备忘录",
-    "categoryIcon": "BookMarked"
+    "categoryIcon": "BookMarked",
+    "tags": ["运维", "通用"]
   },
   {
     "id": "docker-cheat-sheet",
@@ -217,7 +238,8 @@
     "usage": "按分类浏览 Docker 常用命令，涵盖容器管理、镜像操作、网络、卷、Docker Compose 等。适用于日常 Docker 运维参考。",
     "icon": "Box",
     "category": "备忘录",
-    "categoryIcon": "BookMarked"
+    "categoryIcon": "BookMarked",
+    "tags": ["运维"]
   },
   {
     "id": "maven-dependency",
@@ -227,7 +249,8 @@
     "usage": "搜索 Java 库名称，选择版本后自动生成 Maven 或 Gradle 依赖 XML/Kotlin 代码，一键复制到项目中。适用于快速引入第三方库。",
     "icon": "Package",
     "category": "资源搜索",
-    "categoryIcon": "Search"
+    "categoryIcon": "Search",
+    "tags": ["后端"]
   },
   {
     "id": "file-generator",
@@ -237,7 +260,8 @@
     "usage": "输入文件大小（如 10MB）即时生成测试文件并下载。适用于测试上传接口的文件大小限制或带宽测试。",
     "icon": "FileUp",
     "category": "开发工具",
-    "categoryIcon": "Wrench"
+    "categoryIcon": "Wrench",
+    "tags": ["后端", "通用"]
   },
   {
     "id": "case-converter",
@@ -247,7 +271,8 @@
     "usage": "输入文本即可转换为 camelCase、PascalCase、snake_case、kebab-case 等格式。适用于变量命名风格统一。",
     "icon": "CaseSensitive",
     "category": "文本工具",
-    "categoryIcon": "FileText"
+    "categoryIcon": "FileText",
+    "tags": ["前端", "通用"]
   },
   {
     "id": "env-vars",
@@ -257,7 +282,8 @@
     "usage": "打开即显示本机所有环境变量，支持搜索和过滤。适用于排查环境配置问题，如 JAVA_HOME、PATH 等关键变量。",
     "icon": "Terminal",
     "category": "系统工具",
-    "categoryIcon": "Monitor"
+    "categoryIcon": "Monitor",
+    "tags": ["运维", "后端"]
   },
   {
     "id": "ascii-table",
@@ -267,7 +293,8 @@
     "usage": "浏览 ASCII 码表，查看十进制/十六进制/八进制/二进制数值及对应字符。适用于字符编码调试和数据协议开发。",
     "icon": "Table",
     "category": "备忘录",
-    "categoryIcon": "BookMarked"
+    "categoryIcon": "BookMarked",
+    "tags": ["通用"]
   },
   {
     "id": "unicode-inspector",
@@ -277,7 +304,8 @@
     "usage": "输入任意字符即可查看其 Unicode 码点、UTF-8/UTF-16 编码、HTML 实体等信息。适用于处理多语言文本或排查乱码问题。",
     "icon": "Languages",
     "category": "文本工具",
-    "categoryIcon": "FileText"
+    "categoryIcon": "FileText",
+    "tags": ["前端", "通用"]
   },
   {
     "id": "npm-cheat-sheet",
@@ -287,7 +315,8 @@
     "usage": "浏览 npm、Yarn、pnpm 常用命令对比速查表。涵盖安装、卸载、更新、发布等操作。适用于多包管理工具切换时快速查阅。",
     "icon": "Package",
     "category": "备忘录",
-    "categoryIcon": "BookMarked"
+    "categoryIcon": "BookMarked",
+    "tags": ["前端", "通用"]
   },
   {
     "id": "linux-cheat-sheet",
@@ -297,7 +326,8 @@
     "usage": "按分类浏览 Linux 常用命令（文件操作/权限/进程/网络等），支持搜索。适用于服务器运维和 Shell 脚本编写参考。",
     "icon": "Terminal",
     "category": "备忘录",
-    "categoryIcon": "BookMarked"
+    "categoryIcon": "BookMarked",
+    "tags": ["运维", "后端"]
   },
   {
     "id": "k8s-cheat-sheet",
@@ -307,7 +337,8 @@
     "usage": "按分类浏览 kubectl 常用命令，涵盖 Pod 管理、部署、服务、配置等。适用于 K8s 日常运维和故障排查。",
     "icon": "Ship",
     "category": "备忘录",
-    "categoryIcon": "BookMarked"
+    "categoryIcon": "BookMarked",
+    "tags": ["运维"]
   },
   {
     "id": "color-converter",
@@ -317,7 +348,8 @@
     "usage": "输入 HEX（如 #3b82f6）即可转换为 RGB、HSL 格式，支持颜色选择器取色。适用于 UI 设计稿还原和前端样式编写。",
     "icon": "Palette",
     "category": "换算工具",
-    "categoryIcon": "Code"
+    "categoryIcon": "Code",
+    "tags": ["前端"]
   },
   {
     "id": "lorem-ipsum",
@@ -327,7 +359,8 @@
     "usage": "设置段落数和字数后点击生成，支持中文乱数假文和拉丁文 Lorem Ipsum。适用于 UI 设计填充占位内容。",
     "icon": "TextQuote",
     "category": "文本工具",
-    "categoryIcon": "FileText"
+    "categoryIcon": "FileText",
+    "tags": ["前端", "通用"]
   },
   {
     "id": "regex-tester",
@@ -337,7 +370,8 @@
     "usage": "输入正则表达式和测试文本，实时高亮匹配结果并显示捕获组。支持替换模式和常用标志（g/i/m）。适用于编写和调试正则表达式。",
     "icon": "Regex",
     "category": "开发工具",
-    "categoryIcon": "Wrench"
+    "categoryIcon": "Wrench",
+    "tags": ["前端", "后端", "通用"]
   },
   {
     "id": "diff-checker",
@@ -347,7 +381,8 @@
     "usage": "粘贴两段文本到左右面板，自动逐行对比差异。新增行高亮绿色，删除行高亮红色。适用于对比配置文件或代码变更。",
     "icon": "GitCompare",
     "category": "文本工具",
-    "categoryIcon": "FileText"
+    "categoryIcon": "FileText",
+    "tags": ["通用"]
   },
   {
     "id": "number-base",
@@ -357,7 +392,8 @@
     "usage": "输入任意进制数值实时显示其他进制结果，支持原码/反码/补码显示。适用于计算机底层编程和嵌入式开发。",
     "icon": "Sigma",
     "category": "换算工具",
-    "categoryIcon": "Calculator"
+    "categoryIcon": "Calculator",
+    "tags": ["后端", "通用"]
   },
   {
     "id": "unit-converter",
@@ -367,7 +403,8 @@
     "usage": "选择单位类别（长度/温度/速度等），输入数值即可换算。支持公制和英制单位。适用于日常单位换算需求。",
     "icon": "Ruler",
     "category": "换算工具",
-    "categoryIcon": "Calculator"
+    "categoryIcon": "Calculator",
+    "tags": ["通用"]
   },
   {
     "id": "timer-stopwatch",
@@ -377,7 +414,8 @@
     "usage": "支持秒表、倒计时和番茄钟模式。番茄钟默认 25 分钟专注 + 5 分钟休息。适用于时间管理和会议计时。",
     "icon": "Timer",
     "category": "系统工具",
-    "categoryIcon": "Monitor"
+    "categoryIcon": "Monitor",
+    "tags": ["通用"]
   },
   {
     "id": "usb-viewer",
@@ -387,7 +425,8 @@
     "usage": "点击连接 USB 设备后查看 HID 设备详情（VID/PID/报告描述符）。适用于 USB 外设开发和调试。",
     "icon": "Usb",
     "category": "系统工具",
-    "categoryIcon": "Monitor"
+    "categoryIcon": "Monitor",
+    "tags": ["运维", "通用"]
   },
   {
     "id": "xpath-tester",
@@ -397,7 +436,8 @@
     "usage": "粘贴 XML/HTML 文档，输入 XPath 表达式即可查询匹配节点。适用于爬虫开发和 XML 数据处理。",
     "icon": "Search",
     "category": "开发工具",
-    "categoryIcon": "Wrench"
+    "categoryIcon": "Wrench",
+    "tags": ["前端", "后端"]
   },
   {
     "id": "http-status-codes",
@@ -407,7 +447,8 @@
     "usage": "按分类浏览 HTTP 状态码（1xx–5xx），查看含义、使用场景和 RFC 引用。适用于接口开发时快速查阅。",
     "icon": "Server",
     "category": "备忘录",
-    "categoryIcon": "BookMarked"
+    "categoryIcon": "BookMarked",
+    "tags": ["前端", "后端"]
   },
   {
     "id": "regex-cheat-sheet",
@@ -417,7 +458,8 @@
     "usage": "浏览正则表达式常用语法（字符类/量词/断言/标志等），附带示例说明。适用于编写正则时的快速参考。",
     "icon": "Regex",
     "category": "备忘录",
-    "categoryIcon": "BookMarked"
+    "categoryIcon": "BookMarked",
+    "tags": ["前端", "通用"]
   },
   {
     "id": "html-entities",
@@ -427,7 +469,8 @@
     "usage": "浏览 HTML 实体字符表，查看字符、实体名称和实体编号。适用于编写 HTML 模板或处理转义字符。",
     "icon": "FileCode",
     "category": "备忘录",
-    "categoryIcon": "BookMarked"
+    "categoryIcon": "BookMarked",
+    "tags": ["前端"]
   },
   {
     "id": "sql-cheat-sheet",
@@ -437,7 +480,8 @@
     "usage": "按分类浏览 SQL 命令（查询/连接/DDL/DML/函数），附带语法示例。适用于数据库操作时的快速参考。",
     "icon": "Database",
     "category": "备忘录",
-    "categoryIcon": "BookMarked"
+    "categoryIcon": "BookMarked",
+    "tags": ["后端"]
   },
   {
     "id": "image-tools",
@@ -447,7 +491,8 @@
     "usage": "拖入图片即可转为 Base64 Data URI 或查看图片尺寸、格式、文件大小等元信息。适用于前端 Base64 图片嵌入。",
     "icon": "Image",
     "category": "换算工具",
-    "categoryIcon": "Calculator"
+    "categoryIcon": "Calculator",
+    "tags": ["前端", "通用"]
   },
   {
     "id": "data-converter",
@@ -457,7 +502,8 @@
     "usage": "粘贴数据即可在 CSV、JSON、XML 之间互转。适用于接口数据格式迁移或数据处理。",
     "icon": "Repeat",
     "category": "开发工具",
-    "categoryIcon": "Wrench"
+    "categoryIcon": "Wrench",
+    "tags": ["前端", "后端", "通用"]
   },
   {
     "id": "uuid-decoder",
@@ -467,7 +513,8 @@
     "usage": "粘贴 UUID 自动解析其版本（v1/v4 等）、变体、时间戳等信息。适用于排查 UUID 相关问题。",
     "icon": "Fingerprint",
     "category": "编码/加密",
-    "categoryIcon": "Lock"
+    "categoryIcon": "Lock",
+    "tags": ["后端"]
   },
   {
     "id": "css-cheat-sheet",
@@ -477,7 +524,8 @@
     "usage": "浏览 CSS 布局速查（Flexbox/Grid 图示）、单位对照、选择器语法等。适用于前端开发时的快速参考。",
     "icon": "Paintbrush",
     "category": "备忘录",
-    "categoryIcon": "BookMarked"
+    "categoryIcon": "BookMarked",
+    "tags": ["前端"]
   },
   {
     "id": "json-converter",
@@ -487,7 +535,8 @@
     "usage": "粘贴 JSON 数据后选择目标格式即可转换。支持 TypeScript 接口定义、TOML、XML、YAML 等格式。适用于配置文件格式转换。",
     "icon": "Shuffle",
     "category": "开发工具",
-    "categoryIcon": "Wrench"
+    "categoryIcon": "Wrench",
+    "tags": ["前端", "后端"]
   },
   {
     "id": "gradient-generator",
@@ -497,7 +546,8 @@
     "usage": "可视化编辑渐变色（线性/径向），调整方向和色标，自动生成 CSS background 代码。适用于前端 UI 设计。",
     "icon": "Palette",
     "category": "开发工具",
-    "categoryIcon": "Wrench"
+    "categoryIcon": "Wrench",
+    "tags": ["前端"]
   },
   {
     "id": "html-to-jsx",
@@ -507,7 +557,8 @@
     "usage": "粘贴 HTML 代码自动转换为 JSX 语法（class→className、style 字符串→对象等）。适用于将设计稿 HTML 迁移到 React 项目。",
     "icon": "Code",
     "category": "开发工具",
-    "categoryIcon": "Wrench"
+    "categoryIcon": "Wrench",
+    "tags": ["前端"]
   },
   {
     "id": "aes-des-encryptor",
@@ -517,7 +568,8 @@
     "usage": "选择加密算法和模式，输入密钥和明文即可加密/解密。支持 AES（CBC/GCM/CTR/ECB）和 DES/3DES。适用于数据加解密测试。",
     "icon": "ShieldCheck",
     "category": "编码/加密",
-    "categoryIcon": "Lock"
+    "categoryIcon": "Lock",
+    "tags": ["后端"]
   },
   {
     "id": "certificate-parser",
@@ -527,7 +579,8 @@
     "usage": "粘贴 PEM 格式证书内容，自动解析颁发者、有效期、SAN 域名、指纹等信息。适用于排查 HTTPS 证书问题。",
     "icon": "FileKey",
     "category": "编码/加密",
-    "categoryIcon": "Lock"
+    "categoryIcon": "Lock",
+    "tags": ["运维", "后端"]
   },
   {
     "id": "hmac-generator",
@@ -537,7 +590,8 @@
     "usage": "输入消息和密钥，选择算法（SHA256/SHA512）生成 HMAC 签名。适用于 API 签名验证和消息认证码生成。",
     "icon": "Fingerprint",
     "category": "编码/加密",
-    "categoryIcon": "Lock"
+    "categoryIcon": "Lock",
+    "tags": ["后端"]
   },
   {
     "id": "ssh-key-generator",
@@ -547,7 +601,8 @@
     "usage": "选择密钥类型（Ed25519/RSA），点击生成即可获得公私钥对和指纹。适用于配置 Git SSH 或服务器免密登录。",
     "icon": "KeyRound",
     "category": "编码/加密",
-    "categoryIcon": "Lock"
+    "categoryIcon": "Lock",
+    "tags": ["运维", "后端"]
   },
   {
     "id": "clipboard-manager",
@@ -557,7 +612,8 @@
     "usage": "自动记录复制内容，支持搜索和点击回填。适用于频繁复制粘贴场景，快速找回之前复制过的内容。",
     "icon": "Clipboard",
     "category": "系统工具",
-    "categoryIcon": "Monitor"
+    "categoryIcon": "Monitor",
+    "tags": ["通用"]
   },
   {
     "id": "screen-info",
@@ -567,7 +623,8 @@
     "usage": "打开即显示当前屏幕分辨率、DPI、色彩深度、像素比等信息。适用于前端适配和多屏开发时了解显示参数。",
     "icon": "Monitor",
     "category": "系统工具",
-    "categoryIcon": "Monitor"
+    "categoryIcon": "Monitor",
+    "tags": ["前端", "通用"]
   },
   {
     "id": "storage-viewer",
@@ -577,7 +634,8 @@
     "usage": "查看和编辑浏览器 localStorage/sessionStorage 数据。适用于调试前端存储逻辑或手动修改缓存数据。",
     "icon": "Archive",
     "category": "系统工具",
-    "categoryIcon": "Monitor"
+    "categoryIcon": "Monitor",
+    "tags": ["前端"]
   },
   {
     "id": "timezone-converter",
@@ -587,7 +645,8 @@
     "usage": "选择源时区和目标时区，输入时间即可转换。适用于跨国团队协作时计算对方当地时间。",
     "icon": "Globe",
     "category": "换算工具",
-    "categoryIcon": "Calculator"
+    "categoryIcon": "Calculator",
+    "tags": ["通用"]
   },
   {
     "id": "date-format-converter",
@@ -597,7 +656,8 @@
     "usage": "输入日期字符串自动识别格式，或选择目标格式转换。支持 ISO 8601、RFC 2822、Unix 时间戳和自定义格式。",
     "icon": "Calendar",
     "category": "换算工具",
-    "categoryIcon": "Calculator"
+    "categoryIcon": "Calculator",
+    "tags": ["后端", "通用"]
   },
   {
     "id": "number-formatter",
@@ -607,7 +667,8 @@
     "usage": "输入数字即可格式化为千分位、货币、百分比、科学计数等表示形式。适用于报表数据展示和国际化数字格式。",
     "icon": "Hash",
     "category": "换算工具",
-    "categoryIcon": "Calculator"
+    "categoryIcon": "Calculator",
+    "tags": ["前端", "通用"]
   },
   {
     "id": "translator",
@@ -618,6 +679,7 @@
     "icon": "Languages",
     "category": "开发工具",
     "categoryIcon": "Wrench",
+    "tags": ["通用"],
     "isNew": true
   },
   {
@@ -629,6 +691,7 @@
     "icon": "PackageSearch",
     "category": "资源搜索",
     "categoryIcon": "Search",
+    "tags": ["前端"],
     "isNew": true
   },
   {
@@ -640,6 +703,7 @@
     "icon": "Container",
     "category": "资源搜索",
     "categoryIcon": "Search",
+    "tags": ["运维"],
     "isNew": true
   }
 ]
