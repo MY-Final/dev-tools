@@ -333,6 +333,31 @@
   padding: 20px 40px;
   border-top: 1px solid var(--color-border);
   background: var(--color-surface-hover);
+  flex-wrap: wrap;
+}
+
+.settings-path-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--color-text-muted);
+  width: 100%;
+}
+
+.settings-path-label {
+  flex-shrink: 0;
+}
+
+.settings-path-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  background: var(--color-editor-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: 2px 8px;
+  color: var(--color-text);
+  word-break: break-all;
 }
 
 .settings-btn {

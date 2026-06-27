@@ -76,6 +76,8 @@ const settingsAPI = {
     ipcRenderer.invoke('settings:update-proxy', updates),
   updateShortcuts: (updates: Partial<AppSettings['shortcuts']>): Promise<AppSettings> =>
     ipcRenderer.invoke('settings:update-shortcuts', updates),
+  getSettingsPath: (): Promise<string> =>
+    ipcRenderer.invoke('settings:get-path'),
   resetToDefaults: (): Promise<AppSettings> => ipcRenderer.invoke('settings:reset')
 }
 

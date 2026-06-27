@@ -27,6 +27,7 @@ export default function SettingsPage(): React.JSX.Element {
   const [testResult, setTestResult] = useState('未测试')
   const [testing, setTesting] = useState(false)
   const [fetchedModels, setFetchedModels] = useState<string[]>([])
+  const [settingsPath, setSettingsPath] = useState('')
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({
     appearance: false,
     editor: false,
@@ -51,6 +52,11 @@ export default function SettingsPage(): React.JSX.Element {
       }).catch(() => { /* ignore */ })
     }
   }, [settings.translator.baseUrl, settings.translator.apiKey])
+
+  // Fetch settings.json path
+  useEffect(() => {
+    window.api.getSettingsPath().then(setSettingsPath).catch(() => setSettingsPath('未知'))
+  }, [])
 
   const modelOptions = (() => {
     const current = settings.translator.model
@@ -579,6 +585,12 @@ export default function SettingsPage(): React.JSX.Element {
         </div>
 
         <div className="settings-footer">
+          {settingsPath && (
+            <div className="settings-path-info">
+              <span className="settings-path-label">配置文件</span>
+              <code className="settings-path-value">{settingsPath}</code>
+            </div>
+          )}
           <div className="updater-actions">
             {!isAvailable && !isDownloading && !isDownloaded && (
               <button

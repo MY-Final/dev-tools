@@ -72,6 +72,10 @@ function registerSettingsHandlers(): void {
     return settingsStore.updateShortcuts(updates)
   })
 
+  ipcMain.handle('settings:get-path', () => {
+    return settingsStore.getFilePath()
+  })
+
   ipcMain.handle('settings:get-translator', () => {
     return settingsStore.getTranslator()
   })

@@ -128,6 +128,10 @@ class SettingsStore {
     return { ...this.settings }
   }
 
+  getFilePath(): string {
+    return this.filePath
+  }
+
   getAppearance(): AppSettings['appearance'] {
     return { ...this.settings.appearance }
   }

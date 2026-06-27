@@ -52,6 +52,7 @@ export interface SettingsAPI {
   getProxy: () => Promise<{ enabled: boolean; url: string }>
   updateProxy: (updates: Partial<{ enabled: boolean; url: string }>) => Promise<AppSettings>
   updateShortcuts: (updates: Partial<AppSettings['shortcuts']>) => Promise<AppSettings>
+  getSettingsPath: () => Promise<string>
   resetToDefaults: () => Promise<AppSettings>
 }
 
