@@ -182,7 +182,7 @@ Dev Tools 支持构建为纯静态页面，部署到 Vercel / 云服务器等任
 
 ### 在线体验
 
-访问 → **https://dev-tools-pi.vercel.app**
+访问 → **https://dev-tools-orcin.vercel.app/**
 
 > 部分依赖 Electron 原生能力的工具（如内网 IP、Maven 依赖搜索）在 Web 版不可用，会提示下载桌面版。
 
