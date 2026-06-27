@@ -36,6 +36,7 @@ export interface AppSettings {
     openSettings: string
     goHome: string
   }
+  favorites: string[]
 }
 
 const DEFAULT_SHORTCUTS = {
@@ -73,7 +74,8 @@ const DEFAULT_SETTINGS: AppSettings = {
     enabled: false,
     url: ''
   },
-  shortcuts: { ...DEFAULT_SHORTCUTS }
+  shortcuts: { ...DEFAULT_SHORTCUTS },
+  favorites: []
 }
 
 class SettingsStore {
@@ -108,7 +110,8 @@ class SettingsStore {
       npmRegistry: data.npmRegistry ?? '',
       mavenSearchUrl: data.mavenSearchUrl ?? '',
       proxy: { ...DEFAULT_SETTINGS.proxy, ...data.proxy },
-      shortcuts: { ...DEFAULT_SETTINGS.shortcuts, ...data.shortcuts }
+      shortcuts: { ...DEFAULT_SETTINGS.shortcuts, ...data.shortcuts },
+      favorites: data.favorites ?? []
     }
   }
 
@@ -192,6 +195,17 @@ class SettingsStore {
 
   updateShortcuts(updates: Partial<AppSettings['shortcuts']>): AppSettings {
     this.settings.shortcuts = { ...this.settings.shortcuts, ...updates }
+    this.save()
+    return this.getSettings()
+  }
+
+  updateFavorites(toolId: string): AppSettings {
+    const idx = this.settings.favorites.indexOf(toolId)
+    if (idx === -1) {
+      this.settings.favorites = [...this.settings.favorites, toolId]
+    } else {
+      this.settings.favorites = this.settings.favorites.filter((id) => id !== toolId)
+    }
     this.save()
     return this.getSettings()
   }

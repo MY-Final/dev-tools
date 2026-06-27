@@ -34,6 +34,7 @@ export interface AppSettings {
     openSettings: string
     goHome: string
   }
+  favorites: string[]
 }
 
 export interface SettingsAPI {
@@ -52,6 +53,7 @@ export interface SettingsAPI {
   getProxy: () => Promise<{ enabled: boolean; url: string }>
   updateProxy: (updates: Partial<{ enabled: boolean; url: string }>) => Promise<AppSettings>
   updateShortcuts: (updates: Partial<AppSettings['shortcuts']>) => Promise<AppSettings>
+  updateFavorites: (toolId: string) => Promise<AppSettings>
   getSettingsPath: () => Promise<string>
   resetToDefaults: () => Promise<AppSettings>
 }
