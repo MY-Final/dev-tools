@@ -1,5 +1,25 @@
 # Changelog
 
+## v1.0.14 (2026-06-27)
+
+**新增 3 个文本工具** (总共 68 个)
+
+- 📝 **Markdown Preview** — 左右分栏 Markdown 编辑器与实时 HTML 渲染预览，支持 GFM 语法（标题/列表/代码块/表格/链接/图片/粗斜体）
+- 📊 **CSV Editor** — CSV 数据表格查看与编辑，支持单元格编辑、添加/删除行、文件导入、复制 CSV/JSON 格式
+- 🔧 **XML Formatter** — XML 格式化/压缩/校验，支持 2/4 空格缩进切换、标签匹配校验与错误定位
+- 📂 **CSV Editor 文件导入** — 点击「导入 CSV」按钮读取本地 .csv 文件，纯前端 FileReader 实现，无需 IPC
+
+**改进**
+- 🔧 JSON Converter — 修复嵌套对象 TypeScript 缩进错误，UI 改为左右分栏布局
+- 🔌 WebSocket Tester — 全面升级：主进程代理支持自定义请求头 / Basic Auth / 自动认证消息
+
+**修复**
+- 🐛 修复 proxy effect 移动至 callback 声明之后导致的 TS2448/TS2454/TS6133 错误
+- 🐛 删除未使用 import 消除编译告警
+- 🐛 修复 WebSocket Tester 3 个 bug — proxy 事件闭包 / 日志区 min-height
+
+---
+
 ## v1.0.13 (2026-06-27)
 
 **新增**
