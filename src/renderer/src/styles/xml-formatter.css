@@ -1,0 +1,258 @@
+/* ========================================
+   XML Formatter
+   ======================================== */
+
+.xf-page {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 24px;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+.xf-card {
+  width: 100%;
+  max-width: 900px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+  padding: 28px;
+  box-shadow: var(--shadow-xl);
+}
+
+.xf-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+  color: var(--color-text);
+}
+
+.xf-title {
+  font-size: 20px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+  margin: 0;
+}
+
+.xf-subtitle {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  margin: 0 0 0 auto;
+}
+
+/* ── Controls ────────────────────────── */
+
+.xf-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+.xf-indent-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.xf-indent-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.xf-indent-btns {
+  display: flex;
+  gap: 3px;
+  padding: 3px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+}
+
+.xf-indent-btn {
+  padding: 4px 12px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.xf-indent-btn.active {
+  background: var(--color-accent-soft);
+  color: var(--color-text-inverse, #fff);
+  font-weight: 600;
+}
+
+.xf-indent-btn:hover:not(.active) {
+  color: var(--color-text);
+}
+
+.xf-action-btns {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.xf-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.xf-btn:hover:not(:disabled) {
+  background: var(--color-surface-hover);
+  color: var(--color-text);
+  border-color: var(--color-accent-soft);
+}
+
+.xf-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ── Error ───────────────────────────── */
+
+.xf-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: rgba(229, 62, 62, 0.08);
+  border: 1px solid rgba(229, 62, 62, 0.2);
+  border-radius: 8px;
+  color: var(--color-danger, #e53e3e);
+  font-size: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  margin-bottom: 14px;
+}
+
+.xf-error-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  background: var(--color-danger, #e53e3e);
+  color: #fff;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+/* ── Panes ───────────────────────────── */
+
+.xf-panes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  height: calc(100vh - 300px);
+  min-height: 350px;
+}
+
+.xf-pane {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.xf-pane-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.xf-pane-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.xf-pane-size {
+  font-size: 10px;
+  color: var(--color-text-muted);
+}
+
+.xf-textarea {
+  flex: 1;
+  width: 100%;
+  padding: 14px;
+  background: var(--color-editor-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  color: var(--color-text);
+  font-size: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  resize: none;
+  outline: none;
+  box-sizing: border-box;
+  line-height: 1.6;
+}
+
+.xf-textarea:focus {
+  border-color: var(--color-accent-soft);
+  box-shadow: 0 0 0 3px var(--color-accent-soft-subtle);
+}
+
+.xf-textarea::placeholder {
+  color: var(--color-text-muted);
+}
+
+.xf-output {
+  flex: 1;
+  padding: 14px;
+  background: var(--color-editor-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  font-size: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--color-text);
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-y: auto;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.xf-placeholder {
+  color: var(--color-text-muted);
+}
+
+@media (max-width: 700px) {
+  .xf-panes { grid-template-columns: 1fr; height: auto; }
+  .xf-textarea { min-height: 200px; }
+  .xf-output { min-height: 200px; }
+  .xf-page { padding: 16px; }
+  .xf-card { padding: 20px; border-radius: 16px; }
+}

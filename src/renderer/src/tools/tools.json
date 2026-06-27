@@ -741,5 +741,41 @@
     "category": "开发工具",
     "categoryIcon": "Wrench",
     "isNew": true
+  },
+  {
+    "id": "markdown-preview",
+    "name": "Markdown Preview",
+    "shortDesc": "Markdown 实时渲染",
+    "desc": "Markdown 编辑器与实时渲染预览",
+    "usage": "左侧编写 Markdown 文本，右侧实时预览渲染效果。支持 GFM 语法：标题、列表、代码块、表格、链接、图片、粗斜体等。适用于撰写技术文档或 README。",
+    "tags": ["前端", "通用"],
+    "icon": "FileText",
+    "category": "文本工具",
+    "categoryIcon": "FileText",
+    "isNew": true
+  },
+  {
+    "id": "csv-editor",
+    "name": "CSV Editor",
+    "shortDesc": "CSV 表格编辑器",
+    "desc": "CSV 数据表格查看与编辑，支持导出",
+    "usage": "粘贴 CSV 文本自动解析为表格视图，支持添加/删除行、编辑单元格内容、复制 CSV 或 JSON 格式。适用于快速编辑和浏览 CSV 数据。",
+    "tags": ["后端", "通用"],
+    "icon": "Table",
+    "category": "文本工具",
+    "categoryIcon": "FileText",
+    "isNew": true
+  },
+  {
+    "id": "xml-formatter",
+    "name": "XML Formatter",
+    "shortDesc": "XML 格式化",
+    "desc": "XML 格式化、压缩、校验",
+    "usage": "粘贴 XML 文本即可格式化/压缩。支持缩进调整（2/4 空格）、语法校验、错误定位。适用于阅读 API 响应中的 XML 数据或排查 XML 语法错误。",
+    "tags": ["后端", "通用"],
+    "icon": "Code",
+    "category": "文本工具",
+    "categoryIcon": "FileText",
+    "isNew": true
   }
 ]
