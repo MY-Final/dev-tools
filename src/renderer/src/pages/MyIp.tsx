@@ -1,3 +1,4 @@
+import ElectronOnlyPage from '@renderer/components/ElectronOnlyPage'
 import { useEffect, useRef } from 'react'
 import { Copy, Check, RefreshCw, Wifi } from 'lucide-react'
 import { useMyIp } from '@renderer/tools/my-ip/useMyIp'
@@ -16,7 +17,8 @@ export default function MyIp(): React.JSX.Element {
   }, [fetchLocalIp])
 
   return (
-    <div className="myip-page">
+    <ElectronOnlyPage toolName="内网 IP">
+      <div className="myip-page">
       <div className="myip-bg-decoration" />
 
       <div className="myip-card">
@@ -80,6 +82,7 @@ export default function MyIp(): React.JSX.Element {
           {toast}
         </div>
       )}
-    </div>
+      </div>
+    </ElectronOnlyPage>
   )
 }

@@ -68,7 +68,7 @@ src/
 | `memory/tool-patterns.md` | 新建/修改工具页面、注册表、hooks |
 | `memory/design-system.md` | UI 样式、CSS 变量、组件布局 |
 | `memory/ts-conventions.md` | TypeScript 类型、变量命名、React 类型写法 |
-| `memory/git-commit-style.md` | 提交 commit 时的消息格式 |
+| `web-dual-mode-architecture.md` | 新增/维护 web 兼容层、API 映射、双模式构建
 
 ## Notes
 

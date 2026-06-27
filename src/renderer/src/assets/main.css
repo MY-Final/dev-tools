@@ -65,6 +65,7 @@
 @import '../styles/websocket-tester.css';
 @import '../styles/cors-checker.css';
 @import '../styles/user-agent-parser.css';
+@import '../styles/electron-only.css';
 
 @tailwind base;
 @tailwind components;

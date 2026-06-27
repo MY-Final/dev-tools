@@ -1,0 +1,80 @@
+/* ── ElectronOnlyPage — web 端禁用提示 ── */
+
+.electron-only-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 60px);
+  padding: 40px 24px;
+}
+
+.electron-only-card {
+  max-width: 480px;
+  width: 100%;
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+  padding: 48px 36px;
+  text-align: center;
+  box-shadow: var(--shadow-xl);
+}
+
+.electron-only-icon-wrapper {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  background: var(--color-accent-soft-subtle);
+  border-radius: 20px;
+  color: var(--color-accent-soft);
+  margin-bottom: 24px;
+}
+
+.electron-only-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--color-text);
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: -0.5px;
+  margin-bottom: 16px;
+}
+
+.electron-only-desc {
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--color-text-secondary);
+  margin-bottom: 12px;
+}
+
+.electron-only-hint {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-accent-soft);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.electron-only-divider {
+  height: 1px;
+  background: var(--color-border);
+  margin: 24px 0;
+}
+
+.electron-only-alt {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  line-height: 1.6;
+}
+
+/* ── 响应式 ── */
+@media (max-width: 600px) {
+  .electron-only-card {
+    padding: 36px 24px;
+  }
+
+  .electron-only-title {
+    font-size: 20px;
+  }
+}

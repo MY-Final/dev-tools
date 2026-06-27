@@ -5,6 +5,7 @@ import {
   getArtifactVersions,
   type MavenDoc
 } from '@renderer/lib/maven-api'
+import ElectronOnlyPage from '@renderer/components/ElectronOnlyPage'
 
 interface MavenMirror {
   id: string
@@ -153,7 +154,8 @@ export default function MavenDependency(): React.JSX.Element {
   }
 
   return (
-    <div className="mvn-page">
+    <ElectronOnlyPage toolName="Maven Dependency">
+      <div className="mvn-page">
       <div className="mvn-card">
         <div className="mvn-header">
           <h2 className="mvn-title">Maven Dependency</h2>
@@ -359,5 +361,6 @@ export default function MavenDependency(): React.JSX.Element {
         )}
       </div>
     </div>
+    </ElectronOnlyPage>
   )
 }
