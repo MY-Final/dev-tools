@@ -2,6 +2,10 @@ import { useState, useMemo, useCallback } from 'react'
 import { FileText, Copy, Check, RotateCcw } from 'lucide-react'
 import '../styles/markdown-preview.css'
 
+function escapeHTML(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+}
+
 // Simple Markdown parser — supports GFM subset
 function parseMarkdown(md: string): string {
   const lines = md.split('\n')
@@ -28,7 +32,7 @@ function parseMarkdown(md: string): string {
     if (/^#{1,6} /.test(line)) {
       const level = line.match(/^(#+)/)![1].length
       const text = line.slice(level + 1)
-      out.push(`<h${level}>${text}</h${level}>`)
+      out.push(`<h${level}>${escapeHTML(text)}</h${level}>`)
       i++
       continue
     }
@@ -44,7 +48,7 @@ function parseMarkdown(md: string): string {
     if (/^[\*\-] /.test(line)) {
       const items: string[] = []
       while (i < lines.length && /^[\*\-] /.test(lines[i])) {
-        items.push(lines[i].replace(/^[\*\-] /, ''))
+        items.push(escapeHTML(lines[i].replace(/^[\*\-] /, '')))
         i++
       }
       out.push('<ul>' + items.map((item) => `<li>${item}</li>`).join('') + '</ul>')
@@ -55,7 +59,7 @@ function parseMarkdown(md: string): string {
     if (/^\d+\. /.test(line)) {
       const items: string[] = []
       while (i < lines.length && /^\d+\. /.test(lines[i])) {
-        items.push(lines[i].replace(/^\d+\. /, ''))
+        items.push(escapeHTML(lines[i].replace(/^\d+\. /, '')))
         i++
       }
       out.push('<ol>' + items.map((item) => `<li>${item}</li>`).join('') + '</ol>')
@@ -69,7 +73,7 @@ function parseMarkdown(md: string): string {
         const cells = lines[i]
           .split('|')
           .filter((_, idx, arr) => idx > 0 && idx < arr.length - 1) // skip first/last empty
-          .map((c) => c.trim())
+          .map((c) => escapeHTML(c.trim()))
         rows.push(cells)
         i++
       }
@@ -89,10 +93,10 @@ function parseMarkdown(md: string): string {
     }
 
     // Blockquote
-    if (/^&gt; /.test(line)) {
+    if (/^> /.test(line)) {
       const quotes: string[] = []
-      while (i < lines.length && /^&gt; /.test(lines[i])) {
-        quotes.push(lines[i].replace(/^&gt; /, ''))
+      while (i < lines.length && /^> /.test(lines[i])) {
+        quotes.push(escapeHTML(lines[i].replace(/^> /, '')))
         i++
       }
       out.push('<blockquote>' + quotes.join('<br>') + '</blockquote>')
@@ -107,27 +111,12 @@ function parseMarkdown(md: string): string {
 
     // Regular paragraph line
     i++
-    out.push('<p>' + line + '</p>')
+    out.push('<p>' + escapeHTML(line) + '</p>')
   }
 
-  let html = out
-    .join('\n')
-    // Escape HTML entities
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    // But revert inside <pre><code>
-    .replace(/<pre><code>([\s\S]*?)<\/code><\/pre>/g, (_m: string, code: string) => {
-      return '<pre><code>' + code
-        .replace(/&amp;/g, '&')
-        .replace(/&lt;/g, '<')
-        .replace(/&gt;/g, '>')
-        + '</code></pre>'
-    })
+  let html = out.join('\n')
 
-  // Inline code
-  html = html.replace(/`([^`]+)`/g, '<code>$1</code>')
-
+  // Inline formatting (applied on escaped text content)
   // Images
   html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" loading="lazy">')
 
@@ -141,6 +130,9 @@ function parseMarkdown(md: string): string {
   html = html.replace(/___(.+?)___/g, '<strong><em>$1</em></strong>')
   html = html.replace(/__(.+?)__/g, '<strong>$1</strong>')
   html = html.replace(/_(.+?)_/g, '<em>$1</em>')
+
+  // Inline code
+  html = html.replace(/`([^`]+)`/g, '<code>$1</code>')
 
   // Strikethrough
   html = html.replace(/~~(.+?)~~/g, '<del>$1</del>')
