@@ -62,6 +62,9 @@
 @import '../styles/npm-search.css';
 @import '../styles/dockerhub-search.css';
 @import '../styles/tool-help.css';
+@import '../styles/websocket-tester.css';
+@import '../styles/cors-checker.css';
+@import '../styles/user-agent-parser.css';
 
 @tailwind base;
 @tailwind components;

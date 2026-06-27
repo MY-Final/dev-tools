@@ -705,5 +705,41 @@
     "category": "资源搜索",
     "categoryIcon": "Search",
     "isNew": true
+  },
+  {
+    "id": "websocket-tester",
+    "name": "WebSocket Tester",
+    "shortDesc": "WebSocket 测试",
+    "desc": "WebSocket 连接测试与消息收发调试",
+    "usage": "输入 WebSocket 服务器 URL（如 ws://localhost:8080），点击连接后即可发送和接收消息。适用于调试 WebSocket API。",
+    "tags": ["后端", "前端"],
+    "icon": "Radio",
+    "category": "开发工具",
+    "categoryIcon": "Wrench",
+    "isNew": true
+  },
+  {
+    "id": "cors-checker",
+    "name": "CORS Checker",
+    "shortDesc": "CORS 检测",
+    "desc": "跨域请求检测 — 预检 OPTIONS 测试与响应头分析",
+    "usage": "输入目标 URL 和方法后发送请求，自动显示 CORS 相关响应头。适用于排查跨域问题。",
+    "tags": ["前端", "后端"],
+    "icon": "ShieldOff",
+    "category": "开发工具",
+    "categoryIcon": "Wrench",
+    "isNew": true
+  },
+  {
+    "id": "user-agent-parser",
+    "name": "User-Agent Parser",
+    "shortDesc": "UA 解析器",
+    "desc": "解析 User-Agent 字符串，识别浏览器/操作系统/设备信息",
+    "usage": "粘贴任意 User-Agent 字符串，自动解析浏览器名称/版本、操作系统、设备类型、厂商等信息。",
+    "tags": ["前端", "通用"],
+    "icon": "MonitorSmartphone",
+    "category": "开发工具",
+    "categoryIcon": "Wrench",
+    "isNew": true
   }
 ]

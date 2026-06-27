@@ -1,0 +1,165 @@
+/* ========================================
+   User-Agent Parser
+   ======================================== */
+
+.uap-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.uap-input-area {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.uap-textarea {
+  width: 100%;
+  padding: 12px 14px;
+  background: var(--color-surface);
+  border: 1.5px solid var(--color-border);
+  border-radius: 10px;
+  color: var(--color-text);
+  font-size: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  outline: none;
+  resize: vertical;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+  line-height: 1.6;
+}
+
+.uap-textarea:focus {
+  border-color: var(--color-accent-soft);
+}
+
+.uap-textarea::placeholder {
+  color: var(--color-text-muted);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.uap-input-actions {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.uap-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.uap-btn:hover {
+  background: var(--color-surface-hover);
+  color: var(--color-text-secondary);
+}
+
+.uap-result {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+}
+
+.uap-result-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.uap-result-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.uap-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.uap-copy-btn:hover {
+  background: var(--color-surface-hover);
+  color: var(--color-accent-soft);
+  border-color: var(--color-accent-soft);
+}
+
+.uap-section {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.uap-section-title {
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text);
+  background: var(--color-background);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.uap-info-row {
+  display: flex;
+  padding: 8px 14px;
+  font-size: 12px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.uap-info-row:last-child {
+  border-bottom: none;
+}
+
+.uap-info-label {
+  color: var(--color-text-muted);
+  min-width: 60px;
+  flex-shrink: 0;
+}
+
+.uap-info-value {
+  color: var(--color-text);
+  font-family: 'JetBrains Mono', monospace;
+  word-break: break-all;
+}
+
+.uap-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 60px 24px;
+  flex: 1;
+}
+
+.uap-empty-icon {
+  opacity: 0.3;
+  color: var(--color-text-muted);
+}
