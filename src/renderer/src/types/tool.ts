@@ -5,6 +5,7 @@ export interface ToolItem {
   name: string
   shortDesc: string
   desc: string
+  usage?: string
   icon: React.ComponentType<{ size?: number; className?: string }>
   category: string
   categoryIcon: React.ComponentType<{ size?: number; className?: string }>

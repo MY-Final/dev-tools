@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, Suspense } from 'react'
 import Sidebar from '@renderer/components/Sidebar'
 import CommandPalette from '@renderer/components/CommandPalette'
+import ToolHelp from '@renderer/components/ToolHelp'
 import Home from '@renderer/pages/Home'
 import About from '@renderer/pages/About'
 import SettingsPage from '@renderer/pages/SettingsPage'
@@ -80,6 +81,7 @@ function AppContent(): React.JSX.Element {
     if (PageComponent) {
       return (
         <Suspense fallback={<div className="page-loading">Loading…</div>}>
+          <ToolHelp toolId={currentPage} />
           <PageComponent />
         </Suspense>
       )
