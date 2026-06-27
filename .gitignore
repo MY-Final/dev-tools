@@ -6,3 +6,5 @@ out
 *.log*
 /plan.md
 .reasonix/
+*.tsbuildinfo
+reasonix.toml
