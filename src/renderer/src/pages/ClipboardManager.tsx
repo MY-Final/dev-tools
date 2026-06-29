@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react'
-import { Clipboard, Copy, Check, Trash2, Download, Clock, FileText, Image } from 'lucide-react'
+import { Clipboard, Copy, Check, Trash2, Download, Clock, FileText, Image, X } from 'lucide-react'
 import '../styles/clipboard-manager.css'
 
 interface HistoryItem {
@@ -16,6 +16,7 @@ export default function ClipboardManager(): React.JSX.Element {
   const [copiedId, setCopiedId] = useState<number | null>(null)
   const [isReading, setIsReading] = useState(false)
   const [readError, setReadError] = useState('')
+  const [previewSrc, setPreviewSrc] = useState<string | null>(null)
 
   // Read clipboard
   const readClipboard = useCallback(async () => {
@@ -104,6 +105,16 @@ export default function ClipboardManager(): React.JSX.Element {
   const clearAll = useCallback(() => {
     setHistory([])
   }, [])
+
+  // Close lightbox on Escape
+  useEffect(() => {
+    if (!previewSrc) return
+    const handler = (e: KeyboardEvent): void => {
+      if (e.key === 'Escape') setPreviewSrc(null)
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [previewSrc])
 
   const exportHistory = useCallback(() => {
     const text = history
@@ -198,6 +209,7 @@ export default function ClipboardManager(): React.JSX.Element {
                       src={item.imageDataUrl}
                       alt="Clipboard"
                       className="clm-item-image"
+                      onClick={() => setPreviewSrc(item.imageDataUrl ?? null)}
                     />
                   </div>
                 ) : (
@@ -211,6 +223,20 @@ export default function ClipboardManager(): React.JSX.Element {
           </div>
         )}
       </div>
+
+      {previewSrc && (
+        <div className="clm-lightbox" onClick={() => setPreviewSrc(null)}>
+          <button className="clm-lightbox-close" title="关闭">
+            <X size={20} />
+          </button>
+          <img
+            src={previewSrc}
+            alt="Preview"
+            className="clm-lightbox-img"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
     </div>
   )
 }
