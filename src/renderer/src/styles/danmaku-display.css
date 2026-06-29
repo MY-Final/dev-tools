@@ -1,0 +1,425 @@
+/* ========================================
+   Danmaku Display 页面
+   ======================================== */
+
+.dd-page {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 40px 24px;
+  overflow-y: auto;
+}
+
+.dd-card {
+  width: 100%;
+  max-width: 680px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+  padding: 32px;
+  box-shadow: var(--shadow-xl);
+}
+
+.dd-header {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.dd-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--color-text);
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: -0.5px;
+  margin-bottom: 6px;
+}
+
+.dd-subtitle {
+  font-size: 14px;
+  color: var(--color-text-muted);
+}
+
+.dd-textarea {
+  width: 100%;
+  min-height: 100px;
+  padding: 12px 16px;
+  background: var(--color-editor-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: var(--color-text);
+  resize: vertical;
+  outline: none;
+  transition: border-color 0.15s ease;
+  margin-bottom: 20px;
+}
+
+.dd-textarea:focus {
+  border-color: var(--color-accent-soft);
+}
+
+.dd-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.dd-control-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.dd-control-label {
+  min-width: 80px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+.dd-control-label-long {
+  min-width: 100px;
+}
+
+.dd-slider {
+  flex: 1;
+  accent-color: var(--color-accent-soft);
+  height: 4px;
+}
+
+.dd-slider-value {
+  min-width: 36px;
+  font-size: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--color-text-muted);
+  text-align: right;
+}
+
+.dd-color-input {
+  width: 36px;
+  height: 36px;
+  padding: 2px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  cursor: pointer;
+  background: none;
+}
+
+.dd-color-input::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.dd-color-input::-webkit-color-swatch {
+  border: none;
+  border-radius: 6px;
+}
+
+.dd-mode-selector {
+  display: flex;
+  gap: 8px;
+  padding: 4px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+}
+
+.dd-mode-btn {
+  padding: 6px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.dd-mode-btn:hover {
+  color: var(--color-text);
+}
+
+.dd-mode-btn.active {
+  background: var(--color-accent-soft);
+  color: var(--color-text-inverse);
+}
+
+.dd-direction-group {
+  display: flex;
+  gap: 6px;
+}
+
+.dd-dir-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-size: 14px;
+}
+
+.dd-dir-btn:hover {
+  border-color: var(--color-border-hover);
+  color: var(--color-text);
+}
+
+.dd-dir-btn.active {
+  border-color: var(--color-accent-soft);
+  background: var(--color-accent-soft-subtle);
+  color: var(--color-accent-soft);
+}
+
+.dd-preview {
+  width: 100%;
+  height: 120px;
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+  margin-bottom: 20px;
+  border: 1px solid var(--color-border);
+}
+
+.dd-preview-inner {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 0 16px;
+}
+
+.dd-preview-text {
+  font-weight: 700;
+  line-height: 1.3;
+  text-align: center;
+  white-space: nowrap;
+  word-break: break-word;
+}
+
+.dd-preview-text.static {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  white-space: normal;
+}
+
+@keyframes dd-preview-left {
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
+}
+
+.dd-preview-text.scroll-left {
+  animation: dd-preview-left 8s linear infinite;
+}
+
+@keyframes dd-preview-right {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.dd-preview-text.scroll-right {
+  animation: dd-preview-right 8s linear infinite;
+}
+
+@keyframes dd-preview-up {
+  0% { transform: translateY(100%); }
+  100% { transform: translateY(-100%); }
+}
+
+.dd-preview-text.scroll-up {
+  animation: dd-preview-up 8s linear infinite;
+}
+
+@keyframes dd-preview-down {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100%); }
+}
+
+.dd-preview-text.scroll-down {
+  animation: dd-preview-down 8s linear infinite;
+}
+
+/* ========================================
+   全屏覆盖层
+   ======================================== */
+
+.dd-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.dd-overlay-close {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 10;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.3);
+  color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  opacity: 0;
+}
+
+.dd-overlay:hover .dd-overlay-close {
+  opacity: 1;
+}
+
+.dd-overlay-close:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.dd-overlay-body {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  overflow: hidden;
+}
+
+.dd-overlay-text {
+  font-weight: 700;
+  line-height: 1.4;
+  text-align: center;
+  word-break: break-word;
+  user-select: none;
+}
+
+.dd-overlay-static {
+  max-width: 90vw;
+}
+
+/* 滚动模式：左对齐，让 translateX(100vw) 从屏幕右边缘进入 */
+.dd-overlay-body.dd-overlay-scroll {
+  justify-content: flex-start;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* 全屏滚动动画 */
+@keyframes dd-fs-scroll-left {
+  0% { transform: translateX(100vw); }
+  100% { transform: translateX(-100%); }
+}
+
+.dd-overlay-text.dd-fs-scroll-left {
+  animation: dd-fs-scroll-left linear infinite;
+  white-space: nowrap;
+}
+
+@keyframes dd-fs-scroll-right {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100vw); }
+}
+
+.dd-overlay-text.dd-fs-scroll-right {
+  animation: dd-fs-scroll-right linear infinite;
+  white-space: nowrap;
+}
+
+@keyframes dd-fs-scroll-up {
+  0% { transform: translateY(100vh); }
+  100% { transform: translateY(-100%); }
+}
+
+.dd-overlay-text.dd-fs-scroll-up {
+  animation: dd-fs-scroll-up linear infinite;
+  white-space: nowrap;
+}
+
+@keyframes dd-fs-scroll-down {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100vh); }
+}
+
+.dd-overlay-text.dd-fs-scroll-down {
+  animation: dd-fs-scroll-down linear infinite;
+  white-space: nowrap;
+}
+
+.dd-fullscreen-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 14px 24px;
+  background: linear-gradient(135deg, var(--color-accent-soft), #9b8ed4);
+  border: none;
+  border-radius: 14px;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 0.3px;
+}
+
+.dd-fullscreen-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(124, 107, 196, 0.3);
+}
+
+.dd-fullscreen-btn:active {
+  transform: translateY(0);
+}
+
+/* 响应式 */
+@media (max-width: 600px) {
+  .dd-page {
+    padding: 24px 16px;
+  }
+
+  .dd-card {
+    padding: 24px 20px;
+    border-radius: 16px;
+  }
+
+  .dd-title {
+    font-size: 20px;
+  }
+
+  .dd-control-row {
+    flex-wrap: wrap;
+  }
+
+  .dd-control-label {
+    min-width: auto;
+  }
+
+  .dd-direction-group {
+    flex-wrap: wrap;
+  }
+}

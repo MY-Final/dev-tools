@@ -777,5 +777,17 @@
     "category": "文本工具",
     "categoryIcon": "FileText",
     "isNew": true
+  },
+  {
+    "id": "danmaku-display",
+    "name": "Danmaku Display",
+    "shortDesc": "全屏弹幕留言",
+    "desc": "全屏展示自定义消息（弹幕滚动/居中大字），适合离开工位时留言",
+    "usage": "输入文字，调整字体/颜色/动画模式，点击全屏按钮即可在全屏窗口展示。支持水平弹幕滚动、垂直滚动、静止三种模式。",
+    "tags": ["通用"],
+    "icon": "MessageSquareMore",
+    "category": "系统工具",
+    "categoryIcon": "Monitor",
+    "isNew": true
   }
 ]

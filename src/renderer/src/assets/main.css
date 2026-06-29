@@ -66,6 +66,7 @@
 @import '../styles/cors-checker.css';
 @import '../styles/user-agent-parser.css';
 @import '../styles/electron-only.css';
+@import '../styles/danmaku-display.css';
 
 @tailwind base;
 @tailwind components;

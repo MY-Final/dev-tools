@@ -79,7 +79,8 @@ const pageMap: Record<string, React.LazyExoticComponent<ComponentType>> = {
   'user-agent-parser': lazy(() => import('./UserAgentParser')),
   'markdown-preview': lazy(() => import('./MarkdownPreview')),
   'csv-editor': lazy(() => import('./CsvEditor')),
-  'xml-formatter': lazy(() => import('./XmlFormatter'))
+  'xml-formatter': lazy(() => import('./XmlFormatter')),
+  'danmaku-display': lazy(() => import('./DanmakuDisplay'))
 }
 
 export function getPageComponent(id: string): React.LazyExoticComponent<ComponentType> | null {
