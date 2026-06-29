@@ -258,6 +258,28 @@
   min-height: 0;
 }
 
+.clm-item-image-wrap {
+  display: flex;
+  gap: 10px;
+  padding: 10px;
+  background: var(--color-editor-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+}
+
+.clm-item-image {
+  max-width: 100%;
+  max-height: 200px;
+  object-fit: contain;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.clm-item-image:hover {
+  transform: scale(1.02);
+}
+
 /* 响应式 */
 @media (max-width: 600px) {
   .clm-page {

@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react'
-import { Clipboard, Copy, Check, Trash2, Download, Clock, FileText } from 'lucide-react'
+import { Clipboard, Copy, Check, Trash2, Download, Clock, FileText, Image } from 'lucide-react'
 import '../styles/clipboard-manager.css'
 
 interface HistoryItem {
@@ -7,6 +7,8 @@ interface HistoryItem {
   text: string
   timestamp: number
   isImage: boolean
+  imageDataUrl?: string
+  imageType?: string
 }
 
 export default function ClipboardManager(): React.JSX.Element {
@@ -32,13 +34,26 @@ export default function ClipboardManager(): React.JSX.Element {
           const text = await blob.text()
           if (text.trim()) {
             setHistory((prev) => {
-              // Dedup: skip if last item is the same
               if (prev.length > 0 && prev[0].text === text) return prev
               return [{ id: Date.now(), text, timestamp: Date.now(), isImage: false }, ...prev].slice(0, 50)
             })
           }
-        } else if (item.types.some((t) => t.startsWith('image/'))) {
-          setReadError('检测到图片内容（暂不支持图片历史）')
+        }
+        const imageType = item.types.find((t) => t.startsWith('image/'))
+        if (imageType) {
+          const blob = await item.getType(imageType)
+          const dataUrl = await new Promise<string>((resolve) => {
+            const reader = new FileReader()
+            reader.onload = () => resolve(reader.result as string)
+            reader.readAsDataURL(blob)
+          })
+          setHistory((prev) => {
+            if (prev.length > 0 && prev[0].isImage && prev[0].imageDataUrl === dataUrl) return prev
+            return [
+              { id: Date.now(), text: '', timestamp: Date.now(), isImage: true, imageDataUrl: dataUrl, imageType },
+              ...prev
+            ].slice(0, 50)
+          })
         }
       }
     } catch (err) {
@@ -66,7 +81,15 @@ export default function ClipboardManager(): React.JSX.Element {
 
   const copyItem = useCallback(async (item: HistoryItem) => {
     try {
-      await navigator.clipboard.writeText(item.text)
+      if (item.isImage && item.imageDataUrl) {
+        const resp = await fetch(item.imageDataUrl)
+        const blob = await resp.blob()
+        await navigator.clipboard.write([
+          new ClipboardItem({ [item.imageType || blob.type]: blob })
+        ])
+      } else {
+        await navigator.clipboard.writeText(item.text)
+      }
       setCopiedId(item.id)
       setTimeout(() => setCopiedId(null), 1500)
     } catch {
@@ -84,6 +107,7 @@ export default function ClipboardManager(): React.JSX.Element {
 
   const exportHistory = useCallback(() => {
     const text = history
+      .filter((item) => !item.isImage)
       .map(
         (item) =>
           `[${new Date(item.timestamp).toLocaleString()}] ${item.text}`
@@ -167,10 +191,21 @@ export default function ClipboardManager(): React.JSX.Element {
                     </button>
                   </div>
                 </div>
-                <div className="clm-item-content">
-                  <FileText size={14} className="clm-item-icon" />
-                  <pre className="clm-item-text">{item.text}</pre>
-                </div>
+                {item.isImage ? (
+                  <div className="clm-item-image-wrap">
+                    <Image size={14} className="clm-item-icon" />
+                    <img
+                      src={item.imageDataUrl}
+                      alt="Clipboard"
+                      className="clm-item-image"
+                    />
+                  </div>
+                ) : (
+                  <div className="clm-item-content">
+                    <FileText size={14} className="clm-item-icon" />
+                    <pre className="clm-item-text">{item.text}</pre>
+                  </div>
+                )}
               </div>
             ))}
           </div>
