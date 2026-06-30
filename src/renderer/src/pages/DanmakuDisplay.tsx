@@ -1,10 +1,30 @@
-import { ArrowLeft, ArrowRight, ArrowUp, ArrowDown, Monitor, X } from 'lucide-react'
+import { ArrowLeft, ArrowRight, ArrowUp, ArrowDown, Monitor, X, Clock } from 'lucide-react'
 import { useDanmakuDisplay } from '../tools/danmaku-display/useDanmakuDisplay'
 import type { ScrollDirection } from '../tools/danmaku-display/useDanmakuDisplay'
+import { TEMPLATES } from '../tools/danmaku-display/useDanmakuDisplay'
 import '../styles/danmaku-display.css'
 
+function formatCountdown(sec: number): string {
+  if (sec <= 0) return '00:00'
+  const h = Math.floor(sec / 3600)
+  const m = Math.floor((sec % 3600) / 60)
+  const s = sec % 60
+  if (h > 0)
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+}
+
 export default function DanmakuDisplay(): React.JSX.Element {
-  const { config, update, isFullscreen, enterFullscreen, exitFullscreen } = useDanmakuDisplay()
+  const {
+    config,
+    update,
+    isFullscreen,
+    enterFullscreen,
+    exitFullscreen,
+    applyTemplate,
+    overlayTime,
+    countdownTotal
+  } = useDanmakuDisplay()
 
   const dirIcon: Record<ScrollDirection, React.ReactNode> = {
     left: <ArrowLeft size={16} />,
@@ -14,7 +34,6 @@ export default function DanmakuDisplay(): React.JSX.Element {
   }
 
   const previewAnimClass = config.mode === 'scroll' ? `scroll-${config.direction}` : 'static'
-
   const speedSec = Math.round(60 - (config.speed - 1) * (52 / 9))
 
   const dirAnimClass: Record<ScrollDirection, string> = {
@@ -23,6 +42,8 @@ export default function DanmakuDisplay(): React.JSX.Element {
     up: 'dd-fs-scroll-up',
     down: 'dd-fs-scroll-down'
   }
+
+  const hasReturnTime = config.returnTimeEnabled && config.returnTimeType !== 'none'
 
   return (
     <>
@@ -34,12 +55,26 @@ export default function DanmakuDisplay(): React.JSX.Element {
             <p className="dd-subtitle">全屏展示自定义消息，适合离开工位时留言</p>
           </div>
 
+          {/* 一键模板 */}
+          <div className="dd-templates">
+            {TEMPLATES.map((t) => (
+              <button
+                key={t.emoji + t.text}
+                className="dd-template-btn"
+                onClick={() => applyTemplate(t)}
+              >
+                <span className="dd-template-emoji">{t.emoji}</span>
+                <span className="dd-template-label">{t.text}</span>
+              </button>
+            ))}
+          </div>
+
           <textarea
             className="dd-textarea"
             value={config.text}
             onChange={(e) => update('text', e.target.value)}
             placeholder="输入你要展示的消息…"
-            rows={4}
+            rows={3}
           />
 
           <div className="dd-controls">
@@ -104,12 +139,9 @@ export default function DanmakuDisplay(): React.JSX.Element {
                         className={`dd-dir-btn ${config.direction === d ? 'active' : ''}`}
                         onClick={() => update('direction', d)}
                         title={
-                          {
-                            left: '向左滚动',
-                            right: '向右滚动',
-                            up: '向上滚动',
-                            down: '向下滚动'
-                          }[d]
+                          { left: '向左滚动', right: '向右滚动', up: '向上滚动', down: '向下滚动' }[
+                            d
+                          ]
                         }
                       >
                         {dirIcon[d]}
@@ -132,16 +164,97 @@ export default function DanmakuDisplay(): React.JSX.Element {
                 </div>
               </>
             )}
+
+            {/* 分隔线 */}
+            <div className="dd-section-title">返回时间</div>
+
+            <div className="dd-control-row">
+              <span className="dd-control-label">启用</span>
+              <label className="dd-toggle">
+                <input
+                  type="checkbox"
+                  checked={config.returnTimeEnabled}
+                  onChange={(e) => update('returnTimeEnabled', e.target.checked)}
+                />
+                <span className="dd-toggle-slider" />
+              </label>
+            </div>
+
+            {config.returnTimeEnabled && (
+              <>
+                <div className="dd-control-row">
+                  <span className="dd-control-label">方式</span>
+                  <div className="dd-mode-selector">
+                    <button
+                      className={`dd-mode-btn ${config.returnTimeType === 'absolute' ? 'active' : ''}`}
+                      onClick={() => update('returnTimeType', 'absolute')}
+                    >
+                      指定时间
+                    </button>
+                    <button
+                      className={`dd-mode-btn ${config.returnTimeType === 'relative' ? 'active' : ''}`}
+                      onClick={() => update('returnTimeType', 'relative')}
+                    >
+                      相对时间
+                    </button>
+                  </div>
+                </div>
+
+                {config.returnTimeType === 'absolute' && (
+                  <div className="dd-control-row">
+                    <span className="dd-control-label">预计</span>
+                    <input
+                      type="time"
+                      className="dd-time-input"
+                      value={config.returnTimeAbsolute}
+                      onChange={(e) => update('returnTimeAbsolute', e.target.value)}
+                    />
+                    <span className="dd-hint-text">回来</span>
+                  </div>
+                )}
+
+                {config.returnTimeType === 'relative' && (
+                  <div className="dd-control-row">
+                    <span className="dd-control-label">预计</span>
+                    <input
+                      type="number"
+                      className="dd-number-input"
+                      min={1}
+                      max={1440}
+                      value={config.returnTimeRelative}
+                      onChange={(e) =>
+                        update('returnTimeRelative', Math.max(1, Number(e.target.value)))
+                      }
+                    />
+                    <span className="dd-hint-text">分钟后回来</span>
+                  </div>
+                )}
+              </>
+            )}
+
+            <div className="dd-section-title">显示选项</div>
+
+            <div className="dd-control-row">
+              <label className="dd-toggle-label">
+                <span className="dd-toggle-icon">
+                  <Clock size={14} />
+                </span>
+                显示当前时间
+                <input
+                  type="checkbox"
+                  checked={config.showClock}
+                  onChange={(e) => update('showClock', e.target.checked)}
+                  className="dd-toggle-inline"
+                />
+              </label>
+            </div>
           </div>
 
           <div className="dd-preview" style={{ background: config.bgColor }}>
             <div className="dd-preview-inner">
               <span
                 className={`dd-preview-text ${previewAnimClass}`}
-                style={{
-                  color: config.fontColor,
-                  fontSize: Math.min(config.fontSize, 64)
-                }}
+                style={{ color: config.fontColor, fontSize: Math.min(config.fontSize, 64) }}
               >
                 {config.text || '预览'}
               </span>
@@ -162,27 +275,60 @@ export default function DanmakuDisplay(): React.JSX.Element {
             <X size={20} />
           </button>
 
+          {/* 当前时间 */}
+          {config.showClock && <div className="dd-overlay-clock">{overlayTime}</div>}
+
           <div className={`dd-overlay-body ${config.mode === 'scroll' ? 'dd-overlay-scroll' : ''}`}>
-            <span
-              className={
-                config.mode === 'scroll'
-                  ? `dd-overlay-text ${dirAnimClass[config.direction]}`
-                  : 'dd-overlay-text dd-overlay-static'
-              }
-              style={{
-                color: config.fontColor,
-                fontSize: config.fontSize,
-                animationDuration: config.mode === 'scroll' ? `${speedSec}s` : undefined
-              }}
-            >
-              {config.text.split('\n').map((line, i) => (
-                <span key={i}>
-                  {line}
-                  {i < config.text.split('\n').length - 1 && <br />}
+            {config.mode === 'scroll' ? (
+              <span
+                className={`dd-overlay-text ${dirAnimClass[config.direction]}`}
+                style={{
+                  color: config.fontColor,
+                  fontSize: config.fontSize,
+                  animationDuration: `${speedSec}s`
+                }}
+              >
+                {config.text.split('\n').map((line, i) => (
+                  <span key={i}>
+                    {line}
+                    {i < config.text.split('\n').length - 1 && <br />}
+                  </span>
+                ))}
+              </span>
+            ) : (
+              <div className="dd-overlay-center">
+                <span
+                  className="dd-overlay-text dd-overlay-static"
+                  style={{ color: config.fontColor, fontSize: config.fontSize }}
+                >
+                  {config.text.split('\n').map((line, i) => (
+                    <span key={i}>
+                      {line}
+                      {i < config.text.split('\n').length - 1 && <br />}
+                    </span>
+                  ))}
                 </span>
-              ))}
-            </span>
+                {hasReturnTime && countdownTotal > 0 && (
+                  <div className="dd-overlay-countdown" style={{ color: config.fontColor }}>
+                    <div className="dd-overlay-countdown-label">回来倒计时</div>
+                    <div className="dd-overlay-countdown-time">
+                      {formatCountdown(countdownTotal)}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
+
+          {config.mode === 'scroll' && hasReturnTime && countdownTotal > 0 && (
+            <div
+              className="dd-overlay-countdown dd-overlay-countdown-bottom"
+              style={{ color: config.fontColor }}
+            >
+              <div className="dd-overlay-countdown-label">回来倒计时</div>
+              <div className="dd-overlay-countdown-time">{formatCountdown(countdownTotal)}</div>
+            </div>
+          )}
         </div>
       )}
     </>

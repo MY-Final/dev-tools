@@ -64,6 +64,54 @@
   border-color: var(--color-accent-soft);
 }
 
+/* 一键模板 */
+.dd-templates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.dd-template-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  font-size: 12px;
+  color: var(--color-text);
+}
+
+.dd-template-btn:hover {
+  border-color: var(--color-accent-soft);
+  background: var(--color-accent-soft-subtle);
+}
+
+.dd-template-emoji {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.dd-template-label {
+  font-weight: 500;
+}
+
+/* 分段标题 */
+.dd-section-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  padding-top: 4px;
+  border-top: 1px solid var(--color-border);
+  margin-top: 4px;
+}
+
 .dd-controls {
   display: flex;
   flex-direction: column;
@@ -181,6 +229,112 @@
   border-color: var(--color-accent-soft);
   background: var(--color-accent-soft-subtle);
   color: var(--color-accent-soft);
+}
+
+/* Toggle 开关 */
+.dd-toggle {
+  position: relative;
+  display: inline-block;
+  width: 36px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.dd-toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.dd-toggle-slider {
+  position: absolute;
+  inset: 0;
+  background: var(--color-border);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.dd-toggle-slider::before {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+}
+
+.dd-toggle input:checked + .dd-toggle-slider {
+  background: var(--color-accent-soft);
+}
+
+.dd-toggle input:checked + .dd-toggle-slider::before {
+  transform: translateX(16px);
+}
+
+.dd-toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  user-select: none;
+}
+
+.dd-toggle-label .dd-toggle-icon {
+  display: flex;
+  align-items: center;
+}
+
+.dd-toggle-inline {
+  margin-left: auto;
+  accent-color: var(--color-accent-soft);
+}
+
+/* 时间 / 数字输入 */
+.dd-time-input {
+  padding: 6px 10px;
+  background: var(--color-editor-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: var(--color-text);
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.dd-time-input:focus {
+  border-color: var(--color-accent-soft);
+}
+
+.dd-number-input {
+  width: 72px;
+  padding: 6px 10px;
+  background: var(--color-editor-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: var(--color-text);
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.dd-number-input:focus {
+  border-color: var(--color-accent-soft);
+}
+
+.dd-hint-text {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  font-weight: 500;
 }
 
 .dd-preview {
@@ -314,6 +468,57 @@
   text-align: center;
   word-break: break-word;
   user-select: none;
+}
+
+.dd-overlay-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 32px;
+}
+
+/* 全屏时钟 */
+.dd-overlay-clock {
+  position: fixed;
+  top: 20px;
+  right: 28px;
+  z-index: 10;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 18px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.35);
+  pointer-events: none;
+  user-select: none;
+}
+
+/* 全屏倒计时 */
+.dd-overlay-countdown {
+  text-align: center;
+  pointer-events: none;
+  user-select: none;
+}
+
+.dd-overlay-countdown-bottom {
+  position: fixed;
+  bottom: 48px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+}
+
+.dd-overlay-countdown-label {
+  font-size: 16px;
+  font-weight: 500;
+  opacity: 0.6;
+  margin-bottom: 4px;
+}
+
+.dd-overlay-countdown-time {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 48px;
+  font-weight: 700;
+  letter-spacing: 2px;
 }
 
 .dd-overlay-static {
