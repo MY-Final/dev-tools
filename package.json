@@ -21,7 +21,8 @@
     "build:linux": "npm run build && electron-builder --linux",
     "build:web": "vite build --config web/vite.config.ts",
     "dev:web": "vite --config web/vite.config.ts",
-    "release": "pwsh scripts/release.ps1"
+    "release": "pwsh scripts/release.ps1",
+    "new-tool": "node scripts/new-tool.js"
   },
   "dependencies": {
     "@codemirror/lang-json": "^6.0.2",
