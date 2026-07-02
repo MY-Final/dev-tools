@@ -78,7 +78,6 @@ export interface UpdaterAPI {
 export interface MavenAPI {
   searchArtifacts: (query: string, rows: number) => Promise<unknown>
   getVersions: (groupId: string, artifactId: string) => Promise<unknown>
-  fetchPopular: () => Promise<unknown>
 }
 
 export interface EnvAPI {

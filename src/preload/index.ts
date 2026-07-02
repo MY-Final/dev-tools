@@ -103,8 +103,7 @@ const mavenAPI = {
   searchArtifacts: (query: string, rows: number): Promise<unknown> =>
     ipcRenderer.invoke('maven:search', query, rows),
   getVersions: (groupId: string, artifactId: string): Promise<unknown> =>
-    ipcRenderer.invoke('maven:versions', groupId, artifactId),
-  fetchPopular: (): Promise<unknown> => ipcRenderer.invoke('maven:popular')
+    ipcRenderer.invoke('maven:versions', groupId, artifactId)
 }
 
 // Environment Variables API
