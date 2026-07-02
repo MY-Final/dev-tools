@@ -2,7 +2,14 @@ import { app } from 'electron'
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs'
 import { join } from 'path'
 
+// ────────────────────────────────────────────────────────────────
+// Settings Version & Migration Strategy
+// ────────────────────────────────────────────────────────────────
+
+export const SETTINGS_VERSION = 2 // 当前配置版本
+
 export interface AppSettings {
+  version?: number // 配置文件版本号
   appearance: {
     theme: 'light' | 'dark' | 'system'
     fontSize: 'small' | 'medium' | 'large'
@@ -46,6 +53,7 @@ const DEFAULT_SHORTCUTS = {
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
+  version: SETTINGS_VERSION,
   appearance: {
     theme: 'dark',
     fontSize: 'medium',
@@ -64,7 +72,8 @@ const DEFAULT_SETTINGS: AppSettings = {
     baseUrl: '',
     apiKey: '',
     model: 'gpt-3.5-turbo',
-    systemPrompt: 'You are a professional translator. Translate the following text from {sourceLang} to {targetLang}. Only output the translated text, nothing else. Do not add explanations, notes, or quotation marks.',
+    systemPrompt:
+      'You are a professional translator. Translate the following text from {sourceLang} to {targetLang}. Only output the translated text, nothing else. Do not add explanations, notes, or quotation marks.',
     temperature: 0.3,
     maxTokens: 4096
   },
@@ -78,13 +87,100 @@ const DEFAULT_SETTINGS: AppSettings = {
   favorites: []
 }
 
-class SettingsStore {
+// ────────────────────────────────────────────────────────────────
+// Migration Functions
+// ────────────────────────────────────────────────────────────────
+
+type MigrationFn = (data: any) => any
+
+const migrations: Record<number, MigrationFn> = {
+  // v0 → v1: 添加 translator 配置
+  1: (data: any) => {
+    return {
+      ...data,
+      version: 1,
+      translator: data.translator || DEFAULT_SETTINGS.translator
+    }
+  },
+
+  // v1 → v2: 添加 proxy 配置
+  2: (data: any) => {
+    return {
+      ...data,
+      version: 2,
+      proxy: data.proxy || DEFAULT_SETTINGS.proxy
+    }
+  }
+
+  // 未来版本迁移示例:
+  // 3: (data: any) => {
+  //   return {
+  //     ...data,
+  //     version: 3,
+  //     newFeature: 'default value'
+  //   }
+  // }
+}
+
+/**
+ * 执行配置迁移
+ * @param data 旧版本配置
+ * @returns 迁移后的配置
+ */
+function migrateSettings(data: any): AppSettings {
+  let migrated = { ...data }
+  const currentVersion = migrated.version || 0
+
+  // 如果是未来版本，降级到当前版本（向后兼容）
+  if (currentVersion > SETTINGS_VERSION) {
+    console.warn(
+      `Settings version ${currentVersion} is newer than current ${SETTINGS_VERSION}, using defaults`
+    )
+    return { ...DEFAULT_SETTINGS }
+  }
+
+  // 逐步应用迁移
+  for (let v = currentVersion + 1; v <= SETTINGS_VERSION; v++) {
+    if (migrations[v]) {
+      console.log(`Migrating settings from v${v - 1} to v${v}`)
+      migrated = migrations[v](migrated)
+    }
+  }
+
+  migrated.version = SETTINGS_VERSION
+  return migrated
+}
+
+// ────────────────────────────────────────────────────────────────
+// Settings Store (Dependency Injection Pattern)
+// ────────────────────────────────────────────────────────────────
+
+export interface ISettingsStore {
+  getSettings(): AppSettings
+  getFilePath(): string
+  getAppearance(): AppSettings['appearance']
+  getEditor(): AppSettings['editor']
+  getUpdater(): AppSettings['updater']
+  getTranslator(): AppSettings['translator']
+  updateAppearance(updates: Partial<AppSettings['appearance']>): AppSettings
+  updateEditor(updates: Partial<AppSettings['editor']>): AppSettings
+  updateUpdater(updates: Partial<AppSettings['updater']>): AppSettings
+  updateTranslator(updates: Partial<AppSettings['translator']>): AppSettings
+  updateNpmRegistry(npmRegistry: string): AppSettings
+  updateMavenSearchUrl(mavenSearchUrl: string): AppSettings
+  updateProxy(updates: Partial<AppSettings['proxy']>): AppSettings
+  updateShortcuts(updates: Partial<AppSettings['shortcuts']>): AppSettings
+  updateFavorites(toolId: string): AppSettings
+  resetToDefaults(): AppSettings
+}
+
+export class SettingsStore implements ISettingsStore {
   private filePath: string
   private settings: AppSettings
 
-  constructor() {
-    const userDataPath = app.getPath('userData')
-    this.filePath = join(userDataPath, 'settings.json')
+  constructor(userDataPath?: string) {
+    const dataPath = userDataPath || app.getPath('userData')
+    this.filePath = join(dataPath, 'settings.json')
     this.settings = this.load()
   }
 
@@ -93,16 +189,46 @@ class SettingsStore {
       if (existsSync(this.filePath)) {
         const data = readFileSync(this.filePath, 'utf-8')
         const parsed = JSON.parse(data)
-        return this.mergeWithDefaults(parsed)
+
+        // 执行版本迁移
+        const migrated = migrateSettings(parsed)
+
+        // 合并默认值（处理新增字段）
+        const merged = this.mergeWithDefaults(migrated)
+
+        // 如果版本号变化，保存迁移后的配置
+        if (!parsed.version || parsed.version !== SETTINGS_VERSION) {
+          this.settings = merged
+          this.save()
+          console.log(`Settings migrated to v${SETTINGS_VERSION}`)
+        }
+
+        return merged
       }
-    } catch {
-      // 如果读取失败，使用默认设置
+    } catch (error) {
+      console.error('Failed to load settings:', error)
+      // 备份损坏的配置文件
+      this.backupCorruptedFile()
     }
     return { ...DEFAULT_SETTINGS }
   }
 
+  private backupCorruptedFile(): void {
+    try {
+      if (existsSync(this.filePath)) {
+        const backupPath = `${this.filePath}.backup.${Date.now()}`
+        const data = readFileSync(this.filePath, 'utf-8')
+        writeFileSync(backupPath, data, 'utf-8')
+        console.log(`Corrupted settings backed up to ${backupPath}`)
+      }
+    } catch (error) {
+      console.error('Failed to backup corrupted settings:', error)
+    }
+  }
+
   private mergeWithDefaults(data: Partial<AppSettings>): AppSettings {
     return {
+      version: SETTINGS_VERSION,
       appearance: { ...DEFAULT_SETTINGS.appearance, ...data.appearance },
       editor: { ...DEFAULT_SETTINGS.editor, ...data.editor },
       updater: { ...DEFAULT_SETTINGS.updater, ...data.updater },
@@ -121,9 +247,11 @@ class SettingsStore {
       if (!existsSync(dir)) {
         mkdirSync(dir, { recursive: true })
       }
-      writeFileSync(this.filePath, JSON.stringify(this.settings, null, 2), 'utf-8')
-    } catch {
-      // 忽略保存错误
+      // 确保版本号始终写入
+      const toSave = { ...this.settings, version: SETTINGS_VERSION }
+      writeFileSync(this.filePath, JSON.stringify(toSave, null, 2), 'utf-8')
+    } catch (error) {
+      console.error('Failed to save settings:', error)
     }
   }
 
@@ -217,4 +345,18 @@ class SettingsStore {
   }
 }
 
-export const settingsStore = new SettingsStore()
+// ────────────────────────────────────────────────────────────────
+// Factory & Singleton Export
+// ────────────────────────────────────────────────────────────────
+
+/**
+ * 工厂函数：创建 SettingsStore 实例（支持 DI）
+ */
+export function createSettingsStore(userDataPath?: string): ISettingsStore {
+  return new SettingsStore(userDataPath)
+}
+
+/**
+ * 默认单例实例（向后兼容）
+ */
+export const settingsStore = createSettingsStore()
