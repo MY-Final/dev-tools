@@ -1,0 +1,48 @@
+.error-boundary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 2rem;
+  background: var(--color-background);
+}
+
+.error-content {
+  text-align: center;
+  max-width: 500px;
+}
+
+.error-content h2 {
+  color: var(--color-danger);
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.error-content p {
+  color: var(--color-text-secondary);
+  margin-bottom: 1.5rem;
+}
+
+.error-content details {
+  margin: 1rem 0;
+  padding: 1rem;
+  background: var(--color-surface);
+  border-radius: 8px;
+  text-align: left;
+}
+
+.error-content summary {
+  cursor: pointer;
+  color: var(--color-accent);
+  font-weight: 500;
+}
+
+.error-content pre {
+  margin-top: 0.5rem;
+  padding: 0.75rem;
+  background: var(--color-background);
+  border-radius: 4px;
+  overflow-x: auto;
+  font-size: 0.875rem;
+  color: var(--color-danger);
+}

@@ -60,12 +60,3 @@ export async function getArtifactVersions(
     return []
   }
 }
-
-export async function fetchPopularDeps(): Promise<MavenDoc[]> {
-  try {
-    const docs = (await window.maven.fetchPopular()) as SolrDoc[]
-    return docs.map(toMavenDoc)
-  } catch {
-    return []
-  }
-}

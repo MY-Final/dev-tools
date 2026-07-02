@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect, Suspense } from 'react'
 import Sidebar from '@renderer/components/Sidebar'
 import CommandPalette from '@renderer/components/CommandPalette'
 import ToolHelp from '@renderer/components/ToolHelp'
+import { ErrorBoundary } from '@renderer/components/ErrorBoundary'
 import Home from '@renderer/pages/Home'
 import About from '@renderer/pages/About'
 import SettingsPage from '@renderer/pages/SettingsPage'
@@ -80,10 +81,12 @@ function AppContent(): React.JSX.Element {
     const PageComponent = getPageComponent(currentPage)
     if (PageComponent) {
       return (
-        <Suspense fallback={<div className="page-loading">Loading…</div>}>
-          <ToolHelp toolId={currentPage} />
-          <PageComponent />
-        </Suspense>
+        <ErrorBoundary>
+          <Suspense fallback={<div className="page-loading">Loading…</div>}>
+            <ToolHelp toolId={currentPage} />
+            <PageComponent />
+          </Suspense>
+        </ErrorBoundary>
       )
     }
 

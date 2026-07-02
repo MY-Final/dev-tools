@@ -328,51 +328,6 @@ const webMavenAPI = {
     const res = await mavenFetch(params, 1, stored.mavenSearchUrl)
     if (!res) return { response: { docs: [] } }
     return res.json()
-  },
-
-  async fetchPopular(): Promise<unknown> {
-    const seeds = [
-      'spring-boot-starter-web',
-      'spring-boot-starter-data-jpa',
-      'lombok',
-      'guava',
-      'jackson-databind',
-      'gson',
-      'mybatis-spring-boot-starter',
-      'mybatis-plus-boot-starter',
-      'mysql-connector-j',
-      'postgresql',
-      'h2',
-      'commons-lang3',
-      'okhttp',
-      'kafka-clients',
-      'jjwt-api',
-      'springdoc-openapi-starter-webmvc-ui',
-      'mapstruct',
-      'hutool-all',
-      'fastjson2',
-      'knife4j-openapi3-jakarta-spring-boot-starter',
-      'aliyun-sdk-oss',
-      'amqp-client',
-      'jedis',
-      'httpclient5'
-    ]
-    const results: unknown[] = []
-    for (const seed of seeds) {
-      try {
-        const params = new URLSearchParams({ q: `a:${seed}`, rows: '1', wt: 'json' })
-        const res = await mavenFetch(params)
-        if (res) {
-          const data = await res.json()
-          if (data.response?.docs?.length > 0) {
-            results.push(data.response.docs[0])
-          }
-        }
-      } catch {
-        /* skip */
-      }
-    }
-    return results
   }
 }
 
