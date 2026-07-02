@@ -10,6 +10,16 @@ function sendToWindow(win: BrowserWindow | null, channel: string, data: unknown)
   }
 }
 
+// Clean up all WebSocket connections on app quit
+export function cleanupWsProxyConnections(): void {
+  wsProxyConnections.forEach((ws) => {
+    if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
+      ws.close()
+    }
+  })
+  wsProxyConnections.clear()
+}
+
 export function registerWsProxyHandlers(getMainWindow: () => BrowserWindow | null): void {
   ipcMain.handle('ws-proxy:connect', (_event, opts: { url: string; headers?: Record<string, string>; protocols?: string[] }) => {
     const id = ++wsProxyIdCounter

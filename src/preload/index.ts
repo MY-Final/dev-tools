@@ -1,51 +1,13 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
-
-export interface AppSettings {
-  appearance: {
-    theme: 'light' | 'dark' | 'system'
-    fontSize: 'small' | 'medium' | 'large'
-    sidebarCollapsed: boolean
-    showSidebarShortDesc: boolean
-  }
-  editor: {
-    jsonIndent: 2 | 4
-    autoCopy: boolean
-    timestampFormat: 'seconds' | 'milliseconds'
-  }
-  updater: {
-    autoCheck: boolean
-  }
-  translator: {
-    baseUrl: string
-    apiKey: string
-    model: string
-    systemPrompt: string
-    temperature: number
-    maxTokens: number
-  }
-  npmRegistry: string
-  mavenSearchUrl: string
-  proxy: {
-    enabled: boolean
-    url: string
-  }
-  shortcuts: {
-    toggleSidebar: string
-    openSettings: string
-    goHome: string
-  }
-  favorites: string[]
-}
-
-export type UpdateStatus =
-  | { type: 'idle' }
-  | { type: 'checking' }
-  | { type: 'not-available' }
-  | { type: 'available'; version: string; releaseDate?: string; releaseNotes?: string }
-  | { type: 'downloading'; percent: number }
-  | { type: 'downloaded'; version: string }
-  | { type: 'error'; message: string }
+import type {
+  AppSettings,
+  UpdateStatus,
+  NpmSearchResult,
+  NpmPackageDetail,
+  DockerSearchResult,
+  DockerTagResult
+} from './index.d'
 
 // Settings API
 const settingsAPI = {
@@ -111,27 +73,6 @@ const envAPI = {
   getEnvVars: (): Promise<Record<string, string>> => ipcRenderer.invoke('env:get-vars')
 }
 
-interface NpmSearchResult {
-  name: string
-  version: string
-  description: string
-  keywords: string[]
-  publisher: string
-  link: string
-  date: string
-}
-
-interface NpmPackageDetail {
-  name: string
-  description: string
-  license: string
-  homepage: string
-  repository: string
-  keywords: string[]
-  maintainers: string[]
-  versions: string[]
-}
-
 // Translator API (proxied through main process)
 const translatorAPI = {
   translate: (text: string, sourceLang: string, targetLang: string): Promise<{ translation?: string; error?: string }> =>
@@ -146,16 +87,6 @@ const npmAPI = {
     ipcRenderer.invoke('npm:search', query, size || 20),
   getPackage: (name: string): Promise<NpmPackageDetail | null> =>
     ipcRenderer.invoke('npm:package', name)
-}
-
-interface DockerSearchResult {
-  name: string
-  description: string
-  stars: number
-  pulls: number
-  isOfficial: boolean
-  isAutomated: boolean
-  imageName: string
 }
 
 // Docker API (proxied through main process)
@@ -196,16 +127,6 @@ const wsProxyAPI = {
   }
 }
 
-interface DockerTagResult {
-  name: string
-  digest: string
-  digestShort: string
-  size: number
-  arch: string
-  os: string
-  lastUpdated: string
-}
-
 // Use `contextBridge` APIs to expose Electron APIs to
 // renderer only if context isolation is enabled, otherwise
 // just add to the DOM global.
@@ -224,22 +145,14 @@ if (process.contextIsolated) {
     console.error(error)
   }
 } else {
-  // @ts-ignore (define in dts)
-  window.electron = electronAPI
-  // @ts-ignore (define in dts)
-  window.api = settingsAPI
-  // @ts-ignore (define in dts)
-  window.updater = updaterAPI
-  // @ts-ignore (define in dts)
-  window.maven = mavenAPI
-  // @ts-ignore (define in dts)
-  window.env = envAPI
-  // @ts-ignore (define in dts)
-  window.translator = translatorAPI
-  // @ts-ignore (define in dts)
-  window.npm = npmAPI
-  // @ts-ignore (define in dts)
-  window.docker = dockerAPI
-  // @ts-ignore (define in dts)
-  window.wsProxy = wsProxyAPI
+  // Fallback for non-isolated context (development mode)
+  ;(window as any).electron = electronAPI
+  ;(window as any).api = settingsAPI
+  ;(window as any).updater = updaterAPI
+  ;(window as any).maven = mavenAPI
+  ;(window as any).env = envAPI
+  ;(window as any).translator = translatorAPI
+  ;(window as any).npm = npmAPI
+  ;(window as any).docker = dockerAPI
+  ;(window as any).wsProxy = wsProxyAPI
 }

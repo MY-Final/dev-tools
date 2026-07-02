@@ -10,7 +10,7 @@ import { registerEnvHandlers } from './env-ipc'
 import { registerTranslatorHandlers } from './translator-ipc'
 import { registerNpmHandlers } from './npm-ipc'
 import { registerDockerHandlers } from './docker-ipc'
-import { registerWsProxyHandlers } from './ws-proxy-ipc'
+import { registerWsProxyHandlers, cleanupWsProxyConnections } from './ws-proxy-ipc'
 
 let mainWindow: BrowserWindow | null = null
 
@@ -148,6 +148,12 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit()
   }
+})
+
+// Clean up WebSocket connections before quitting
+app.on('will-quit', () => {
+  cleanupWsProxyConnections()
+  globalShortcut.unregisterAll()
 })
 
 // In this file you can include the rest of your app's specific main process
