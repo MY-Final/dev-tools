@@ -6,7 +6,10 @@ import type {
   NpmSearchResult,
   NpmPackageDetail,
   DockerSearchResult,
-  DockerTagResult
+  DockerTagResult,
+  CreateTodoInput,
+  UpdateTodoInput,
+  TodoItem
 } from './index.d'
 
 // Settings API
@@ -127,6 +130,18 @@ const wsProxyAPI = {
   }
 }
 
+// Todo Notes API
+const todosAPI = {
+  getItems: (): Promise<TodoItem[]> => ipcRenderer.invoke('todos:get'),
+  createItem: (input: CreateTodoInput): Promise<TodoItem> =>
+    ipcRenderer.invoke('todos:create', input),
+  updateItem: (id: string, updates: UpdateTodoInput): Promise<TodoItem | null> =>
+    ipcRenderer.invoke('todos:update', id, updates),
+  deleteItem: (id: string): Promise<boolean> => ipcRenderer.invoke('todos:delete', id),
+  clearCompleted: (date?: string): Promise<number> =>
+    ipcRenderer.invoke('todos:clear-completed', date)
+}
+
 // Use `contextBridge` APIs to expose Electron APIs to
 // renderer only if context isolation is enabled, otherwise
 // just add to the DOM global.
@@ -141,6 +156,7 @@ if (process.contextIsolated) {
     contextBridge.exposeInMainWorld('npm', npmAPI)
     contextBridge.exposeInMainWorld('docker', dockerAPI)
     contextBridge.exposeInMainWorld('wsProxy', wsProxyAPI)
+    contextBridge.exposeInMainWorld('todos', todosAPI)
   } catch (error) {
     console.error(error)
   }
@@ -155,4 +171,5 @@ if (process.contextIsolated) {
   ;(window as any).npm = npmAPI
   ;(window as any).docker = dockerAPI
   ;(window as any).wsProxy = wsProxyAPI
+  ;(window as any).todos = todosAPI
 }

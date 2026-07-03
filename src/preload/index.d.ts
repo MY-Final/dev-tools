@@ -58,6 +58,37 @@ export interface SettingsAPI {
   resetToDefaults: () => Promise<AppSettings>
 }
 
+export interface TodoItem {
+  id: string
+  title: string
+  note: string
+  date: string
+  completed: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export interface CreateTodoInput {
+  title: string
+  note?: string
+  date: string
+}
+
+export interface UpdateTodoInput {
+  title?: string
+  note?: string
+  date?: string
+  completed?: boolean
+}
+
+export interface TodosAPI {
+  getItems: () => Promise<TodoItem[]>
+  createItem: (input: CreateTodoInput) => Promise<TodoItem>
+  updateItem: (id: string, updates: UpdateTodoInput) => Promise<TodoItem | null>
+  deleteItem: (id: string) => Promise<boolean>
+  clearCompleted: (date?: string) => Promise<number>
+}
+
 export type UpdateStatus =
   | { type: 'idle' }
   | { type: 'checking' }
@@ -161,5 +192,6 @@ declare global {
     npm: NpmAPI
     docker: DockerAPI
     wsProxy: WsProxyAPI
+    todos: TodosAPI
   }
 }

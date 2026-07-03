@@ -484,6 +484,18 @@
     "categoryIcon": "BookMarked"
   },
   {
+    "id": "todo-notes",
+    "name": "Todo Notes",
+    "shortDesc": "待办记事本",
+    "desc": "每日待办 · 本地保存",
+    "usage": "按日期记录待办事项，支持新增、编辑、勾选完成、删除和按状态筛选。数据保存在本机 userData 目录，适合日常开发任务记录。",
+    "tags": ["通用"],
+    "icon": "ListTodo",
+    "category": "备忘录",
+    "categoryIcon": "BookMarked",
+    "isNew": true
+  },
+  {
     "id": "image-tools",
     "name": "File to Base64",
     "shortDesc": "文件转 Base64",

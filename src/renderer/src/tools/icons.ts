@@ -58,6 +58,7 @@ import {
   Container,
   PackageSearch,
   MessageSquareMore,
+  ListTodo,
   type LucideIcon
 } from 'lucide-react'
 
@@ -120,7 +121,8 @@ const iconMap: Record<string, LucideIcon> = {
   AlignLeft,
   Container,
   PackageSearch,
-  MessageSquareMore
+  MessageSquareMore,
+  ListTodo
 }
 
 export function getIcon(name: string): LucideIcon {
