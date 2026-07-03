@@ -14,6 +14,7 @@ import {
   Monitor,
   FileText,
   BookMarked,
+  ListTodo,
   Lock,
   Search,
   Star
@@ -37,7 +38,8 @@ const categoryIcons: Record<string, React.ComponentType<{ size?: number; classNa
   '编码/加密': Lock,
   开发工具: Wrench,
   文本工具: FileText,
-  备忘录: BookMarked,
+  速查表: BookMarked,
+  备忘录: ListTodo,
   资源搜索: Search,
   __default: Wrench
 }
@@ -118,6 +120,17 @@ export default function Sidebar({
     [favorites]
   )
 
+  const navigateToTool = useCallback(
+    (toolId: string): void => {
+      onNavigate(toolId)
+    },
+    [onNavigate]
+  )
+
+  const openCommandPalette = useCallback((): void => {
+    window.dispatchEvent(new Event('command-palette:open'))
+  }, [])
+
   // 默认只展开第一个分类，其余折叠
   const [collapsedCategories, setCollapsedCategories] = useState<Record<string, boolean>>(() => {
     const entries = [...toolsByCategory.entries()]
@@ -195,6 +208,14 @@ export default function Sidebar({
           ))}
         </div>
 
+        {!collapsed && (
+          <button className="sidebar-search" type="button" onClick={openCommandPalette}>
+            <Search size={14} className="sidebar-search-icon" />
+            <span className="sidebar-search-input">快速搜索...</span>
+            <kbd className="sidebar-search-kbd">Ctrl K</kbd>
+          </button>
+        )}
+
         {/* 收藏 */}
         {favoriteTools.length > 0 && (
           <div className="nav-group">
@@ -226,7 +247,7 @@ export default function Sidebar({
                       currentPage === tool.id && 'active',
                       collapsed && 'collapsed'
                     )}
-                    onClick={() => onNavigate(tool.id)}
+                    onClick={() => navigateToTool(tool.id)}
                   >
                     <Icon size={18} className="nav-icon" />
                     <div className="nav-label-wrapper">
@@ -282,7 +303,7 @@ export default function Sidebar({
                         currentPage === tool.id && 'active',
                         collapsed && 'collapsed'
                       )}
-                      onClick={() => onNavigate(tool.id)}
+                      onClick={() => navigateToTool(tool.id)}
                     >
                       <Icon size={18} className="nav-icon" />
                       {!collapsed && (

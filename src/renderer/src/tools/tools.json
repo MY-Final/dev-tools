@@ -8,7 +8,7 @@
     "tags": ["通用"],
     "icon": "HardDrive",
     "category": "换算工具",
-    "categoryIcon": "Code"
+    "categoryIcon": "Calculator"
   },
   {
     "id": "my-ip",
@@ -129,7 +129,7 @@
     "tags": ["后端", "通用"],
     "icon": "CalendarClock",
     "category": "换算工具",
-    "categoryIcon": "Code"
+    "categoryIcon": "Calculator"
   },
   {
     "id": "base64-codec",
@@ -227,7 +227,7 @@
     "usage": "按分类浏览 Git 常用命令，支持搜索。涵盖分支管理、暂存、回退、标签、远程操作等。适用于 Git 新手学习或老手快速回忆。",
     "tags": ["通用"],
     "icon": "GitBranch",
-    "category": "备忘录",
+    "category": "速查表",
     "categoryIcon": "BookMarked"
   },
   {
@@ -238,7 +238,7 @@
     "usage": "按分类浏览 Docker 常用命令，涵盖容器管理、镜像操作、网络、卷、Docker Compose 等。适用于日常 Docker 运维参考。",
     "tags": ["运维", "通用"],
     "icon": "Box",
-    "category": "备忘录",
+    "category": "速查表",
     "categoryIcon": "BookMarked"
   },
   {
@@ -293,7 +293,7 @@
     "usage": "浏览 ASCII 码表，查看十进制/十六进制/八进制/二进制数值及对应字符。适用于字符编码调试和数据协议开发。",
     "tags": ["后端", "通用"],
     "icon": "Table",
-    "category": "备忘录",
+    "category": "速查表",
     "categoryIcon": "BookMarked"
   },
   {
@@ -315,7 +315,7 @@
     "usage": "浏览 npm、Yarn、pnpm 常用命令对比速查表。涵盖安装、卸载、更新、发布等操作。适用于多包管理工具切换时快速查阅。",
     "tags": ["前端"],
     "icon": "Package",
-    "category": "备忘录",
+    "category": "速查表",
     "categoryIcon": "BookMarked"
   },
   {
@@ -326,7 +326,7 @@
     "usage": "按分类浏览 Linux 常用命令（文件操作/权限/进程/网络等），支持搜索。适用于服务器运维和 Shell 脚本编写参考。",
     "tags": ["运维"],
     "icon": "Terminal",
-    "category": "备忘录",
+    "category": "速查表",
     "categoryIcon": "BookMarked"
   },
   {
@@ -337,7 +337,7 @@
     "usage": "按分类浏览 kubectl 常用命令，涵盖 Pod 管理、部署、服务、配置等。适用于 K8s 日常运维和故障排查。",
     "tags": ["运维"],
     "icon": "Ship",
-    "category": "备忘录",
+    "category": "速查表",
     "categoryIcon": "BookMarked"
   },
   {
@@ -349,7 +349,7 @@
     "tags": ["前端", "通用"],
     "icon": "Palette",
     "category": "换算工具",
-    "categoryIcon": "Code"
+    "categoryIcon": "Calculator"
   },
   {
     "id": "lorem-ipsum",
@@ -447,7 +447,7 @@
     "usage": "按分类浏览 HTTP 状态码（1xx–5xx），查看含义、使用场景和 RFC 引用。适用于接口开发时快速查阅。",
     "tags": ["前端", "后端", "通用"],
     "icon": "Server",
-    "category": "备忘录",
+    "category": "速查表",
     "categoryIcon": "BookMarked"
   },
   {
@@ -458,7 +458,7 @@
     "usage": "浏览正则表达式常用语法（字符类/量词/断言/标志等），附带示例说明。适用于编写正则时的快速参考。",
     "tags": ["通用"],
     "icon": "Regex",
-    "category": "备忘录",
+    "category": "速查表",
     "categoryIcon": "BookMarked"
   },
   {
@@ -469,7 +469,7 @@
     "usage": "浏览 HTML 实体字符表，查看字符、实体名称和实体编号。适用于编写 HTML 模板或处理转义字符。",
     "tags": ["前端"],
     "icon": "FileCode",
-    "category": "备忘录",
+    "category": "速查表",
     "categoryIcon": "BookMarked"
   },
   {
@@ -480,19 +480,31 @@
     "usage": "按分类浏览 SQL 命令（查询/连接/DDL/DML/函数），附带语法示例。适用于数据库操作时的快速参考。",
     "tags": ["后端"],
     "icon": "Database",
-    "category": "备忘录",
+    "category": "速查表",
     "categoryIcon": "BookMarked"
   },
   {
+    "id": "todo-notes",
+    "name": "Todo Notes",
+    "shortDesc": "待办记事本",
+    "desc": "每日待办 · 本地保存",
+    "usage": "按日期记录待办事项，支持新增、编辑、勾选完成、删除和按状态筛选。数据保存在本机 userData 目录，适合日常开发任务记录。",
+    "tags": ["通用"],
+    "icon": "ListTodo",
+    "category": "备忘录",
+    "categoryIcon": "ListTodo",
+    "isNew": true
+  },
+  {
     "id": "image-tools",
-    "name": "Image Tools",
-    "shortDesc": "图片工具",
-    "desc": "图片转 Base64 · 图片信息查看",
-    "usage": "拖入图片即可转为 Base64 Data URI 或查看图片尺寸、格式、文件大小等元信息。适用于前端 Base64 图片嵌入。",
+    "name": "File to Base64",
+    "shortDesc": "文件转 Base64",
+    "desc": "文件转 Base64 · Data URL 生成",
+    "usage": "拖入任意文件即可转为 Base64 或 Data URL。图片会额外显示尺寸信息并支持复制 img 标签，视频和音频支持预览与标签复制。适用于开发上传调试或内联资源生成。",
     "tags": ["前端", "通用"],
     "icon": "Image",
-    "category": "换算工具",
-    "categoryIcon": "Calculator"
+    "category": "编码/加密",
+    "categoryIcon": "Lock"
   },
   {
     "id": "data-converter",
@@ -524,7 +536,7 @@
     "usage": "浏览 CSS 布局速查（Flexbox/Grid 图示）、单位对照、选择器语法等。适用于前端开发时的快速参考。",
     "tags": ["前端"],
     "icon": "Paintbrush",
-    "category": "备忘录",
+    "category": "速查表",
     "categoryIcon": "BookMarked"
   },
   {
@@ -634,8 +646,8 @@
     "usage": "查看和编辑浏览器 localStorage/sessionStorage 数据。适用于调试前端存储逻辑或手动修改缓存数据。",
     "tags": ["前端"],
     "icon": "Archive",
-    "category": "系统工具",
-    "categoryIcon": "Monitor"
+    "category": "开发工具",
+    "categoryIcon": "Wrench"
   },
   {
     "id": "timezone-converter",
@@ -678,8 +690,8 @@
     "usage": "在设置中配置 API Key 和 Base URL 后即可使用。支持任意语言互译，可自定义翻译 Prompt。适用于技术文档翻译。",
     "tags": ["通用"],
     "icon": "Languages",
-    "category": "开发工具",
-    "categoryIcon": "Wrench",
+    "category": "文本工具",
+    "categoryIcon": "FileText",
     "isNew": true
   },
   {
@@ -786,8 +798,8 @@
     "usage": "输入文字，调整字体/颜色/动画模式，点击全屏按钮即可在全屏窗口展示。支持水平弹幕滚动、垂直滚动、静止三种模式。",
     "tags": ["通用"],
     "icon": "MessageSquareMore",
-    "category": "系统工具",
-    "categoryIcon": "Monitor",
+    "category": "备忘录",
+    "categoryIcon": "ListTodo",
     "isNew": true
   }
 ]

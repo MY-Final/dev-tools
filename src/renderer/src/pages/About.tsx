@@ -80,7 +80,8 @@ export default function About(): React.JSX.Element {
               <span className="about-tech-badge">Vite</span>
               <span className="about-tech-badge">CodeMirror 6</span>
               <span className="about-tech-badge">Lucide</span>
-              <span className="about-tech-badge">Radix UI</span>
+              <span className="about-tech-badge">shadcn/ui</span>
+              <span className="about-tech-badge">React DayPicker</span>
             </div>
           </div>
 

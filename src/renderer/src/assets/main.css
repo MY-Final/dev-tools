@@ -2,6 +2,7 @@
 @import '../styles/global.css';
 @import '../styles/sidebar.css';
 @import '../styles/error-boundary.css';
+@import '../styles/tool-layout.css';
 @import '../styles/home.css';
 @import '../styles/converter.css';
 @import '../styles/myip.css';
@@ -43,6 +44,7 @@
 @import '../styles/timer-stopwatch.css';
 @import '../styles/usb-viewer.css';
 @import '../styles/xpath-tester.css';
+@import '../styles/todo-notes.css';
 @import '../styles/image-tools.css';
 @import '../styles/data-converter.css';
 @import '../styles/uuid-decoder.css';

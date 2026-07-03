@@ -11,6 +11,7 @@ import { registerTranslatorHandlers } from './translator-ipc'
 import { registerNpmHandlers } from './npm-ipc'
 import { registerDockerHandlers } from './docker-ipc'
 import { registerWsProxyHandlers, cleanupWsProxyConnections } from './ws-proxy-ipc'
+import { registerTodoHandlers } from './todos-ipc'
 
 let mainWindow: BrowserWindow | null = null
 
@@ -114,6 +115,9 @@ app.whenReady().then(() => {
 
   // Register WebSocket proxy handlers
   registerWsProxyHandlers(() => mainWindow)
+
+  // Register todo handlers
+  registerTodoHandlers()
 
   createWindow()
 
