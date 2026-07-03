@@ -181,7 +181,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 14px;
+  padding: 9px 10px 9px 14px;
   background: var(--color-editor-bg);
   border: 1px solid var(--color-border);
   border-radius: 10px;
@@ -216,7 +216,7 @@
 .uc-result-right {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 10px;
   text-align: right;
   flex: 1;
   min-width: 0;
@@ -237,21 +237,21 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   border: 1px solid var(--color-border);
-  border-radius: 6px;
-  background: var(--color-surface);
-  color: var(--color-text-muted);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-text-secondary);
   cursor: pointer;
   transition: all 0.15s ease;
   flex-shrink: 0;
 }
 
 .uc-copy-btn svg {
-  width: 14px;
-  height: 14px;
-  stroke-width: 2.25;
+  width: 16px;
+  height: 16px;
+  stroke-width: 2;
 }
 
 .uc-copy-btn:hover {
