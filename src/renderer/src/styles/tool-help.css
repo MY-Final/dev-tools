@@ -3,40 +3,27 @@
    ======================================== */
 
 .tool-help {
-  margin: 0 16px 4px;
-  padding: 6px 10px;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
+  width: 100%;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid var(--glass-border);
+  border-radius: 14px;
+  box-shadow: var(--shadow-sm);
   transition: all 0.2s ease;
 }
 
-.tool-help-expanded {
-  background: var(--color-accent-soft-subtle);
-  border-color: var(--color-accent-soft);
-}
-
-.tool-help-toggle {
+.tool-help-heading {
   display: flex;
   align-items: center;
   gap: 6px;
   width: 100%;
-  padding: 4px 0;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  color: var(--color-text-muted);
-  font-size: 12px;
-  font-weight: 500;
-  transition: color 0.15s ease;
-}
-
-.tool-help-toggle:hover {
   color: var(--color-text-secondary);
-}
-
-.tool-help-expanded .tool-help-toggle {
-  color: var(--color-accent-soft);
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 4px;
 }
 
 .tool-help-icon {
@@ -46,19 +33,11 @@
 .tool-help-label {
   flex: 1;
   text-align: left;
-}
-
-.tool-help-arrow {
-  flex-shrink: 0;
-  transition: transform 0.2s ease;
-}
-
-.tool-help-expanded .tool-help-arrow {
-  transform: rotate(180deg);
+  white-space: nowrap;
 }
 
 .tool-help-content {
-  padding: 6px 0 4px;
+  padding-left: 20px;
 }
 
 .tool-help-text {
@@ -66,4 +45,10 @@
   font-size: 12px;
   line-height: 1.6;
   color: var(--color-text-secondary);
+}
+
+@media (max-width: 1100px) {
+  .tool-help-content {
+    padding-left: 0;
+  }
 }

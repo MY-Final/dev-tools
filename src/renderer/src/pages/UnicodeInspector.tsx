@@ -196,6 +196,7 @@ function InfoRow({ label, value, copiedKey, onCopy }: InfoRowProps): React.JSX.E
 
 export default function UnicodeInspector(): React.JSX.Element {
   const [input, setInput] = useState('')
+  const [selectedIndex, setSelectedIndex] = useState(0)
   const [copiedKey, setCopiedKey] = useState<string | null>(null)
 
   const chars = useMemo(() => {
@@ -204,14 +205,16 @@ export default function UnicodeInspector(): React.JSX.Element {
     return [...input]
   }, [input])
 
-  const selectedChar = useMemo(() => {
-    if (chars.length === 0) return null
-    return analyzeChar(chars[0])
-  }, [chars])
-
   const allChars = useMemo(() => {
     return chars.map((c) => analyzeChar(c)).filter(Boolean) as CharInfo[]
   }, [chars])
+
+  const selectedChar = allChars[Math.min(selectedIndex, allChars.length - 1)] ?? null
+
+  const updateInput = useCallback((value: string) => {
+    setInput(value)
+    setSelectedIndex(0)
+  }, [])
 
   const copyToClipboard = useCallback(async (text: string, key: string) => {
     try {
@@ -236,7 +239,7 @@ export default function UnicodeInspector(): React.JSX.Element {
             <span className="ui-input-label">输入字符或字符串</span>
             <div className="ui-samples">
               {['A', '中', 'Ω', '🎉', '∑', '⚡'].map((s) => (
-                <button key={s} className="ui-sample-btn" onClick={() => setInput(s)}>
+                <button key={s} className="ui-sample-btn" onClick={() => updateInput(s)}>
                   {s}
                 </button>
               ))}
@@ -246,7 +249,7 @@ export default function UnicodeInspector(): React.JSX.Element {
             className="ui-input"
             type="text"
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            onChange={(e) => updateInput(e.target.value)}
             placeholder="输入任意字符..."
             autoFocus
           />
@@ -256,14 +259,14 @@ export default function UnicodeInspector(): React.JSX.Element {
           <div className="ui-char-list">
             <span className="ui-char-list-label">
               <Info size={12} />
-              检测到 {allChars.length} 个字符，显示第一个的详情
+              检测到 {allChars.length} 个字符，当前查看第 {Math.min(selectedIndex + 1, allChars.length)} 个
             </span>
             <div className="ui-char-chips">
               {allChars.map((info, i) => (
                 <button
                   key={i}
-                  className={`ui-char-chip ${i === 0 ? 'active' : ''}`}
-                  onClick={() => setInput(info.char)}
+                  className={`ui-char-chip ${i === Math.min(selectedIndex, allChars.length - 1) ? 'active' : ''}`}
+                  onClick={() => setSelectedIndex(i)}
                   title={info.hex}
                 >
                   {info.char}

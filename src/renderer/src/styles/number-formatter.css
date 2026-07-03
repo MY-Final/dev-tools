@@ -25,7 +25,7 @@
 .nfm-digits:focus { border-color: var(--color-accent-soft); }
 
 /* Results list */
-.nfm-results { display: flex; flex-direction: column; gap: 10px; }
+.nfm-results { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
 .nfm-result-item { padding: 14px 16px; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 12px; transition: all .2s ease; }
 .nfm-result-item:hover { border-color: var(--color-border-hover); }
 .nfm-result-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
@@ -33,6 +33,9 @@
 .nfm-copy-btn { display: flex; align-items: center; gap: 5px; padding: 5px 10px; background: var(--color-editor-bg); border: 1px solid var(--color-border); border-radius: 6px; color: var(--color-text-muted); font-size: 11px; font-weight: 500; cursor: pointer; transition: all .15s ease; }
 .nfm-copy-btn:hover { border-color: var(--color-accent-soft); color: var(--color-accent-soft); }
 .nfm-result-value { padding: 10px 12px; background: var(--color-editor-bg); border: 1px solid var(--color-border); border-radius: 8px; font-family: 'JetBrains Mono', monospace; font-size: 15px; font-weight: 700; color: var(--color-text); word-break: break-all; }
+
+.tool-shell .nfm-card { max-width: none; }
+.tool-shell .nfm-header { text-align: center; }
 
 @media (max-width: 600px) {
   .nfm-page { padding: 24px 16px; }

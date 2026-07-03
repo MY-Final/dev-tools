@@ -377,6 +377,26 @@
   background: var(--color-accent-soft-subtle);
 }
 
+.tg-expand-results {
+  width: 100%;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 1px dashed var(--color-border);
+  border-radius: 10px;
+  background: var(--color-editor-bg);
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.tg-expand-results:hover {
+  border-color: var(--color-accent-soft);
+  color: var(--color-accent-soft);
+  background: var(--color-accent-soft-subtle);
+}
+
 /* Toast */
 .tg-toast {
   position: fixed;

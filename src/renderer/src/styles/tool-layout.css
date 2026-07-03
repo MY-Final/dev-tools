@@ -1,0 +1,350 @@
+/* ========================================
+   Shared Tool Layout
+   ======================================== */
+
+.tool-shell {
+  width: 100%;
+  min-height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: clamp(48px, 7vh, 84px) clamp(24px, 4vw, 56px) 40px;
+}
+
+.tool-shell-main {
+  width: min(100%, 760px);
+  min-width: 0;
+}
+
+/* Result-heavy tools: lists, reports, generated batches. */
+.tool-shell-main:has(.nfm-page),
+.tool-shell-main:has(.re-page),
+.tool-shell-main:has(.token-generator-page),
+.tool-shell-main:has(.clm-page),
+.tool-shell-main:has(.sv-page),
+.tool-shell-main:has(.uv-page),
+.tool-shell-main:has(.si-page),
+.tool-shell-main:has(.mvn-page),
+.tool-shell-main:has(.npm-page),
+.tool-shell-main:has(.dh-page),
+.tool-shell-main:has(.uap-page) {
+  width: min(100%, 960px);
+}
+
+/* Cheat sheets are reference libraries, not forms. */
+.tool-shell-main:has(.gcs-page),
+.tool-shell-main:has(.dcs-page),
+.tool-shell-main:has(.cs-page) {
+  width: min(100%, 1080px);
+}
+
+/* Complex tools that benefit from a larger operating surface. */
+.tool-shell-main:has(.converter-page),
+.tool-shell-main:has(.uc-page),
+.tool-shell-main:has(.ta-page),
+.tool-shell-main:has(.jc-page),
+.tool-shell-main:has(.dc-page),
+.tool-shell-main:has(.xp-page),
+.tool-shell-main:has(.wst-page),
+.tool-shell-main:has(.cors-page),
+.tool-shell-main:has(.tr-page) {
+  width: min(100%, 1040px);
+}
+
+/* Workspace tools manage their own dense editor/table layout. */
+.tool-shell-main:has(.jf-page),
+.tool-shell-main:has(.mp-page),
+.tool-shell-main:has(.csv-page),
+.tool-shell-main:has(.xf-page) {
+  width: 100%;
+}
+
+.tool-shell :is(
+  .converter-page,
+  .tc-page,
+  .cv-page,
+  .nb-page,
+  .uc-page,
+  .im-page,
+  .dfc-page,
+  .nf-page,
+  .nfm-page,
+  .re-page,
+  .cc-page,
+  .bc-page,
+  .url-page,
+  .hash-page,
+  .pwd-page,
+  .jwt-page,
+  .jd-page,
+  .token-page,
+  .token-generator-page,
+  .cron-page,
+  .lorem-page,
+  .li-page,
+  .regex-page,
+  .rx-page,
+  .diff-page,
+  .ud-page,
+  .htmljsx-page,
+  .hmac-page,
+  .cert-page,
+  .ssh-page,
+  .skg-page,
+  .tn-page,
+  .re-page,
+  .v4c-page,
+  .sc-page,
+  .pg2-page,
+  .myip-page,
+  .ts-page,
+  .kt-page,
+  .mt-page,
+  .clm-page,
+  .uv-page,
+  .si-page,
+  .sv-page,
+  .ta-page,
+  .ui-page,
+  .tzc-page,
+  .tr-page,
+  .mvn-page,
+  .npm-page,
+  .dh-page,
+  .uap-page,
+  .jc-page,
+  .dc-page,
+  .xp-page,
+  .wst-page,
+  .cors-page
+) {
+  height: auto;
+  min-height: 0;
+  padding: 0;
+  align-items: stretch;
+  justify-content: flex-start;
+  overflow: visible;
+}
+
+.tool-shell :is(.gcs-page, .dcs-page, .cs-page) {
+  height: auto;
+  min-height: 0;
+  padding: 0;
+  align-items: stretch;
+  justify-content: flex-start;
+  overflow: visible;
+}
+
+.tool-shell :is(
+  .converter-card,
+  .tc-card,
+  .cv-card,
+  .nb-card,
+  .uc-card,
+  .im-card,
+  .dfc-card,
+  .nf-card,
+  .nfm-card,
+  .re-card,
+  .cc-card,
+  .bc-card,
+  .url-card,
+  .hash-card,
+  .pwd-card,
+  .jwt-card,
+  .jd-card,
+  .token-card,
+  .tg-card,
+  .cron-card,
+  .lorem-card,
+  .li-card,
+  .regex-card,
+  .rx-card,
+  .diff-card,
+  .ud-card,
+  .htmljsx-card,
+  .hmac-card,
+  .cert-card,
+  .ssh-card,
+  .skg-card,
+  .tn-card,
+  .v4c-card,
+  .sc-card,
+  .pg2-card,
+  .myip-card,
+  .ts-card,
+  .kt-card,
+  .mt-card,
+  .clm-card,
+  .uv-card,
+  .si-card,
+  .sv-card,
+  .ta-card,
+  .ui-card,
+  .tzc-card,
+  .tr-card,
+  .mvn-card,
+  .npm-card,
+  .dh-card,
+  .uap-card,
+  .jc-card,
+  .dc-card,
+  .xp-card,
+  .wst-card,
+  .cors-card
+) {
+  max-width: none;
+}
+
+.tool-shell :is(.gcs-card, .dcs-card, .cs-card) {
+  max-width: none;
+}
+
+.tool-shell :is(
+  .converter-header,
+  .tc-header,
+  .cv-header,
+  .nb-header,
+  .uc-header,
+  .im-header,
+  .dfc-header,
+  .nf-header,
+  .nfm-header,
+  .re-header,
+  .cc-header,
+  .bc-header,
+  .url-header,
+  .hash-header,
+  .pwd-header,
+  .jwt-header,
+  .jd-header,
+  .token-header,
+  .tg-header,
+  .cron-header,
+  .lorem-header,
+  .li-header,
+  .regex-header,
+  .rx-header,
+  .diff-header,
+  .ud-header,
+  .htmljsx-header,
+  .hmac-header,
+  .cert-header,
+  .ssh-header,
+  .skg-header,
+  .tn-header,
+  .v4c-header,
+  .sc-header,
+  .pg2-header,
+  .myip-header,
+  .ts-header,
+  .kt-header,
+  .mt-header,
+  .clm-header,
+  .uv-header,
+  .si-header,
+  .sv-header,
+  .ta-header,
+  .ui-header,
+  .tzc-header,
+  .tr-header,
+  .mvn-header,
+  .npm-header,
+  .dh-header,
+  .uap-header,
+  .jc-header,
+  .dc-header,
+  .xp-header,
+  .wst-header,
+  .cors-header
+) {
+  text-align: center;
+}
+
+.tool-shell :is(.gcs-header, .dcs-header, .cs-header) {
+  text-align: center;
+}
+
+/* Wide screens should use horizontal space for repeated results. */
+@media (min-width: 900px) {
+  .tool-shell .re-cidr-list,
+  .tool-shell .tg-results-list,
+  .tool-shell .clm-list,
+  .tool-shell .tn-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 10px;
+  }
+
+  .tool-shell :is(.gcs-content, .dcs-content, .cs-content) {
+    display: block;
+    column-width: 420px;
+    column-gap: 16px;
+  }
+
+  .tool-shell :is(.gcs-category, .dcs-category, .cs-category) {
+    break-inside: avoid;
+    margin-bottom: 16px;
+  }
+
+  .tool-shell :is(.gcs-command, .dcs-command, .cs-command) {
+    align-items: flex-start;
+  }
+
+  .tool-shell :is(.gcs-command-text, .dcs-command-text, .cs-command-text) {
+    max-width: 58%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .tool-shell .re-cidr-item,
+  .tool-shell .tg-result-item,
+  .tool-shell .clm-item,
+  .tool-shell .tn-item {
+    margin-bottom: 0;
+  }
+}
+
+@media (min-width: 1280px) {
+  .tool-shell-main {
+    width: min(100%, 820px);
+  }
+
+  .tool-shell-main:has(.nfm-page),
+  .tool-shell-main:has(.re-page),
+  .tool-shell-main:has(.token-generator-page),
+  .tool-shell-main:has(.clm-page),
+  .tool-shell-main:has(.sv-page),
+  .tool-shell-main:has(.uv-page),
+  .tool-shell-main:has(.si-page),
+  .tool-shell-main:has(.mvn-page),
+  .tool-shell-main:has(.npm-page),
+  .tool-shell-main:has(.dh-page),
+  .tool-shell-main:has(.uap-page) {
+    width: min(100%, 980px);
+  }
+
+  .tool-shell-main:has(.gcs-page),
+  .tool-shell-main:has(.dcs-page),
+  .tool-shell-main:has(.cs-page) {
+    width: min(100%, 1120px);
+  }
+
+  .tool-shell-main:has(.converter-page),
+  .tool-shell-main:has(.ta-page),
+  .tool-shell-main:has(.jc-page),
+  .tool-shell-main:has(.dc-page),
+  .tool-shell-main:has(.xp-page),
+  .tool-shell-main:has(.wst-page),
+  .tool-shell-main:has(.cors-page),
+  .tool-shell-main:has(.tr-page) {
+    width: min(100%, 1080px);
+  }
+}
+
+@media (max-width: 1100px) {
+  .tool-shell {
+    padding: 28px 18px;
+  }
+}

@@ -1,3 +1,4 @@
+import { useState, useMemo } from 'react'
 import {
   Key,
   Copy,
@@ -47,7 +48,10 @@ const CHARSET_OPTIONS: { id: RandomStringCharset; label: string }[] = [
   { id: 'special', label: '!@#$' }
 ]
 
+const COLLAPSED_RESULT_COUNT = 12
+
 export default function TokenGenerator(): React.JSX.Element {
+  const [resultsExpanded, setResultsExpanded] = useState(false)
   const {
     tokenType,
     setTokenType,
@@ -61,6 +65,13 @@ export default function TokenGenerator(): React.JSX.Element {
     handleCopyAll,
     handleExport
   } = useTokenGenerator()
+
+  const visibleResults = useMemo(
+    () => (resultsExpanded ? results : results.slice(0, COLLAPSED_RESULT_COUNT)),
+    [results, resultsExpanded]
+  )
+
+  const hiddenResultCount = Math.max(0, results.length - visibleResults.length)
 
   const renderConfig = (): React.JSX.Element => {
     switch (tokenType) {
@@ -295,7 +306,7 @@ export default function TokenGenerator(): React.JSX.Element {
               </div>
             </div>
             <div className="tg-results-list">
-              {results.map((token, index) => (
+              {visibleResults.map((token, index) => (
                 <div key={index} className="tg-result-item">
                   <code className="tg-result-text">{token}</code>
                   <button
@@ -308,6 +319,16 @@ export default function TokenGenerator(): React.JSX.Element {
                 </div>
               ))}
             </div>
+            {hiddenResultCount > 0 && (
+              <button className="tg-expand-results" onClick={() => setResultsExpanded(true)}>
+                展开剩余 {hiddenResultCount} 条
+              </button>
+            )}
+            {resultsExpanded && results.length > COLLAPSED_RESULT_COUNT && (
+              <button className="tg-expand-results" onClick={() => setResultsExpanded(false)}>
+                收起结果
+              </button>
+            )}
           </div>
         )}
       </div>

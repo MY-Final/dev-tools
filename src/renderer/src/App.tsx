@@ -83,8 +83,12 @@ function AppContent(): React.JSX.Element {
       return (
         <ErrorBoundary>
           <Suspense fallback={<div className="page-loading">Loading…</div>}>
-            <ToolHelp toolId={currentPage} />
-            <PageComponent />
+            <div className="tool-shell">
+              <section className="tool-shell-main">
+                <ToolHelp toolId={currentPage} />
+                <PageComponent />
+              </section>
+            </div>
           </Suspense>
         </ErrorBoundary>
       )

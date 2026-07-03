@@ -23,8 +23,8 @@
 }
 
 .sidebar:not(.sidebar-collapsed) {
-  width: 200px;
-  min-width: 200px;
+  width: 232px;
+  min-width: 232px;
 }
 
 .sidebar-scroll {
@@ -84,7 +84,8 @@
   align-items: center;
   gap: 8px;
   width: 100%;
-  padding: 6px 8px;
+  min-height: 34px;
+  padding: 8px 10px;
   border: none;
   background: transparent;
   cursor: pointer;
@@ -202,11 +203,11 @@
 .nav-icon-btn {
   position: relative;
   width: 100%;
-  min-height: 36px;
+  min-height: 44px;
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 4px 10px;
+  padding: 6px 12px;
   border-radius: 8px;
   cursor: pointer;
   color: var(--color-text-muted);
@@ -265,7 +266,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  line-height: 1.3;
+  line-height: 1.4;
 }
 
 /* Tooltip（收起时悬浮显示） */
