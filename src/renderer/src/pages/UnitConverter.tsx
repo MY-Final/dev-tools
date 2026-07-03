@@ -279,7 +279,7 @@ export default function UnitConverter(): React.JSX.Element {
                   <div className="uc-result-right">
                     <code className="uc-result-value">{u.value}</code>
                     <button
-                      className="uc-copy-btn"
+                      className={`uc-copy-btn ${copiedKey === u.symbol ? 'copied' : ''}`}
                       title="复制"
                       onClick={() => copyToClipboard(u.symbol, u.value)}
                     >
