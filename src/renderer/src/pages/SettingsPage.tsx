@@ -28,6 +28,7 @@ export default function SettingsPage(): React.JSX.Element {
   const [testing, setTesting] = useState(false)
   const [fetchedModels, setFetchedModels] = useState<string[]>([])
   const [settingsPath, setSettingsPath] = useState('')
+  const [activeSection, setActiveSection] = useState('appearance')
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({
     appearance: false,
     editor: false,
@@ -41,6 +42,11 @@ export default function SettingsPage(): React.JSX.Element {
 
   const toggleSection = useCallback((key: string) => {
     setCollapsedSections(prev => ({ ...prev, [key]: !prev[key] }))
+  }, [])
+
+  const selectSection = useCallback((key: string) => {
+    setActiveSection(key)
+    setCollapsedSections(prev => ({ ...prev, [key]: false }))
   }, [])
 
   // Auto-fetch models on mount if config exists
@@ -99,10 +105,80 @@ export default function SettingsPage(): React.JSX.Element {
           <p className="settings-subtitle">自定义你的开发工具</p>
         </div>
 
-        <div className="settings-content">
+        <div className="settings-layout">
+          <aside className="settings-nav" aria-label="设置分组">
+            <button
+              type="button"
+              className={`settings-nav-item ${activeSection === 'appearance' ? 'active' : ''}`}
+              onClick={() => selectSection('appearance')}
+            >
+              <Palette size={15} />
+              <span>外观</span>
+            </button>
+            <button
+              type="button"
+              className={`settings-nav-item ${activeSection === 'editor' ? 'active' : ''}`}
+              onClick={() => selectSection('editor')}
+            >
+              <Settings size={15} />
+              <span>编辑器</span>
+            </button>
+            <button
+              type="button"
+              className={`settings-nav-item ${activeSection === 'translator' ? 'active' : ''}`}
+              onClick={() => selectSection('translator')}
+            >
+              <span className="settings-nav-emoji">AI</span>
+              <span>AI 翻译</span>
+            </button>
+            <button
+              type="button"
+              className={`settings-nav-item ${activeSection === 'npm' ? 'active' : ''}`}
+              onClick={() => selectSection('npm')}
+            >
+              <span className="settings-nav-emoji">npm</span>
+              <span>npm Registry</span>
+            </button>
+            <button
+              type="button"
+              className={`settings-nav-item ${activeSection === 'maven' ? 'active' : ''}`}
+              onClick={() => selectSection('maven')}
+            >
+              <span className="settings-nav-emoji">MVN</span>
+              <span>Maven Search</span>
+            </button>
+            <button
+              type="button"
+              className={`settings-nav-item ${activeSection === 'proxy' ? 'active' : ''}`}
+              onClick={() => selectSection('proxy')}
+            >
+              <Wifi size={15} />
+              <span>代理</span>
+            </button>
+            <button
+              type="button"
+              className={`settings-nav-item ${activeSection === 'shortcuts' ? 'active' : ''}`}
+              onClick={() => selectSection('shortcuts')}
+            >
+              <Keyboard size={15} />
+              <span>快捷键</span>
+            </button>
+            <button
+              type="button"
+              className={`settings-nav-item ${activeSection === 'updater' ? 'active' : ''}`}
+              onClick={() => selectSection('updater')}
+            >
+              <RefreshCw size={15} />
+              <span>更新</span>
+            </button>
+          </aside>
+
+          <div className="settings-content">
 
           {/* 外观设置 */}
-          <div className="settings-section-header" onClick={() => toggleSection('appearance')}>
+          {activeSection === 'appearance' && (
+            <>
+          <div id="settings-appearance" className="settings-section-header" onClick={() => toggleSection('appearance')}>
             <h3 className="settings-section-title">
               <Palette size={18} className="settings-section-icon" />
               外观
@@ -194,9 +270,13 @@ export default function SettingsPage(): React.JSX.Element {
               </label>
             </div>
           </div>
+            </>
+          )}
 
           {/* 编辑器设置 */}
-          <div className="settings-section-header" onClick={() => toggleSection('editor')}>
+          {activeSection === 'editor' && (
+            <>
+          <div id="settings-editor" className="settings-section-header" onClick={() => toggleSection('editor')}>
             <h3 className="settings-section-title">
               <Settings size={18} className="settings-section-icon" />
               编辑器
@@ -240,9 +320,13 @@ export default function SettingsPage(): React.JSX.Element {
               </label>
             </div>
           </div>
+            </>
+          )}
 
           {/* AI 翻译设置 */}
-          <div className="settings-section-header" onClick={() => toggleSection('translator')}>
+          {activeSection === 'translator' && (
+            <>
+          <div id="settings-translator" className="settings-section-header" onClick={() => toggleSection('translator')}>
             <h3 className="settings-section-title">
               <span className="settings-section-icon" style={{ fontSize: 18 }}>🤖</span>
               AI 翻译
@@ -367,9 +451,13 @@ export default function SettingsPage(): React.JSX.Element {
               </button>
             </div>
           </div>
+            </>
+          )}
 
           {/* npm 源设置 */}
-          <div className="settings-section-header" onClick={() => toggleSection('npm')}>
+          {activeSection === 'npm' && (
+            <>
+          <div id="settings-npm" className="settings-section-header" onClick={() => toggleSection('npm')}>
             <h3 className="settings-section-title">
               <span className="settings-section-icon" style={{ fontSize: 18 }}>📦</span>
               npm Registry
@@ -393,9 +481,13 @@ export default function SettingsPage(): React.JSX.Element {
               />
             </div>
           </div>
+            </>
+          )}
 
           {/* Maven 搜索设置 */}
-          <div className="settings-section-header" onClick={() => toggleSection('maven')}>
+          {activeSection === 'maven' && (
+            <>
+          <div id="settings-maven" className="settings-section-header" onClick={() => toggleSection('maven')}>
             <h3 className="settings-section-title">
               <span className="settings-section-icon" style={{ fontSize: 18 }}>🔍</span>
               Maven Search
@@ -419,9 +511,13 @@ export default function SettingsPage(): React.JSX.Element {
               />
             </div>
           </div>
+            </>
+          )}
 
           {/* 代理设置 */}
-          <div className="settings-section-header" onClick={() => toggleSection('proxy')}>
+          {activeSection === 'proxy' && (
+            <>
+          <div id="settings-proxy" className="settings-section-header" onClick={() => toggleSection('proxy')}>
             <h3 className="settings-section-title">
               <Wifi size={18} className="settings-section-icon" />
               代理
@@ -461,9 +557,13 @@ export default function SettingsPage(): React.JSX.Element {
               />
             </div>
           </div>
+            </>
+          )}
 
           {/* 快捷键设置 */}
-          <div className="settings-section-header" onClick={() => toggleSection('shortcuts')}>
+          {activeSection === 'shortcuts' && (
+            <>
+          <div id="settings-shortcuts" className="settings-section-header" onClick={() => toggleSection('shortcuts')}>
             <h3 className="settings-section-title">
               <Keyboard size={18} className="settings-section-icon" />
               快捷键
@@ -523,10 +623,14 @@ export default function SettingsPage(): React.JSX.Element {
               </table>
             </div>
           </div>
+            </>
+          )}
 
           {/* 工具禁用 */}
           {/* 更新设置 */}
-          <div className="settings-section-header" onClick={() => toggleSection('updater')}>
+          {activeSection === 'updater' && (
+            <>
+          <div id="settings-updater" className="settings-section-header" onClick={() => toggleSection('updater')}>
             <h3 className="settings-section-title">
               <RefreshCw size={18} className="settings-section-icon" />
               更新
@@ -581,51 +685,62 @@ export default function SettingsPage(): React.JSX.Element {
                 <div className="updater-progress-bar" style={{ width: `${status.percent}%` }} />
               </div>
             )}
-          </div>
-        </div>
 
-        <div className="settings-footer">
-          {settingsPath && (
-            <div className="settings-path-info">
-              <span className="settings-path-label">配置文件</span>
-              <code className="settings-path-value">{settingsPath}</code>
-            </div>
-          )}
-          <div className="updater-actions">
-            {!isAvailable && !isDownloading && !isDownloaded && (
-              <button
-                className="settings-btn settings-btn-primary"
-                onClick={checkForUpdates}
-                disabled={isChecking}
-              >
-                <RefreshCw size={15} className={isChecking ? 'updater-spin' : ''} />
-                检查更新
-              </button>
+            {settingsPath && (
+              <div className="settings-item">
+                <div className="settings-item-info">
+                  <p className="settings-item-label">配置文件</p>
+                  <p className="settings-item-description">本地设置文件路径</p>
+                </div>
+                <code className="settings-path-value">{settingsPath}</code>
+              </div>
             )}
-            {isAvailable && (
-              <>
-                <button className="settings-btn settings-btn-primary" onClick={downloadUpdate}>
-                  <Download size={15} />
-                  下载更新
-                </button>
-                {(releaseNotes || releaseDate) && (
-                  <button className="settings-btn settings-btn-secondary" onClick={() => setShowNotes(true)}>
-                    <FileText size={13} />
-                    更新说明
+
+            <div className="settings-item">
+              <div className="settings-item-info">
+                <p className="settings-item-label">维护操作</p>
+                <p className="settings-item-description">检查应用更新，或将设置恢复为默认值</p>
+              </div>
+              <div className="updater-actions">
+                {!isAvailable && !isDownloading && !isDownloaded && (
+                  <button
+                    className="settings-btn settings-btn-primary"
+                    onClick={checkForUpdates}
+                    disabled={isChecking}
+                  >
+                    <RefreshCw size={15} className={isChecking ? 'updater-spin' : ''} />
+                    检查更新
                   </button>
                 )}
-              </>
-            )}
-            {isDownloaded && (
-              <button className="settings-btn settings-btn-primary" onClick={quitAndInstall}>
-                重启并安装
-              </button>
-            )}
+                {isAvailable && (
+                  <>
+                    <button className="settings-btn settings-btn-primary" onClick={downloadUpdate}>
+                      <Download size={15} />
+                      下载更新
+                    </button>
+                    {(releaseNotes || releaseDate) && (
+                      <button className="settings-btn settings-btn-secondary" onClick={() => setShowNotes(true)}>
+                        <FileText size={13} />
+                        更新说明
+                      </button>
+                    )}
+                  </>
+                )}
+                {isDownloaded && (
+                  <button className="settings-btn settings-btn-primary" onClick={quitAndInstall}>
+                    重启并安装
+                  </button>
+                )}
+                <button className="settings-btn settings-btn-secondary" onClick={resetToDefaults}>
+                  <RotateCcw size={15} />
+                  恢复默认
+                </button>
+              </div>
+            </div>
           </div>
-          <button className="settings-btn settings-btn-secondary" onClick={resetToDefaults}>
-            <RotateCcw size={15} />
-            恢复默认
-          </button>
+            </>
+          )}
+          </div>
         </div>
       </div>
 

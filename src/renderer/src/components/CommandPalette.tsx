@@ -32,6 +32,12 @@ export default function CommandPalette({ onNavigate }: Props): React.JSX.Element
     }
   }, [])
 
+  useEffect(() => {
+    const handler = (): void => setOpen(true)
+    window.addEventListener('command-palette:open', handler)
+    return () => window.removeEventListener('command-palette:open', handler)
+  }, [])
+
   // Also handle local Ctrl+K and Escape
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent): void => {
