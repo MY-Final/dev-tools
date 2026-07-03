@@ -18,7 +18,8 @@ const CATEGORY_ACCENTS: Record<string, string> = {
   '编码/加密': 'accent-orange',
   '开发工具': 'accent-cyan',
   '文本工具': 'accent-pink',
-  '备忘录': 'accent-yellow'
+  '速查表': 'accent-yellow',
+  '备忘录': 'accent-purple'
 }
 
 interface HomeProps {
@@ -93,7 +94,7 @@ export default function Home({ onSelectTool }: HomeProps): React.JSX.Element {
             </div>
             <div className="home-stat-divider" />
             <div className="home-stat">
-              <span className="home-stat-value">{totalTools - tools.filter(t => t.category === '备忘录').length}</span>
+              <span className="home-stat-value">{totalTools - tools.filter(t => t.category === '速查表').length}</span>
               <span className="home-stat-label">功能工具</span>
             </div>
           </div>

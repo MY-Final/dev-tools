@@ -14,6 +14,7 @@ import {
   Monitor,
   FileText,
   BookMarked,
+  ListTodo,
   Lock,
   Search,
   Star
@@ -37,7 +38,8 @@ const categoryIcons: Record<string, React.ComponentType<{ size?: number; classNa
   '编码/加密': Lock,
   开发工具: Wrench,
   文本工具: FileText,
-  备忘录: BookMarked,
+  速查表: BookMarked,
+  备忘录: ListTodo,
   资源搜索: Search,
   __default: Wrench
 }
