@@ -9,7 +9,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  padding: 40px 24px;
+  padding: clamp(32px, 5vh, 56px) clamp(24px, 4vw, 56px);
   overflow-y: auto;
   position: relative;
 }
@@ -29,7 +29,10 @@
   position: relative;
   z-index: 1;
   width: 100%;
-  max-width: 520px;
+  max-width: 1080px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 22px;
   background: var(--glass-bg);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
@@ -40,19 +43,29 @@
 }
 
 .about-header {
-  text-align: center;
-  margin-bottom: 32px;
+  align-self: start;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  column-gap: 22px;
+  text-align: left;
+  margin-bottom: 0;
+  padding: 18px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 18px;
 }
 
 .about-logo {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 160px;
-  height: 160px;
+  grid-row: 1 / span 2;
+  width: 112px;
+  height: 112px;
   background: var(--color-accent-soft-subtle);
-  border-radius: 40px;
-  margin-bottom: 16px;
+  border-radius: 28px;
+  margin: 0;
 }
 
 .about-logo-icon {
@@ -60,8 +73,8 @@
 }
 
 .about-logo-img {
-  width: 120px;
-  height: 120px;
+  width: 84px;
+  height: 84px;
   object-fit: contain;
 }
 
@@ -71,19 +84,26 @@
   color: var(--color-text);
   font-family: 'JetBrains Mono', monospace;
   letter-spacing: -0.5px;
-  margin-bottom: 6px;
+  align-self: end;
+  margin: 0 0 4px;
 }
 
 .about-subtitle {
+  align-self: start;
   font-size: 14px;
   color: var(--color-text-muted);
 }
 
 .about-info {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-  margin-bottom: 32px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  margin-bottom: 0;
+}
+
+.about-info .about-section:first-child,
+.about-info .about-section:last-child {
+  grid-column: 1 / -1;
 }
 
 .about-section {
@@ -161,6 +181,7 @@
 }
 
 .about-footer {
+  grid-column: 1 / -1;
   text-align: center;
   padding-top: 24px;
   border-top: 1px solid var(--color-border);
@@ -255,14 +276,32 @@
   font-family: 'JetBrains Mono', monospace;
 }
 
+@media (max-width: 760px) {
+  .about-info {
+    grid-template-columns: 1fr;
+  }
+
+  .about-info .about-section:first-child,
+  .about-info .about-section:last-child {
+    grid-column: auto;
+  }
+}
+
 @media (max-width: 600px) {
   .about-page {
     padding: 24px 16px;
   }
 
   .about-card {
+    display: block;
     padding: 24px 20px;
     border-radius: 16px;
+  }
+
+  .about-header {
+    display: block;
+    text-align: center;
+    margin-bottom: 28px;
   }
 
   .about-title {
@@ -270,7 +309,14 @@
   }
 
   .about-logo {
-    width: 64px;
-    height: 64px;
+    width: 92px;
+    height: 92px;
+    margin: 0 auto 16px;
+    border-radius: 24px;
+  }
+
+  .about-logo-img {
+    width: 70px;
+    height: 70px;
   }
 }

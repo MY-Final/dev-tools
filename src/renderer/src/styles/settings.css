@@ -152,6 +152,11 @@
   transition: border-color 0.16s ease, background 0.16s ease;
 }
 
+.settings-section-header:has(+ .settings-section-body:not(.open)) {
+  border-bottom: 1px solid var(--color-border);
+  border-radius: 12px;
+}
+
 .settings-section-header:hover {
   border-color: var(--color-border-hover);
   background: var(--color-surface-hover);

@@ -6,6 +6,18 @@ import { formatShortcut } from '@renderer/lib/shortcuts'
 import ShortcutRecorder from '@renderer/components/ShortcutRecorder'
 import '../styles/settings.css'
 
+const CURRENT_RELEASE_NOTES = `
+  <h3>v1.0.17</h3>
+  <ul>
+    <li>新增 Todo Notes 待办记事本，支持日期、筛选和本地持久化。</li>
+    <li>File to Base64 支持任意文件，并支持图片/视频/音频预览。</li>
+    <li>设置页重构为左侧分组导航，Sidebar 新增快速搜索入口。</li>
+    <li>优化工具页通用布局、Command Palette、Sidebar 点击区域和 Cheat Sheet 布局。</li>
+    <li>修复 Unit Converter 复制按钮显示和 Unicode Inspector 字符选择交互。</li>
+    <li>全量核查并修正工具分类。</li>
+  </ul>
+`
+
 export default function SettingsPage(): React.JSX.Element {
   const { settings, updateAppearance, updateEditor, updateUpdater, updateTranslator, updateNpmRegistry, updateMavenSearchUrl, updateProxy, updateShortcuts, resetToDefaults } = useSettings()
   const {
@@ -96,6 +108,8 @@ export default function SettingsPage(): React.JSX.Element {
       return date
     }
   }, [])
+
+  const displayedReleaseNotes = releaseNotes ?? CURRENT_RELEASE_NOTES
 
   return (
     <div className="settings-page">
@@ -731,6 +745,10 @@ export default function SettingsPage(): React.JSX.Element {
                     重启并安装
                   </button>
                 )}
+                <button className="settings-btn settings-btn-secondary" onClick={() => setShowNotes(true)}>
+                  <FileText size={13} />
+                  更新说明
+                </button>
                 <button className="settings-btn settings-btn-secondary" onClick={resetToDefaults}>
                   <RotateCcw size={15} />
                   恢复默认
@@ -745,7 +763,7 @@ export default function SettingsPage(): React.JSX.Element {
       </div>
 
       {/* Release Notes Modal */}
-      {showNotes && (releaseNotes || releaseDate) && (
+      {showNotes && (
         <div className="settings-overlay" onClick={() => setShowNotes(false)}>
           <div className="settings-modal" onClick={(e) => e.stopPropagation()}>
             <div className="settings-modal-header">
@@ -763,18 +781,16 @@ export default function SettingsPage(): React.JSX.Element {
                   发布日期：{formatReleaseDate(releaseDate)}
                 </div>
               )}
-              {releaseNotes ? (
-                <div className="settings-modal-notes" dangerouslySetInnerHTML={{ __html: releaseNotes }} />
-              ) : (
-                <div className="settings-modal-empty">暂无详细更新说明</div>
-              )}
+              <div className="settings-modal-notes" dangerouslySetInnerHTML={{ __html: displayedReleaseNotes }} />
             </div>
-            <div className="settings-modal-footer">
-              <button className="settings-btn settings-btn-primary" onClick={() => { downloadUpdate(); setShowNotes(false) }}>
-                <Download size={14} />
-                下载更新
-              </button>
-            </div>
+            {isAvailable && (
+              <div className="settings-modal-footer">
+                <button className="settings-btn settings-btn-primary" onClick={() => { downloadUpdate(); setShowNotes(false) }}>
+                  <Download size={14} />
+                  下载更新
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
