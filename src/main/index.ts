@@ -1,4 +1,4 @@
-import { app, shell, BrowserWindow, ipcMain, Menu, globalShortcut } from 'electron'
+import { app, shell, BrowserWindow, ipcMain, Menu, globalShortcut, Tray, dialog } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
@@ -12,8 +12,89 @@ import { registerNpmHandlers } from './npm-ipc'
 import { registerDockerHandlers } from './docker-ipc'
 import { registerWsProxyHandlers, cleanupWsProxyConnections } from './ws-proxy-ipc'
 import { registerTodoHandlers } from './todos-ipc'
+import { settingsStore } from './settings'
 
 let mainWindow: BrowserWindow | null = null
+let tray: Tray | null = null
+let isQuitting = false
+
+function showMainWindow(): void {
+  if (!mainWindow || mainWindow.isDestroyed()) return
+  if (mainWindow.isMinimized()) mainWindow.restore()
+  mainWindow.show()
+  mainWindow.focus()
+}
+
+function ensureTray(): void {
+  if (tray) return
+  tray = new Tray(icon)
+  tray.setToolTip('dev-tools')
+  tray.setContextMenu(
+    Menu.buildFromTemplate([
+      { label: '打开 dev-tools', click: showMainWindow },
+      { type: 'separator' },
+      {
+        label: '退出',
+        click: () => {
+          isQuitting = true
+          app.quit()
+        }
+      }
+    ])
+  )
+  tray.on('click', showMainWindow)
+}
+
+function notifySettingsChanged(): void {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('settings:changed', settingsStore.getSettings())
+  }
+}
+
+function handleWindowClose(event: Electron.Event): void {
+  if (isQuitting) return
+
+  const behavior = settingsStore.getSettings().window.closeBehavior
+
+  if (behavior === 'exit') {
+    isQuitting = true
+    return
+  }
+
+  if (behavior === 'minimize-to-tray') {
+    event.preventDefault()
+    ensureTray()
+    mainWindow?.hide()
+    return
+  }
+
+  event.preventDefault()
+  const choice = dialog.showMessageBoxSync(mainWindow!, {
+    type: 'question',
+    title: '关闭 dev-tools',
+    message: '关闭窗口时你希望怎么处理？',
+    detail: '这个提示只会出现一次，之后可以在设置页修改。',
+    buttons: ['最小化到托盘', '退出应用', '取消'],
+    defaultId: 0,
+    cancelId: 2,
+    noLink: true
+  })
+
+  if (choice === 0) {
+    settingsStore.updateWindow({ closeBehavior: 'minimize-to-tray' })
+    notifySettingsChanged()
+    ensureTray()
+    mainWindow?.hide()
+    return
+  }
+
+  if (choice === 1) {
+    settingsStore.updateWindow({ closeBehavior: 'exit' })
+    notifySettingsChanged()
+    isQuitting = true
+    app.quit()
+  }
+}
 
 function createWindow(): void {
   // Create the browser window.
@@ -36,6 +117,8 @@ function createWindow(): void {
   win.on('ready-to-show', () => {
     win.show()
   })
+
+  win.on('close', handleWindowClose)
 
   win.webContents.setWindowOpenHandler((details) => {
     shell.openExternal(details.url)

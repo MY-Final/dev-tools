@@ -15,6 +15,9 @@ export interface AppSettings {
   updater: {
     autoCheck: boolean
   }
+  window: {
+    closeBehavior: 'ask' | 'minimize-to-tray' | 'exit'
+  }
   translator: {
     baseUrl: string
     apiKey: string
@@ -58,6 +61,9 @@ const DEFAULT_SETTINGS: AppSettings = {
   updater: {
     autoCheck: true
   },
+  window: {
+    closeBehavior: 'ask'
+  },
   translator: {
     baseUrl: '',
     apiKey: '',
@@ -82,6 +88,7 @@ interface SettingsContextType {
   updateAppearance: (updates: Partial<AppSettings['appearance']>) => Promise<void>
   updateEditor: (updates: Partial<AppSettings['editor']>) => Promise<void>
   updateUpdater: (updates: Partial<AppSettings['updater']>) => Promise<void>
+  updateWindow: (updates: Partial<AppSettings['window']>) => Promise<void>
   updateTranslator: (updates: Partial<AppSettings['translator']>) => Promise<void>
   updateNpmRegistry: (npmRegistry: string) => Promise<void>
   updateMavenSearchUrl: (url: string) => Promise<void>
@@ -111,6 +118,10 @@ export function SettingsProvider({ children }: { children: ReactNode }): React.J
     loadSettings()
   }, [])
 
+  useEffect(() => {
+    return window.api.onSettingsChanged(setSettings)
+  }, [])
+
   const updateAppearance = useCallback(async (updates: Partial<AppSettings['appearance']>) => {
     try {
       const updated = await window.api.updateAppearance(updates)
@@ -132,6 +143,15 @@ export function SettingsProvider({ children }: { children: ReactNode }): React.J
   const updateUpdater = useCallback(async (updates: Partial<AppSettings['updater']>) => {
     try {
       const updated = await window.api.updateUpdater(updates)
+      setSettings(updated)
+    } catch {
+      // 忽略错误
+    }
+  }, [])
+
+  const updateWindow = useCallback(async (updates: Partial<AppSettings['window']>) => {
+    try {
+      const updated = await window.api.updateWindow(updates)
       setSettings(updated)
     } catch {
       // 忽略错误
@@ -203,7 +223,7 @@ export function SettingsProvider({ children }: { children: ReactNode }): React.J
 
   return (
     <SettingsContext.Provider
-      value={{ settings, loading, updateAppearance, updateEditor, updateUpdater, updateTranslator, updateNpmRegistry, updateMavenSearchUrl, updateProxy, updateShortcuts, updateFavorites, resetToDefaults }}
+      value={{ settings, loading, updateAppearance, updateEditor, updateUpdater, updateWindow, updateTranslator, updateNpmRegistry, updateMavenSearchUrl, updateProxy, updateShortcuts, updateFavorites, resetToDefaults }}
     >
       {children}
     </SettingsContext.Provider>

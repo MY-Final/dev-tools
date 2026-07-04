@@ -15,6 +15,9 @@ export interface AppSettings {
   updater: {
     autoCheck: boolean
   }
+  window: {
+    closeBehavior: 'ask' | 'minimize-to-tray' | 'exit'
+  }
   translator: {
     baseUrl: string
     apiKey: string
@@ -44,6 +47,7 @@ export interface SettingsAPI {
   updateAppearance: (updates: Partial<AppSettings['appearance']>) => Promise<AppSettings>
   updateEditor: (updates: Partial<AppSettings['editor']>) => Promise<AppSettings>
   updateUpdater: (updates: Partial<AppSettings['updater']>) => Promise<AppSettings>
+  updateWindow: (updates: Partial<AppSettings['window']>) => Promise<AppSettings>
   getTranslator: () => Promise<AppSettings['translator']>
   updateTranslator: (updates: Partial<AppSettings['translator']>) => Promise<AppSettings>
   getNpmRegistry: () => Promise<string>
@@ -55,6 +59,7 @@ export interface SettingsAPI {
   updateShortcuts: (updates: Partial<AppSettings['shortcuts']>) => Promise<AppSettings>
   updateFavorites: (toolId: string) => Promise<AppSettings>
   getSettingsPath: () => Promise<string>
+  onSettingsChanged: (callback: (settings: AppSettings) => void) => () => void
   resetToDefaults: () => Promise<AppSettings>
 }
 

@@ -9,6 +9,7 @@ export function registerSettingsHandlers(): void {
   ipcMain.handle('settings:update-editor', (_event, updates: Partial<AppSettings['editor']>) => settingsStore.updateEditor(updates))
   ipcMain.handle('settings:reset', () => settingsStore.resetToDefaults())
   ipcMain.handle('settings:update-updater', (_event, updates: Partial<AppSettings['updater']>) => settingsStore.updateUpdater(updates))
+  ipcMain.handle('settings:update-window', (_event, updates: Partial<AppSettings['window']>) => settingsStore.updateWindow(updates))
   ipcMain.handle('settings:get-npm-registry', () => settingsStore.getSettings().npmRegistry)
   ipcMain.handle('settings:update-npm-registry', (_event, npmRegistry: string) => settingsStore.updateNpmRegistry(npmRegistry))
   ipcMain.handle('settings:get-maven-search-url', () => settingsStore.getSettings().mavenSearchUrl)

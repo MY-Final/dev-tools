@@ -19,7 +19,7 @@ const CURRENT_RELEASE_NOTES = `
 `
 
 export default function SettingsPage(): React.JSX.Element {
-  const { settings, updateAppearance, updateEditor, updateUpdater, updateTranslator, updateNpmRegistry, updateMavenSearchUrl, updateProxy, updateShortcuts, resetToDefaults } = useSettings()
+  const { settings, updateAppearance, updateEditor, updateUpdater, updateWindow, updateTranslator, updateNpmRegistry, updateMavenSearchUrl, updateProxy, updateShortcuts, resetToDefaults } = useSettings()
   const {
     status,
     version,
@@ -282,6 +282,33 @@ export default function SettingsPage(): React.JSX.Element {
                 />
                 <span className="settings-toggle-slider" />
               </label>
+            </div>
+
+            <div className="settings-item">
+              <div className="settings-item-info">
+                <p className="settings-item-label">关闭窗口</p>
+                <p className="settings-item-description">点击关闭按钮时退出应用，或放到系统托盘后台运行</p>
+              </div>
+              <div className="settings-segmented">
+                <button
+                  className={`settings-option ${settings.window.closeBehavior === 'ask' ? 'active' : ''}`}
+                  onClick={() => updateWindow({ closeBehavior: 'ask' })}
+                >
+                  <span className="settings-option-label">询问</span>
+                </button>
+                <button
+                  className={`settings-option ${settings.window.closeBehavior === 'minimize-to-tray' ? 'active' : ''}`}
+                  onClick={() => updateWindow({ closeBehavior: 'minimize-to-tray' })}
+                >
+                  <span className="settings-option-label">放到托盘</span>
+                </button>
+                <button
+                  className={`settings-option ${settings.window.closeBehavior === 'exit' ? 'active' : ''}`}
+                  onClick={() => updateWindow({ closeBehavior: 'exit' })}
+                >
+                  <span className="settings-option-label">退出</span>
+                </button>
+              </div>
             </div>
           </div>
             </>

@@ -24,6 +24,8 @@ const settingsAPI = {
     ipcRenderer.invoke('settings:update-editor', updates),
   updateUpdater: (updates: Partial<AppSettings['updater']>): Promise<AppSettings> =>
     ipcRenderer.invoke('settings:update-updater', updates),
+  updateWindow: (updates: Partial<AppSettings['window']>): Promise<AppSettings> =>
+    ipcRenderer.invoke('settings:update-window', updates),
   getTranslator: (): Promise<AppSettings['translator']> =>
     ipcRenderer.invoke('settings:get-translator'),
   updateTranslator: (updates: Partial<AppSettings['translator']>): Promise<AppSettings> =>
@@ -46,6 +48,12 @@ const settingsAPI = {
     ipcRenderer.invoke('settings:update-favorites', toolId),
   getSettingsPath: (): Promise<string> =>
     ipcRenderer.invoke('settings:get-path'),
+  onSettingsChanged: (callback: (settings: AppSettings) => void): (() => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, settings: AppSettings): void =>
+      callback(settings)
+    ipcRenderer.on('settings:changed', handler)
+    return () => ipcRenderer.removeListener('settings:changed', handler)
+  },
   resetToDefaults: (): Promise<AppSettings> => ipcRenderer.invoke('settings:reset')
 }
 

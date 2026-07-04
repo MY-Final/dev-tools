@@ -6,7 +6,7 @@ import { join } from 'path'
 // Settings Version & Migration Strategy
 // ────────────────────────────────────────────────────────────────
 
-export const SETTINGS_VERSION = 2 // 当前配置版本
+export const SETTINGS_VERSION = 3 // 当前配置版本
 
 export interface AppSettings {
   version?: number // 配置文件版本号
@@ -23,6 +23,9 @@ export interface AppSettings {
   }
   updater: {
     autoCheck: boolean
+  }
+  window: {
+    closeBehavior: 'ask' | 'minimize-to-tray' | 'exit'
   }
   translator: {
     baseUrl: string
@@ -68,6 +71,9 @@ const DEFAULT_SETTINGS: AppSettings = {
   updater: {
     autoCheck: true
   },
+  window: {
+    closeBehavior: 'ask'
+  },
   translator: {
     baseUrl: '',
     apiKey: '',
@@ -109,6 +115,15 @@ const migrations: Record<number, MigrationFn> = {
       ...data,
       version: 2,
       proxy: data.proxy || DEFAULT_SETTINGS.proxy
+    }
+  },
+
+  // v2 → v3: 添加窗口关闭行为配置
+  3: (data: any) => {
+    return {
+      ...data,
+      version: 3,
+      window: data.window || DEFAULT_SETTINGS.window
     }
   }
 
@@ -165,6 +180,7 @@ export interface ISettingsStore {
   updateAppearance(updates: Partial<AppSettings['appearance']>): AppSettings
   updateEditor(updates: Partial<AppSettings['editor']>): AppSettings
   updateUpdater(updates: Partial<AppSettings['updater']>): AppSettings
+  updateWindow(updates: Partial<AppSettings['window']>): AppSettings
   updateTranslator(updates: Partial<AppSettings['translator']>): AppSettings
   updateNpmRegistry(npmRegistry: string): AppSettings
   updateMavenSearchUrl(mavenSearchUrl: string): AppSettings
@@ -232,6 +248,7 @@ export class SettingsStore implements ISettingsStore {
       appearance: { ...DEFAULT_SETTINGS.appearance, ...data.appearance },
       editor: { ...DEFAULT_SETTINGS.editor, ...data.editor },
       updater: { ...DEFAULT_SETTINGS.updater, ...data.updater },
+      window: { ...DEFAULT_SETTINGS.window, ...data.window },
       translator: { ...DEFAULT_SETTINGS.translator, ...data.translator },
       npmRegistry: data.npmRegistry ?? '',
       mavenSearchUrl: data.mavenSearchUrl ?? '',
@@ -293,6 +310,12 @@ export class SettingsStore implements ISettingsStore {
 
   updateUpdater(updates: Partial<AppSettings['updater']>): AppSettings {
     this.settings.updater = { ...this.settings.updater, ...updates }
+    this.save()
+    return this.getSettings()
+  }
+
+  updateWindow(updates: Partial<AppSettings['window']>): AppSettings {
+    this.settings.window = { ...this.settings.window, ...updates }
     this.save()
     return this.getSettings()
   }
