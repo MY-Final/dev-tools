@@ -56,6 +56,7 @@ export function initUpdater(window: BrowserWindow): void {
 }
 
 export async function checkForUpdates(): Promise<UpdateStatus> {
+  let status: UpdateStatus = { type: 'not-available' }
   try {
     const result = await autoUpdater.checkForUpdates()
     if (result && result.updateInfo) {
@@ -63,7 +64,7 @@ export async function checkForUpdates(): Promise<UpdateStatus> {
       const current = autoUpdater.currentVersion.toString()
       // Only report as available if the remote version is actually newer
       if (latest !== current) {
-        return {
+        status = {
           type: 'available',
           version: latest,
           releaseDate: result.updateInfo.releaseDate,
@@ -75,9 +76,10 @@ export async function checkForUpdates(): Promise<UpdateStatus> {
       }
     }
   } catch (err) {
-    return { type: 'error', message: (err as Error).message }
+    status = { type: 'error', message: (err as Error).message }
   }
-  return { type: 'not-available' }
+  sendStatus(status)
+  return status
 }
 
 export async function downloadUpdate(): Promise<void> {

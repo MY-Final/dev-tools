@@ -623,6 +623,7 @@
 .settings-modal-footer {
   justify-content: flex-end;
   border-top: 1px solid var(--color-border);
+  gap: 10px;
 }
 
 .settings-modal-title {

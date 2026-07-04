@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, Suspense } from 'react'
+import { Download, FileText, X } from 'lucide-react'
 import Sidebar from '@renderer/components/Sidebar'
 import CommandPalette from '@renderer/components/CommandPalette'
 import ToolHelp from '@renderer/components/ToolHelp'
@@ -8,8 +9,63 @@ import About from '@renderer/pages/About'
 import SettingsPage from '@renderer/pages/SettingsPage'
 import { getPageComponent } from '@renderer/pages/registry'
 import { SettingsProvider, useSettings } from '@renderer/lib/contexts'
-import { UpdaterProvider } from '@renderer/lib/updater-context'
+import { UpdaterProvider, useUpdater } from '@renderer/lib/updater-context'
 import { matchShortcut } from '@renderer/lib/shortcuts'
+
+function UpdatePrompt(): React.JSX.Element {
+  const { status, isAvailable, releaseNotes, releaseDate, downloadUpdate } = useUpdater()
+  const [dismissedVersion, setDismissedVersion] = useState<string | null>(null)
+
+  if (!isAvailable || status.type !== 'available' || dismissedVersion === status.version) {
+    return <></>
+  }
+
+  const formatReleaseDate = (date?: string): string => {
+    if (!date) return ''
+    try {
+      return new Date(date).toLocaleDateString('zh-CN', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      })
+    } catch {
+      return date
+    }
+  }
+
+  return (
+    <div className="settings-overlay" onClick={() => setDismissedVersion(status.version)}>
+      <div className="settings-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="settings-modal-header">
+          <h3 className="settings-modal-title">
+            <FileText size={16} />
+            发现新版本 {status.version}
+          </h3>
+          <button className="settings-modal-close" onClick={() => setDismissedVersion(status.version)}>
+            <X size={16} />
+          </button>
+        </div>
+        <div className="settings-modal-body">
+          {releaseDate && <div className="settings-modal-date">发布日期：{formatReleaseDate(releaseDate)}</div>}
+          {releaseNotes ? (
+            <div className="settings-modal-notes" dangerouslySetInnerHTML={{ __html: releaseNotes }} />
+          ) : (
+            <div className="settings-modal-empty">发现新版本，可选择立即下载更新。</div>
+          )}
+        </div>
+        <div className="settings-modal-footer">
+          <button className="settings-btn settings-btn-secondary" onClick={() => setDismissedVersion(status.version)}>
+            稍后
+          </button>
+          <button className="settings-btn settings-btn-primary" onClick={downloadUpdate}>
+            <Download size={14} />
+            下载更新
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 function AppContent(): React.JSX.Element {
   const { settings, updateAppearance } = useSettings()
@@ -108,6 +164,7 @@ function AppContent(): React.JSX.Element {
       />
       <main className="main-content">{renderPage()}</main>
       <CommandPalette currentPage={currentPage} onNavigate={setCurrentPage} />
+      <UpdatePrompt />
     </div>
   )
 }
