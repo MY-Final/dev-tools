@@ -41,7 +41,6 @@
     "lucide-react": "^1.21.0",
     "node-forge": "^1.4.0",
     "react-day-picker": "^10.0.1",
-    "react-json-view-lite": "^2.5.0",
     "tailwind-merge": "^3.6.0",
     "ws": "^8.21.0"
   },
