@@ -1,4 +1,22 @@
-import { ElectronAPI } from '@electron-toolkit/preload'
+export interface RuntimeVersions {
+  electron: string
+  chrome: string
+  node: string
+}
+
+export interface RuntimeAPI {
+  getVersions: () => RuntimeVersions
+}
+
+export interface ElectronCompatAPI {
+  process: {
+    platform: string
+    versions: RuntimeVersions
+  }
+  ipcRenderer: {
+    on: (channel: string, callback: () => void) => () => void
+  }
+}
 
 export interface AppSettings {
   appearance: {
@@ -188,7 +206,8 @@ export interface DockerTagResult {
 
 declare global {
   interface Window {
-    electron: ElectronAPI
+    runtime: RuntimeAPI
+    electron: ElectronCompatAPI
     api: SettingsAPI
     updater: UpdaterAPI
     maven: MavenAPI

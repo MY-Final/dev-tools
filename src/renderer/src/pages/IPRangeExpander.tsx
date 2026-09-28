@@ -1,58 +1,59 @@
 import { useState, useMemo, useCallback } from 'react'
 import { Copy, Check, Network, ArrowRight } from 'lucide-react'
 
+const MAX_CIDR_BLOCKS = 64
+
 function ipToNumber(ip: string): number | null {
   const parts = ip.split('.')
   if (parts.length !== 4) return null
+
   let result = 0
   for (const part of parts) {
-    const num = parseInt(part, 10)
-    if (isNaN(num) || num < 0 || num > 255) return null
-    result = (result << 8) | num
+    if (!/^\d{1,3}$/.test(part)) return null
+    const value = Number(part)
+    if (value < 0 || value > 255) return null
+    result = result * 256 + value
   }
-  return result >>> 0
+  return result
 }
 
 function numberToIp(num: number): string {
   return [(num >>> 24) & 0xff, (num >>> 16) & 0xff, (num >>> 8) & 0xff, num & 0xff].join('.')
 }
 
-function ipRangeToCIDRs(startIp: number, endIp: number): string[] {
+function ipRangeToCIDRs(
+  startIp: number,
+  endIp: number
+): { cidrs: string[]; truncated: boolean } {
   const cidrs: string[] = []
   let current = startIp
 
-  while (current <= endIp) {
-    let maxSize = 32
-    while (maxSize > 0) {
-      const mask = (~0 << (32 - (maxSize - 1))) >>> 0
-      const network = (current & mask) >>> 0
-      if (network !== current) break
-      maxSize--
+  while (current <= endIp && cidrs.length < MAX_CIDR_BLOCKS) {
+    let prefix = 32
+
+    while (prefix > 0) {
+      const candidatePrefix = prefix - 1
+      const blockSize = 2 ** (32 - candidatePrefix)
+      if (current % blockSize !== 0) break
+
+      const blockEnd = current + blockSize - 1
+      if (blockEnd > endIp) break
+      prefix = candidatePrefix
     }
 
-    let size = maxSize
-    while (size > 0) {
-      const mask = (~0 << (32 - size)) >>> 0
-      const network = (current & mask) >>> 0
-      const broadcast = (network | (~mask >>> 0)) >>> 0
-      if (broadcast <= endIp) break
-      size--
-    }
-
-    const cidr = size === 0 ? 32 : size
-    cidrs.push(`${numberToIp(current)}/${cidr}`)
-
-    const mask = cidr === 0 ? 0 : (~0 << (32 - cidr)) >>> 0
-    const broadcast = (current | (~mask >>> 0)) >>> 0
-    current = broadcast + 1
+    const blockSize = 2 ** (32 - prefix)
+    cidrs.push(`${numberToIp(current)}/${prefix}`)
+    current += blockSize
   }
 
-  return cidrs
+  return {
+    cidrs,
+    truncated: current <= endIp
+  }
 }
-
 function getCIDRHosts(cidr: string): number {
-  const prefix = parseInt(cidr.split('/')[1], 10)
-  return Math.pow(2, 32 - prefix)
+  const prefix = Number.parseInt(cidr.split('/')[1], 10)
+  return 2 ** (32 - prefix)
 }
 
 interface RangeResult {
@@ -61,6 +62,7 @@ interface RangeResult {
   networkCount: number
   startIp: string
   endIp: string
+  truncated: boolean
 }
 
 export default function IPRangeExpander(): React.JSX.Element {
@@ -74,7 +76,7 @@ export default function IPRangeExpander(): React.JSX.Element {
     if (startNum === null || endNum === null) return null
     if (startNum > endNum) return null
 
-    const cidrs = ipRangeToCIDRs(startNum, endNum)
+    const { cidrs, truncated } = ipRangeToCIDRs(startNum, endNum)
     const totalIPs = endNum - startNum + 1
 
     return {
@@ -82,7 +84,8 @@ export default function IPRangeExpander(): React.JSX.Element {
       totalIPs,
       networkCount: cidrs.length,
       startIp: startInput,
-      endIp: endInput
+      endIp: endInput,
+      truncated
     }
   }, [startInput, endInput])
 
@@ -92,7 +95,7 @@ export default function IPRangeExpander(): React.JSX.Element {
       setCopied(key)
       setTimeout(() => setCopied(null), 1500)
     } catch {
-      // fallback
+      // Fallback is intentionally unavailable so clipboard errors are not reported as success.
     }
   }, [])
 
@@ -103,7 +106,7 @@ export default function IPRangeExpander(): React.JSX.Element {
       setCopied('all')
       setTimeout(() => setCopied(null), 1500)
     } catch {
-      // fallback
+      // Fallback is intentionally unavailable so clipboard errors are not reported as success.
     }
   }, [result])
 
@@ -208,6 +211,13 @@ export default function IPRangeExpander(): React.JSX.Element {
                 })}
               </div>
             </div>
+
+            {result.truncated && (
+              <div className="re-empty">
+                <Network size={24} />
+                <span>范围超过安全上限，仅显示前 {MAX_CIDR_BLOCKS} 个 CIDR 块</span>
+              </div>
+            )}
 
             <div className="re-visual">
               <div className="re-visual-row">

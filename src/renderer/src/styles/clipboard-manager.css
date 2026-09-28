@@ -304,45 +304,103 @@
   }
 }
 
-/* Lightbox */
-.clm-lightbox {
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  background: rgba(0, 0, 0, 0.85);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: zoom-out;
-}
-
-.clm-lightbox-close {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 10px;
-  color: #fff;
-  cursor: pointer;
-  transition: background 0.15s ease;
-  z-index: 1;
-}
-
-.clm-lightbox-close:hover {
-  background: rgba(255, 255, 255, 0.2);
-}
-
-.clm-lightbox-img {
-  max-width: 90vw;
-  max-height: 90vh;
-  object-fit: contain;
+.clm-image-button {
+  display: block;
+  max-width: 100%;
+  padding: 0;
+  border: 0;
   border-radius: 8px;
-  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5);
-  cursor: default;
+  background: transparent;
+  cursor: zoom-in;
+}
+
+.clm-image-button:focus-visible {
+  outline: 2px solid var(--color-accent-soft);
+  outline-offset: 3px;
+}
+
+.clm-copy-feedback {
+  padding: 10px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  font-size: 12px;
+  margin-bottom: 16px;
+}
+
+.clm-copy-feedback--success {
+  border-color: var(--color-success);
+  background: color-mix(in srgb, var(--color-success) 10%, transparent);
+  color: var(--color-success);
+}
+
+.clm-copy-feedback--error {
+  border-color: var(--color-danger);
+  background: var(--color-danger-subtle);
+  color: var(--color-danger);
+}
+
+.clm-dialog-text {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.clm-dialog-cancel,
+.clm-dialog-confirm {
+  padding: 9px 16px;
+  border: 1px solid var(--color-border);
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.clm-dialog-cancel {
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+}
+
+.clm-dialog-cancel:hover {
+  background: var(--color-surface-hover);
+  color: var(--color-text);
+}
+
+.clm-dialog-confirm {
+  border-color: var(--color-danger);
+  background: var(--color-danger);
+  color: var(--color-text-inverse);
+}
+
+.clm-dialog-confirm:hover {
+  filter: brightness(1.08);
+}
+
+.clm-preview-dialog {
+  width: min(94vw, 1000px);
+}
+
+.clm-preview-dialog .dialog-body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.92);
+}
+
+.clm-dialog-image {
+  display: block;
+  max-width: 100%;
+  max-height: min(76vh, 760px);
+  object-fit: contain;
+  border-radius: 10px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .clm-item,
+  .clm-read-btn,
+  .clm-export-btn,
+  .clm-clear-btn,
+  .clm-item-image {
+    transition: none;
+  }
 }

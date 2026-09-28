@@ -297,6 +297,40 @@
   accent-color: var(--color-accent-soft);
 }
 
+/* 动画偏好 */
+.dd-motion-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.dd-motion-label input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--color-accent-soft);
+  cursor: pointer;
+}
+
+.dd-motion-label input:focus-visible {
+  outline: 2px solid var(--color-accent-soft);
+  outline-offset: 2px;
+}
+
+.dd-motion-note {
+  margin: -4px 0 0;
+  padding: 9px 12px;
+  border: 1px solid var(--color-accent-soft);
+  border-radius: 9px;
+  background: var(--color-accent-soft-subtle);
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
 /* 时间 / 数字输入 */
 .dd-time-input {
   padding: 6px 10px;
@@ -522,7 +556,11 @@
 }
 
 .dd-overlay-static {
-  max-width: 90vw;
+  max-width: min(90vw, 1200px);
+  max-height: 88vh;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 /* 滚动模式：左对齐，让 translateX(100vw) 从屏幕右边缘进入 */
@@ -626,5 +664,22 @@
 
   .dd-direction-group {
     flex-wrap: wrap;
+  }
+}
+
+/* 尊重系统减少动态效果设置，静止显示仍保留完整消息和倒计时。 */
+@media (prefers-reduced-motion: reduce) {
+  .dd-preview-text,
+  .dd-overlay-text {
+    animation: none !important;
+    transform: none !important;
+  }
+
+  .dd-template-btn,
+  .dd-mode-btn,
+  .dd-dir-btn,
+  .dd-fullscreen-btn,
+  .dd-overlay-close {
+    transition: none;
   }
 }

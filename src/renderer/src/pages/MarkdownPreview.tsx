@@ -2,11 +2,93 @@ import { useState, useMemo, useCallback } from 'react'
 import { FileText, Copy, Check, RotateCcw } from 'lucide-react'
 import '../styles/markdown-preview.css'
 
-function escapeHTML(s: string): string {
-  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+function escapeHTML(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
 }
 
-// Simple Markdown parser — supports GFM subset
+function decodeHtmlEntities(value: string): string {
+  return value
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/&#x27;/gi, "'")
+    .replace(/&colon;/gi, ':')
+    .replace(/&#58;/gi, ':')
+    .replace(/&#x3a;/gi, ':')
+}
+
+function sanitizeUrl(rawUrl: string, allowMailto: boolean): string | null {
+  let candidate = rawUrl.trim()
+  for (let pass = 0; pass < 3; pass++) {
+    const decoded = decodeHtmlEntities(candidate)
+    if (decoded === candidate) break
+    candidate = decoded
+  }
+
+  // Control characters and whitespace can be used to disguise dangerous schemes.
+  candidate = Array.from(candidate)
+    .filter((character) => {
+      const code = character.charCodeAt(0)
+      return code > 0x1f && code !== 0x7f && !/\s/.test(character)
+    })
+    .join('')
+  if (!candidate) return null
+
+  if (/^(?:\/|\.\/|\.\.\/|#|\?)/.test(candidate)) return candidate
+
+  try {
+    const parsed = new URL(candidate)
+    if (parsed.protocol === 'http:' || parsed.protocol === 'https:') return parsed.href
+    if (allowMailto && parsed.protocol === 'mailto:') return parsed.href
+  } catch {
+    return null
+  }
+
+  return null
+}
+
+function renderInline(source: string): string {
+  const codeTokens: string[] = []
+  let html = escapeHTML(source).replace(/`([^`]+)`/g, (_match, code: string) => {
+    const token = `\uE000CODE${codeTokens.length}\uE001`
+    codeTokens.push(`<code>${code}</code>`)
+    return token
+  })
+
+  html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (_match, alt: string, url: string) => {
+    const safeUrl = sanitizeUrl(url, false)
+    return safeUrl ? `<img src="${escapeHTML(safeUrl)}" alt="${alt}" loading="lazy">` : alt
+  })
+
+  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_match, label: string, url: string) => {
+    const safeUrl = sanitizeUrl(url, true)
+    return safeUrl
+      ? `<a href="${escapeHTML(safeUrl)}" target="_blank" rel="noopener noreferrer">${label}</a>`
+      : label
+  })
+
+  html = html.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>')
+  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+  html = html.replace(/\*(.+?)\*/g, '<em>$1</em>')
+  html = html.replace(/___(.+?)___/g, '<strong><em>$1</em></strong>')
+  html = html.replace(/__(.+?)__/g, '<strong>$1</strong>')
+  html = html.replace(/_(.+?)_/g, '<em>$1</em>')
+  html = html.replace(/~~(.+?)~~/g, '<del>$1</del>')
+
+  return html.replace(/\uE000CODE(\d+)\uE001/g, (_match, index: string) => {
+    return codeTokens[Number(index)] ?? ''
+  })
+}
+
+// Raw HTML is escaped before parsing. This renderer only emits a fixed set of
+// safe tags, so preview output is trusted even though it is injected as HTML.
 function parseMarkdown(md: string): string {
   const lines = md.split('\n')
   const out: string[] = []
@@ -24,7 +106,7 @@ function parseMarkdown(md: string): string {
         i++
       }
       i++ // skip closing ```
-      out.push(`<pre><code>${codeLines.join('\n')}</code></pre>`)
+      out.push(`<pre><code>${escapeHTML(codeLines.join('\n'))}</code></pre>`)
       continue
     }
 
@@ -32,7 +114,7 @@ function parseMarkdown(md: string): string {
     if (/^#{1,6} /.test(line)) {
       const level = line.match(/^(#+)/)![1].length
       const text = line.slice(level + 1)
-      out.push(`<h${level}>${escapeHTML(text)}</h${level}>`)
+      out.push(`<h${level}>${renderInline(text)}</h${level}>`)
       i++
       continue
     }
@@ -45,10 +127,10 @@ function parseMarkdown(md: string): string {
     }
 
     // Unordered list (consecutive items)
-    if (/^[\*\-] /.test(line)) {
+    if (/^[*-] /.test(line)) {
       const items: string[] = []
-      while (i < lines.length && /^[\*\-] /.test(lines[i])) {
-        items.push(escapeHTML(lines[i].replace(/^[\*\-] /, '')))
+      while (i < lines.length && /^[*-] /.test(lines[i])) {
+        items.push(renderInline(lines[i].replace(/^[*-] /, '')))
         i++
       }
       out.push('<ul>' + items.map((item) => `<li>${item}</li>`).join('') + '</ul>')
@@ -59,7 +141,7 @@ function parseMarkdown(md: string): string {
     if (/^\d+\. /.test(line)) {
       const items: string[] = []
       while (i < lines.length && /^\d+\. /.test(lines[i])) {
-        items.push(escapeHTML(lines[i].replace(/^\d+\. /, '')))
+        items.push(renderInline(lines[i].replace(/^\d+\. /, '')))
         i++
       }
       out.push('<ol>' + items.map((item) => `<li>${item}</li>`).join('') + '</ol>')
@@ -73,7 +155,7 @@ function parseMarkdown(md: string): string {
         const cells = lines[i]
           .split('|')
           .filter((_, idx, arr) => idx > 0 && idx < arr.length - 1) // skip first/last empty
-          .map((c) => escapeHTML(c.trim()))
+          .map((c) => renderInline(c.trim()))
         rows.push(cells)
         i++
       }
@@ -96,7 +178,7 @@ function parseMarkdown(md: string): string {
     if (/^> /.test(line)) {
       const quotes: string[] = []
       while (i < lines.length && /^> /.test(lines[i])) {
-        quotes.push(escapeHTML(lines[i].replace(/^> /, '')))
+        quotes.push(renderInline(lines[i].replace(/^> /, '')))
         i++
       }
       out.push('<blockquote>' + quotes.join('<br>') + '</blockquote>')
@@ -111,33 +193,10 @@ function parseMarkdown(md: string): string {
 
     // Regular paragraph line
     i++
-    out.push('<p>' + escapeHTML(line) + '</p>')
+    out.push('<p>' + renderInline(line) + '</p>')
   }
 
-  let html = out.join('\n')
-
-  // Inline formatting (applied on escaped text content)
-  // Images
-  html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" loading="lazy">')
-
-  // Links
-  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
-
-  // Bold + Italic
-  html = html.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>')
-  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-  html = html.replace(/\*(.+?)\*/g, '<em>$1</em>')
-  html = html.replace(/___(.+?)___/g, '<strong><em>$1</em></strong>')
-  html = html.replace(/__(.+?)__/g, '<strong>$1</strong>')
-  html = html.replace(/_(.+?)_/g, '<em>$1</em>')
-
-  // Inline code
-  html = html.replace(/`([^`]+)`/g, '<code>$1</code>')
-
-  // Strikethrough
-  html = html.replace(/~~(.+?)~~/g, '<del>$1</del>')
-
-  return html
+  return out.join('\n')
 }
 
 export default function MarkdownPreview(): React.JSX.Element {

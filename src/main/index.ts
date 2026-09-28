@@ -1,4 +1,4 @@
-import { app, shell, BrowserWindow, ipcMain, Menu, globalShortcut, Tray, dialog } from 'electron'
+import { app, shell, BrowserWindow, Menu, globalShortcut, Tray, dialog } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
@@ -13,10 +13,72 @@ import { registerDockerHandlers } from './docker-ipc'
 import { registerWsProxyHandlers, cleanupWsProxyConnections } from './ws-proxy-ipc'
 import { registerTodoHandlers } from './todos-ipc'
 import { settingsStore } from './settings'
+import { configureIpcSecurity, isTrustedRendererUrl } from './ipc-security'
 
 let mainWindow: BrowserWindow | null = null
 let tray: Tray | null = null
 let isQuitting = false
+
+const APP_USER_MODEL_ID = 'com.electron.app'
+const COMMAND_PALETTE_SHORTCUT = 'CommandOrControl+K'
+
+interface ShortcutRegistrationResult {
+  shortcut: string
+  registered: boolean
+  error?: string
+}
+
+function registerCommandPaletteShortcut(): ShortcutRegistrationResult {
+  try {
+    const registered = globalShortcut.register(COMMAND_PALETTE_SHORTCUT, () => {
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('command-palette:toggle')
+      }
+    })
+
+    const result: ShortcutRegistrationResult = {
+      shortcut: COMMAND_PALETTE_SHORTCUT,
+      registered
+    }
+
+    if (!registered) {
+      result.error = 'The shortcut is already in use or unavailable'
+      console.error(`Failed to register global shortcut ${COMMAND_PALETTE_SHORTCUT}`)
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('app:shortcut-status', result)
+      }
+    }
+
+    return result
+  } catch (error) {
+    const result: ShortcutRegistrationResult = {
+      shortcut: COMMAND_PALETTE_SHORTCUT,
+      registered: false,
+      error: error instanceof Error ? error.message : String(error)
+    }
+    console.error(`Failed to register global shortcut ${COMMAND_PALETTE_SHORTCUT}:`, error)
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('app:shortcut-status', result)
+    }
+    return result
+  }
+}
+
+function isAllowedExternalUrl(rawUrl: string): boolean {
+  try {
+    const protocol = new URL(rawUrl).protocol
+    return protocol === 'http:' || protocol === 'https:'
+  } catch {
+    return false
+  }
+}
+
+function openExternalUrl(rawUrl: string): void {
+  if (!isAllowedExternalUrl(rawUrl)) return
+  void shell.openExternal(rawUrl).catch((error: unknown) => {
+    console.error('Failed to open external URL:', error)
+  })
+}
 
 function showMainWindow(): void {
   if (!mainWindow || mainWindow.isDestroyed()) return
@@ -58,6 +120,7 @@ function handleWindowClose(event: Electron.Event): void {
 
   if (behavior === 'exit') {
     isQuitting = true
+    app.quit()
     return
   }
 
@@ -108,7 +171,7 @@ function createWindow(): void {
     icon,
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
-      sandbox: false,
+      sandbox: true,
       contextIsolation: true,
       nodeIntegration: false
     }
@@ -119,9 +182,19 @@ function createWindow(): void {
   })
 
   win.on('close', handleWindowClose)
+  win.on('closed', () => {
+    if (mainWindow === win) mainWindow = null
+  })
+
+  const preventUntrustedNavigation = (event: Electron.Event, url: string): void => {
+    if (!isTrustedRendererUrl(url)) event.preventDefault()
+  }
+
+  win.webContents.on('will-navigate', preventUntrustedNavigation)
+  win.webContents.on('will-redirect', preventUntrustedNavigation)
 
   win.webContents.setWindowOpenHandler((details) => {
-    shell.openExternal(details.url)
+    openExternalUrl(details.url)
     return { action: 'deny' }
   })
 
@@ -155,6 +228,15 @@ app.commandLine.appendSwitch('disable-pdf-viewer')     // No PDF
 app.commandLine.appendSwitch('disable-breakpad')       // No crash reporter
 app.commandLine.appendSwitch('disable-hang-monitor')   // No hang monitor
 
+const hasSingleInstanceLock = app.requestSingleInstanceLock()
+
+if (!hasSingleInstanceLock) {
+  app.quit()
+} else {
+  app.on('second-instance', () => {
+    showMainWindow()
+  })
+
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
@@ -162,8 +244,14 @@ app.whenReady().then(() => {
   // Disable default menu (Alt key)
   Menu.setApplicationMenu(null)
 
+  configureIpcSecurity({
+    getMainWindow: () => mainWindow,
+    devOrigin: is.dev ? process.env['ELECTRON_RENDERER_URL'] : undefined,
+    rendererEntryPath: join(__dirname, '../renderer/index.html')
+  })
+
   // Set app user model id for windows
-  electronApp.setAppUserModelId('com.electron')
+  electronApp.setAppUserModelId(APP_USER_MODEL_ID)
 
   // Default open or close DevTools by F12 in development
   // and ignore CommandOrControl + R in production.
@@ -171,9 +259,6 @@ app.whenReady().then(() => {
   app.on('browser-window-created', (_, window) => {
     optimizer.watchWindowShortcuts(window)
   })
-
-  // IPC test
-  ipcMain.on('ping', () => console.log('pong'))
 
   // Register settings IPC handlers
   registerSettingsHandlers()
@@ -205,28 +290,26 @@ app.whenReady().then(() => {
   createWindow()
 
   // Initialize updater with the created window
-  if (mainWindow) {
-    initUpdater(mainWindow)
-  }
+  initUpdater(() => mainWindow)
 
   // Register global shortcut: Ctrl+K opens command palette
-  globalShortcut.register('CommandOrControl+K', () => {
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.webContents.send('command-palette:toggle')
-    }
-  })
+  const shortcutResult = registerCommandPaletteShortcut()
+  if (!shortcutResult.registered) {
+    console.error('Command palette global shortcut is unavailable')
+  }
 
   // Auto-check for updates if enabled
   if (shouldAutoCheck()) {
     checkForUpdates()
   }
 
-  app.on('activate', function () {
+  app.on('activate', () => {
     // On macOS it's common to re-create a window in the app when the
     // dock icon is clicked and there are no other windows open.
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })
 })
+}
 
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits

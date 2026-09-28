@@ -1,8 +1,8 @@
-import { ipcMain } from 'electron'
 import { settingsStore } from './settings'
+import { registerGuardedHandler } from './ipc-security'
 
 export function registerTranslatorHandlers(): void {
-  ipcMain.handle(
+  registerGuardedHandler(
     'translator:translate',
     async (_event, text: string, sourceLang: string, targetLang: string) => {
       const config = settingsStore.getTranslator()
@@ -64,7 +64,7 @@ export function registerTranslatorHandlers(): void {
     }
   )
 
-  ipcMain.handle('translator:test-connection', async () => {
+  registerGuardedHandler('translator:test-connection', async () => {
     const config = settingsStore.getTranslator()
     if (!config.baseUrl || !config.apiKey) {
       return { error: '请先配置 Base URL 和 API Key' }

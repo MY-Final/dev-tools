@@ -372,3 +372,13 @@
     flex-wrap: wrap;
   }
 }
+
+/* 尊重系统减少动态效果设置。计时状态仍由 JS 更新，只关闭非必要过渡。 */
+@media (prefers-reduced-motion: reduce) {
+  .ts-tab,
+  .ts-ctrl-btn,
+  .ts-preset-btn,
+  .ts-progress-fill {
+    transition: none;
+  }
+}

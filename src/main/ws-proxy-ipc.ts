@@ -1,5 +1,6 @@
-import { ipcMain, BrowserWindow } from 'electron'
+import { BrowserWindow } from 'electron'
 import WebSocket from 'ws'
+import { registerGuardedHandler } from './ipc-security'
 
 let wsProxyIdCounter = 0
 const wsProxyConnections = new Map<number, WebSocket>()
@@ -21,7 +22,7 @@ export function cleanupWsProxyConnections(): void {
 }
 
 export function registerWsProxyHandlers(getMainWindow: () => BrowserWindow | null): void {
-  ipcMain.handle('ws-proxy:connect', (_event, opts: { url: string; headers?: Record<string, string>; protocols?: string[] }) => {
+  registerGuardedHandler('ws-proxy:connect', (_event, opts: { url: string; headers?: Record<string, string>; protocols?: string[] }) => {
     const id = ++wsProxyIdCounter
     try {
       const ws = opts.protocols && opts.protocols.length > 0
@@ -50,7 +51,7 @@ export function registerWsProxyHandlers(getMainWindow: () => BrowserWindow | nul
     }
   })
 
-  ipcMain.handle('ws-proxy:send', (_event, opts: { id: number; message: string }) => {
+  registerGuardedHandler('ws-proxy:send', (_event, opts: { id: number; message: string }) => {
     const ws = wsProxyConnections.get(opts.id)
     if (!ws || ws.readyState !== WebSocket.OPEN) return { error: '连接未打开' }
     try {
@@ -61,7 +62,7 @@ export function registerWsProxyHandlers(getMainWindow: () => BrowserWindow | nul
     }
   })
 
-  ipcMain.handle('ws-proxy:disconnect', (_event, id: number) => {
+  registerGuardedHandler('ws-proxy:disconnect', (_event, id: number) => {
     const ws = wsProxyConnections.get(id)
     if (ws) {
       ws.close()

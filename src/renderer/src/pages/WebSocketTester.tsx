@@ -22,10 +22,66 @@ function getTimestamp(): string {
   return new Date().toLocaleTimeString('zh-CN', { hour12: false })
 }
 
-function buildUrl(base: string, params: KeyValuePair[], username: string, password: string): string {
+const SENSITIVE_KEY_NAMES = new Set([
+  'authorization',
+  'token',
+  'access_token',
+  'api_key',
+  'apikey',
+  'key',
+  'secret',
+  'password',
+  'passwd'
+])
+
+function isSensitiveKey(key: string): boolean {
+  const normalized = key.trim().toLowerCase()
+  return (
+    SENSITIVE_KEY_NAMES.has(normalized) ||
+    normalized.includes('token') ||
+    normalized.includes('secret') ||
+    normalized.includes('password') ||
+    normalized.includes('passwd')
+  )
+}
+
+function redactUrl(raw: string): string {
+  try {
+    const parsed = new URL(raw)
+    if (parsed.username || parsed.password) {
+      parsed.username = '***'
+      parsed.password = '***'
+    }
+    for (const key of Array.from(parsed.searchParams.keys())) {
+      if (isSensitiveKey(key)) parsed.searchParams.set(key, '***')
+    }
+    return parsed.toString()
+  } catch {
+    return raw.replace(/\/\/[^/@\s]+@/, '//***@')
+  }
+}
+
+function encodeBasicAuth(username: string, password: string): string {
+  const bytes = new TextEncoder().encode(`${username}:${password}`)
+  let binary = ''
+  for (const byte of bytes) binary += String.fromCharCode(byte)
+  return `Basic ${btoa(binary)}`
+}
+
+function isWebRuntime(): boolean {
+  return window.electron?.process?.platform === 'web'
+}
+
+function buildUrl(
+  base: string,
+  params: KeyValuePair[],
+  username: string,
+  password: string,
+  includeAuth = true
+): string {
   let url = base.trim()
   // Basic Auth
-  if (username) {
+  if (includeAuth && username) {
     const protocolEnd = url.indexOf('://')
     if (protocolEnd !== -1) {
       const auth = encodeURIComponent(username) + ':' + encodeURIComponent(password)
@@ -58,6 +114,7 @@ export default function WebSocketTester(): React.JSX.Element {
   ])
   const [autoAuthMsg, setAutoAuthMsg] = useState('')
   const [connected, setConnected] = useState(false)
+  const [activeProtocol, setActiveProtocol] = useState('')
   const [proxyId, setProxyId] = useState<number | null>(null)
   const [inputMsg, setInputMsg] = useState('')
   const [logs, setLogs] = useState<LogEntry[]>([])
@@ -67,9 +124,6 @@ export default function WebSocketTester(): React.JSX.Element {
   const autoAuthedRef = useRef(false)
   const proxyIdRef = useRef<number | null>(null)
 
-  // Keep proxyIdRef in sync
-  proxyIdRef.current = proxyId
-
   useEffect(() => {
     logEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [logs])
@@ -78,18 +132,35 @@ export default function WebSocketTester(): React.JSX.Element {
     setLogs((prev) => [...prev, entry])
   }, [])
 
-  const sendAutoAuth = useCallback(() => {
+  const sendAutoAuth = useCallback(async () => {
     if (!autoAuthMsg.trim() || autoAuthedRef.current) return
     autoAuthedRef.current = true
     const msg = autoAuthMsg.trim()
-    if (connectionMode === 'proxy' && proxyId) {
-      window.wsProxy.send({ id: proxyId, message: msg })
-    } else if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      wsRef.current.send(msg)
+    try {
+      if (connectionMode === 'proxy' && proxyIdRef.current !== null) {
+        const result = await window.wsProxy.send({ id: proxyIdRef.current, message: msg })
+        if (result.error) {
+          autoAuthedRef.current = false
+          addLog({ type: 'error', timestamp: getTimestamp(), message: `认证消息发送失败: ${result.error}` })
+          return
+        }
+      } else if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+        wsRef.current.send(msg)
+      } else {
+        autoAuthedRef.current = false
+        return
+      }
+      addLog({ type: 'sent', timestamp: getTimestamp(), message: msg })
+      addLog({ type: 'system', timestamp: getTimestamp(), message: '已发送认证消息' })
+    } catch (error) {
+      autoAuthedRef.current = false
+      addLog({
+        type: 'error',
+        timestamp: getTimestamp(),
+        message: `认证消息发送失败: ${error instanceof Error ? error.message : '未知错误'}`
+      })
     }
-    addLog({ type: 'sent', timestamp: getTimestamp(), message: msg })
-    addLog({ type: 'system', timestamp: getTimestamp(), message: '已发送认证消息' })
-  }, [autoAuthMsg, connectionMode, proxyId, addLog])
+  }, [autoAuthMsg, connectionMode, addLog])
 
   // Proxy event listeners
   useEffect(() => {
@@ -99,7 +170,7 @@ export default function WebSocketTester(): React.JSX.Element {
       if (id !== proxyIdRef.current) return
       setConnected(true)
       addLog({ type: 'system', timestamp: getTimestamp(), message: '连接成功' })
-      sendAutoAuth()
+      void sendAutoAuth()
     }))
     cleanups.push(window.wsProxy.onMessage(({ id, data: msg }) => {
       if (id !== proxyIdRef.current) return
@@ -108,6 +179,7 @@ export default function WebSocketTester(): React.JSX.Element {
     cleanups.push(window.wsProxy.onClose(({ id, code, reason }) => {
       if (id !== proxyIdRef.current) return
       setConnected(false)
+      proxyIdRef.current = null
       setProxyId(null)
       addLog({ type: 'system', timestamp: getTimestamp(), message: `关闭: 代码=${code} 原因="${reason || '无'}"` })
     }))
@@ -132,23 +204,33 @@ export default function WebSocketTester(): React.JSX.Element {
 
   const handleConnect = useCallback(async () => {
     if (!url.trim()) return
+    const proxyMode = connectionMode === 'proxy'
+    if (proxyMode && isWebRuntime()) {
+      addLog({ type: 'error', timestamp: getTimestamp(), message: '当前 Web 模式不支持主进程代理和自定义请求头' })
+      return
+    }
     setLogs([])
     autoAuthedRef.current = false
+    setActiveProtocol('')
 
-    const finalUrl = buildUrl(url, params, username, password)
+    const finalUrl = buildUrl(url, params, username, password, !proxyMode)
+    const displayUrl = redactUrl(finalUrl)
     const protocols = subprotocol.trim() ? subprotocol.trim().split(',').map((s) => s.trim()).filter(Boolean) : undefined
 
     // Log connection info
-    addLog({ type: 'system', timestamp: getTimestamp(), message: `模式: ${connectionMode === 'proxy' ? '主进程代理 (支持自定义请求头)' : '浏览器'}` })
-    addLog({ type: 'system', timestamp: getTimestamp(), message: `正在连接 ${finalUrl}` })
+    addLog({ type: 'system', timestamp: getTimestamp(), message: `模式: ${proxyMode ? '主进程代理 (支持自定义请求头)' : '浏览器'}` })
+    addLog({ type: 'system', timestamp: getTimestamp(), message: `正在连接 ${displayUrl}` })
     if (protocols && protocols.length > 0) {
       addLog({ type: 'system', timestamp: getTimestamp(), message: `子协议: ${protocols.join(', ')}` })
     }
     if (params.some((p) => p.key.trim())) {
-      const qs = params.filter((p) => p.key.trim()).map((p) => `${p.key}=${p.value || '(空)'}`).join(', ')
+      const qs = params
+        .filter((p) => p.key.trim())
+        .map((p) => `${p.key}=${isSensitiveKey(p.key) ? '***' : p.value || '(空)'}`)
+        .join(', ')
       addLog({ type: 'system', timestamp: getTimestamp(), message: `查询参数: ${qs}` })
     }
-    if (connectionMode === 'proxy') {
+    if (proxyMode) {
       const activeHeaders = headers.filter((h) => h.key.trim())
       if (activeHeaders.length > 0) {
         addLog({ type: 'system', timestamp: getTimestamp(), message: `自定义请求头: ${activeHeaders.length} 个` })
@@ -158,22 +240,34 @@ export default function WebSocketTester(): React.JSX.Element {
       addLog({ type: 'system', timestamp: getTimestamp(), message: `连接后将自动发送认证消息` })
     }
 
-    if (connectionMode === 'proxy') {
+    if (proxyMode) {
       // Use main process proxy
       const activeHeaders: Record<string, string> = {}
       for (const h of headers.filter((h) => h.key.trim())) {
         activeHeaders[h.key.trim()] = h.value
       }
-      const result = await window.wsProxy.connect({
-        url: finalUrl,
-        headers: Object.keys(activeHeaders).length > 0 ? activeHeaders : undefined,
-        protocols
-      })
-      if (result.error) {
-        addLog({ type: 'error', timestamp: getTimestamp(), message: `连接失败: ${result.error}` })
-        return
+      if (username) {
+        activeHeaders.Authorization = encodeBasicAuth(username, password)
       }
-      setProxyId(result.id)
+      try {
+        const result = await window.wsProxy.connect({
+          url: finalUrl,
+          headers: Object.keys(activeHeaders).length > 0 ? activeHeaders : undefined,
+          protocols
+        })
+        if (result.error) {
+          addLog({ type: 'error', timestamp: getTimestamp(), message: `连接失败: ${result.error}` })
+          return
+        }
+        proxyIdRef.current = result.id
+        setProxyId(result.id)
+      } catch (error) {
+        addLog({
+          type: 'error',
+          timestamp: getTimestamp(),
+          message: `连接失败: ${error instanceof Error ? error.message : '未知错误'}`
+        })
+      }
     } else {
       // Use browser WebSocket API
       try {
@@ -183,11 +277,13 @@ export default function WebSocketTester(): React.JSX.Element {
 
         ws.onopen = () => {
           setConnected(true)
+          setActiveProtocol(ws.protocol || '无')
           addLog({ type: 'system', timestamp: getTimestamp(), message: '连接成功' })
-          sendAutoAuth()
+          void sendAutoAuth()
         }
         ws.onclose = (event) => {
           setConnected(false)
+          setActiveProtocol('')
           addLog({ type: 'system', timestamp: getTimestamp(), message: `关闭: 代码=${event.code} 原因="${event.reason || '无'}"` })
         }
         ws.onerror = () => {
@@ -207,30 +303,46 @@ export default function WebSocketTester(): React.JSX.Element {
 
   const handleDisconnect = useCallback(() => {
     if (connectionMode === 'proxy' && proxyId) {
-      window.wsProxy.disconnect(proxyId)
+      void window.wsProxy.disconnect(proxyId).catch(() => undefined)
+      proxyIdRef.current = null
       setProxyId(null)
     } else if (wsRef.current) {
       wsRef.current.close()
       wsRef.current = null
     }
     setConnected(false)
+    setActiveProtocol('')
   }, [connectionMode, proxyId])
 
-  const handleSend = useCallback(() => {
-    if (!inputMsg.trim()) return
-    if (connectionMode === 'proxy' && proxyId) {
-      window.wsProxy.send({ id: proxyId, message: inputMsg.trim() })
-    } else if (wsRef.current?.readyState === WebSocket.OPEN) {
-      wsRef.current.send(inputMsg.trim())
-    } else {
-      return
+  const handleSend = useCallback(async () => {
+    const message = inputMsg.trim()
+    if (!message) return
+    try {
+      if (connectionMode === 'proxy' && proxyIdRef.current !== null) {
+        const result = await window.wsProxy.send({ id: proxyIdRef.current, message })
+        if (result.error) {
+          addLog({ type: 'error', timestamp: getTimestamp(), message: `发送失败: ${result.error}` })
+          return
+        }
+      } else if (wsRef.current?.readyState === WebSocket.OPEN) {
+        wsRef.current.send(message)
+      } else {
+        addLog({ type: 'error', timestamp: getTimestamp(), message: '发送失败: 连接不可用' })
+        return
+      }
+      addLog({ type: 'sent', timestamp: getTimestamp(), message })
+      setInputMsg('')
+    } catch (error) {
+      addLog({
+        type: 'error',
+        timestamp: getTimestamp(),
+        message: `发送失败: ${error instanceof Error ? error.message : '未知错误'}`
+      })
     }
-    addLog({ type: 'sent', timestamp: getTimestamp(), message: inputMsg.trim() })
-    setInputMsg('')
-  }, [inputMsg, connectionMode, proxyId, addLog])
+  }, [inputMsg, connectionMode, addLog])
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() }
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); void handleSend() }
   }, [handleSend])
 
   const copyLog = useCallback((text: string, idx: number) => {
@@ -241,6 +353,7 @@ export default function WebSocketTester(): React.JSX.Element {
   const clearLogs = useCallback(() => setLogs([]), [])
 
   const isConnected = connected
+  const isWebMode = isWebRuntime()
 
   return (
     <div className="wst-page">
@@ -253,9 +366,10 @@ export default function WebSocketTester(): React.JSX.Element {
           onChange={(e) => setUrl(e.target.value)}
           placeholder="ws://localhost:8080"
           disabled={isConnected}
+          aria-label="WebSocket URL"
         />
         {!isConnected ? (
-          <button className="wst-btn wst-btn-connect" onClick={handleConnect}>
+          <button className="wst-btn wst-btn-connect" onClick={() => { void handleConnect() }}>
             <Plug size={14} /> 连接
           </button>
         ) : (
@@ -266,22 +380,31 @@ export default function WebSocketTester(): React.JSX.Element {
       </div>
 
       {/* Mode switch */}
-      <div className="wst-mode-bar">
+      <div className="wst-mode-bar" role="group" aria-label="连接模式">
         <button
           className={`wst-mode-btn ${connectionMode === 'browser' ? 'active' : ''}`}
           onClick={() => setConnectionMode('browser')}
           disabled={isConnected}
+          aria-pressed={connectionMode === 'browser'}
         >
           <Radio size={12} /> 浏览器连接
         </button>
         <button
           className={`wst-mode-btn ${connectionMode === 'proxy' ? 'active' : ''}`}
           onClick={() => setConnectionMode('proxy')}
-          disabled={isConnected}
+          disabled={isConnected || isWebMode}
+          title={isWebMode ? 'Web 模式不支持主进程代理和自定义请求头' : '使用主进程代理建立连接'}
+          aria-pressed={connectionMode === 'proxy'}
         >
           <Shield size={12} /> 主进程代理 <span className="wst-mode-badge">支持请求头</span>
         </button>
       </div>
+
+      {isWebMode && (
+        <div className="wst-auth-footer" role="note">
+          Web 模式仅支持浏览器连接；主进程代理和自定义请求头不可用，子协议仍可在浏览器模式使用。
+        </div>
+      )}
 
       {/* Auth toggle */}
       <button
@@ -306,6 +429,7 @@ export default function WebSocketTester(): React.JSX.Element {
               onChange={(e) => setUsername(e.target.value)}
               placeholder="用户名"
               disabled={isConnected}
+              aria-label="Basic Auth 用户名"
             />
             <input
               className="wst-auth-input wst-auth-input-short"
@@ -314,6 +438,7 @@ export default function WebSocketTester(): React.JSX.Element {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="密码"
               disabled={isConnected}
+              aria-label="Basic Auth 密码"
             />
           </div>
 
@@ -328,6 +453,7 @@ export default function WebSocketTester(): React.JSX.Element {
               onChange={(e) => setSubprotocol(e.target.value)}
               placeholder="多个用逗号分隔，如 chat, superchat"
               disabled={isConnected}
+              aria-label="WebSocket 子协议"
             />
           </div>
 
@@ -373,6 +499,7 @@ export default function WebSocketTester(): React.JSX.Element {
               value={autoAuthMsg}
               onChange={(e) => setAutoAuthMsg(e.target.value)}
               placeholder='如 {"type":"auth","token":"xxx"}'
+              aria-label="连接后自动发送的认证消息"
             />
           </div>
 
@@ -391,16 +518,16 @@ export default function WebSocketTester(): React.JSX.Element {
         {isConnected && connectionMode === 'proxy' && (
           <span className="wst-status-protocol">代理模式</span>
         )}
-        {isConnected && connectionMode === 'browser' && wsRef.current && (
-          <span className="wst-status-protocol">子协议: {wsRef.current.protocol || '无'}</span>
+        {isConnected && connectionMode === 'browser' && activeProtocol && (
+          <span className="wst-status-protocol">子协议: {activeProtocol}</span>
         )}
       </div>
 
       {/* Send area */}
       <div className="wst-send-area">
         <div className="wst-send-row">
-          <input className="wst-send-input" type="text" value={inputMsg} onChange={(e) => setInputMsg(e.target.value)} onKeyDown={handleKeyDown} placeholder="输入要发送的消息..." disabled={!isConnected} />
-          <button className="wst-btn wst-btn-send" onClick={handleSend} disabled={!isConnected}>
+          <input className="wst-send-input" type="text" value={inputMsg} onChange={(e) => setInputMsg(e.target.value)} onKeyDown={handleKeyDown} placeholder="输入要发送的消息..." disabled={!isConnected} aria-label="要发送的消息" />
+          <button className="wst-btn wst-btn-send" onClick={() => { void handleSend() }} disabled={!isConnected}>
             <Send size={14} /> 发送
           </button>
         </div>
@@ -411,7 +538,7 @@ export default function WebSocketTester(): React.JSX.Element {
         <span className="wst-log-title">消息日志</span>
         <button className="wst-btn wst-btn-clear" onClick={clearLogs}><Trash2 size={12} /> 清空</button>
       </div>
-      <div className="wst-log-list">
+      <div className="wst-log-list" role="log" aria-live="polite" aria-relevant="additions">
         {logs.length === 0 && (
           <div className="wst-log-empty">
             <Radio size={32} className="wst-empty-icon" />

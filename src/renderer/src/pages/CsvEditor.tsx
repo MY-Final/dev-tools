@@ -1,84 +1,7 @@
 import { useState, useMemo, useCallback, useRef } from 'react'
 import { Table, Copy, Check, Plus, Trash2, Upload } from 'lucide-react'
 import '../styles/csv-editor.css'
-
-interface CSVData {
-  headers: string[]
-  rows: string[][]
-}
-
-function parseCSV(text: string): CSVData {
-  const lines = text.trim().split(/\r?\n/).filter(Boolean)
-  if (lines.length === 0) return { headers: [], rows: [] }
-
-  const headers = parseCSVLine(lines[0])
-  const rows = lines.slice(1).map((line) => parseCSVLine(line))
-
-  return { headers, rows }
-}
-
-function parseCSVLine(line: string): string[] {
-  const result: string[] = []
-  let current = ''
-  let inQuotes = false
-
-  for (let i = 0; i < line.length; i++) {
-    const ch = line[i]
-    if (inQuotes) {
-      if (ch === '"') {
-        if (line[i + 1] === '"') {
-          current += '"'
-          i++
-        } else {
-          inQuotes = false
-        }
-      } else {
-        current += ch
-      }
-    } else {
-      if (ch === '"') {
-        inQuotes = true
-      } else if (ch === ',') {
-        result.push(current.trim())
-        current = ''
-      } else {
-        current += ch
-      }
-    }
-  }
-  result.push(current.trim())
-  return result
-}
-
-function toCSV(data: CSVData): string {
-  const lines: string[] = []
-  lines.push(data.headers.map(escapeCSVCell).join(','))
-  for (const row of data.rows) {
-    lines.push(row.map(escapeCSVCell).join(','))
-  }
-  return lines.join('\n')
-}
-
-function escapeCSVCell(cell: string): string {
-  if (cell.includes(',') || cell.includes('"') || cell.includes('\n')) {
-    return `"${cell.replace(/"/g, '""')}"`
-  }
-  return cell
-}
-
-function toJSON(data: CSVData): string {
-  return JSON.stringify(
-    data.rows.map((row) => {
-      const obj: Record<string, string> = {}
-      data.headers.forEach((h, i) => {
-        obj[h] = row[i] || ''
-      })
-      return obj
-    }),
-    null,
-    2
-  )
-}
+import { csvTableToJson, parseCsvTable, stringifyCsv } from '@renderer/lib/data-format-utils'
 
 export default function CsvEditor(): React.JSX.Element {
   const [input, setInput] = useState('name,age,city\nAlice,30,NYC\nBob,25,LA\nCharlie,35,SF')
@@ -88,7 +11,7 @@ export default function CsvEditor(): React.JSX.Element {
   const [fileName, setFileName] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const data = useMemo(() => parseCSV(input), [input])
+  const data = useMemo(() => parseCsvTable(input), [input])
 
   const handleCellClick = useCallback((rowIndex: number, colIndex: number, value: string) => {
     setEditingCell({ row: rowIndex, col: colIndex })
@@ -97,14 +20,13 @@ export default function CsvEditor(): React.JSX.Element {
 
   const handleCellSave = useCallback(() => {
     if (!editingCell) return
-    const lines = input.split(/\r?\n/)
-    const parsed = parseCSVLine(lines[editingCell.row + 1])
-    parsed[editingCell.col] = editValue
-    lines[editingCell.row + 1] = parsed.join(',')
-    setInput(lines.join('\n'))
+    const rows = data.rows.map((row) => [...row])
+    if (!rows[editingCell.row]) return
+    rows[editingCell.row][editingCell.col] = editValue
+    setInput(stringifyCsv({ headers: data.headers, rows }))
     setEditingCell(null)
     setEditValue('')
-  }, [editingCell, editValue, input])
+  }, [data, editingCell, editValue])
 
   const handleCellKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -118,22 +40,20 @@ export default function CsvEditor(): React.JSX.Element {
   )
 
   const handleAddRow = useCallback(() => {
-    const emptyRow = data.headers.map(() => '').join(',')
-    setInput(input.trimEnd() + '\n' + emptyRow)
-  }, [data.headers, input])
+    const rows = [...data.rows, data.headers.map(() => '')]
+    setInput(stringifyCsv({ headers: data.headers, rows }))
+  }, [data.headers, data.rows])
 
   const handleDeleteRow = useCallback(
     (rowIndex: number) => {
-      const lines = input.split(/\r?\n/)
-      lines.splice(rowIndex + 1, 1)
-      setInput(lines.join('\n'))
+      const rows = data.rows.filter((_row, index) => index !== rowIndex)
+      setInput(stringifyCsv({ headers: data.headers, rows }))
     },
-    [input]
+    [data.headers, data.rows]
   )
-
   const handleCopyCSV = useCallback(async () => {
     try {
-      await navigator.clipboard.writeText(toCSV(data))
+      await navigator.clipboard.writeText(stringifyCsv(data))
       setCopied('csv')
       setTimeout(() => setCopied(null), 1500)
     } catch {
@@ -143,7 +63,7 @@ export default function CsvEditor(): React.JSX.Element {
 
   const handleCopyJSON = useCallback(async () => {
     try {
-      await navigator.clipboard.writeText(toJSON(data))
+      await navigator.clipboard.writeText(csvTableToJson(data))
       setCopied('json')
       setTimeout(() => setCopied(null), 1500)
     } catch {

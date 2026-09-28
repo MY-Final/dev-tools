@@ -1,6 +1,15 @@
 import { useState, useCallback } from 'react'
 import { Lock, Unlock, Copy, Check, RotateCcw, RefreshCw } from 'lucide-react'
 import forge from 'node-forge'
+import {
+  aesGcmDecrypt,
+  aesGcmEncrypt,
+  bytesToBase64,
+  bytesToHex,
+  concatBytes,
+  hexToBytes,
+  toArrayBuffer
+} from '../lib/crypto-utils'
 import '../styles/aes-des-encryptor.css'
 
 type CipherType = 'AES' | 'DES' | '3DES'
@@ -25,17 +34,8 @@ function parseBytes(input: string, format: InputFormat): Uint8Array {
   switch (format) {
     case 'text':
       return new TextEncoder().encode(input)
-    case 'hex': {
-      const hex = input.replace(/\s/g, '')
-      if (hex.length % 2 !== 0) throw new Error('Hex 长度必须为偶数')
-      const bytes = new Uint8Array(hex.length / 2)
-      for (let i = 0; i < hex.length; i += 2) {
-        const val = parseInt(hex.substring(i, i + 2), 16)
-        if (isNaN(val)) throw new Error(`无效的 Hex 字符: ${hex.substring(i, i + 2)}`)
-        bytes[i / 2] = val
-      }
-      return bytes
-    }
+    case 'hex':
+      return hexToBytes(input)
     case 'base64': {
       try {
         const binary = atob(input)
@@ -47,18 +47,6 @@ function parseBytes(input: string, format: InputFormat): Uint8Array {
       }
     }
   }
-}
-
-function bytesToHex(bytes: Uint8Array): string {
-  return Array.from(bytes)
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('')
-}
-
-function bytesToBase64(bytes: Uint8Array): string {
-  let binary = ''
-  for (const b of bytes) binary += String.fromCharCode(b)
-  return btoa(binary)
 }
 
 function formatOutput(bytes: Uint8Array, format: OutputFormat): string {
@@ -80,11 +68,8 @@ async function aesEncrypt(
   data: Uint8Array,
   keyBytes: Uint8Array,
   ivBytes: Uint8Array | null,
-  mode: AesMode,
-  _keySize: number
+  mode: AesMode
 ): Promise<{ ciphertext: Uint8Array; tag?: Uint8Array }> {
-  const algoName = mode === 'CTR' ? 'AES-CTR' : mode === 'GCM' ? 'AES-GCM' : 'AES-CBC'
-
   if (mode === 'ECB') {
     const cipher = forge.cipher.createCipher('AES-ECB', uint8ToForgeBuffer(keyBytes))
     cipher.start()
@@ -94,30 +79,24 @@ async function aesEncrypt(
     return { ciphertext: Uint8Array.from(out, (c) => c.charCodeAt(0)) }
   }
 
-  const algoParams: AlgorithmIdentifier | AesCtrParams | AesGcmParams | AesCbcParams =
-    mode === 'CTR'
-      ? { name: 'AES-CTR', counter: ivBytes!.buffer as ArrayBuffer, length: 64 }
-      : mode === 'GCM'
-        ? { name: 'AES-GCM', iv: ivBytes!.buffer as ArrayBuffer, tagLength: 128 }
-        : { name: 'AES-CBC', iv: ivBytes!.buffer as ArrayBuffer }
+  if (mode === 'GCM') {
+    return aesGcmEncrypt(data, keyBytes, ivBytes!)
+  }
+
+  const algoName = mode === 'CTR' ? 'AES-CTR' : 'AES-CBC'
+  const algoParams: AesCtrParams | AesCbcParams = mode === 'CTR'
+    ? { name: 'AES-CTR', counter: toArrayBuffer(ivBytes!), length: 64 }
+    : { name: 'AES-CBC', iv: toArrayBuffer(ivBytes!) }
 
   const cryptoKey = await crypto.subtle.importKey(
     'raw',
-    keyBytes.buffer as ArrayBuffer,
+    toArrayBuffer(keyBytes),
     algoName,
     false,
     ['encrypt']
   )
-  const result = await crypto.subtle.encrypt(algoParams, cryptoKey, data.buffer as ArrayBuffer)
-  const resultBytes = new Uint8Array(result)
-
-  if (mode === 'GCM') {
-    const ciphertext = resultBytes.slice(0, -16)
-    const tag = resultBytes.slice(-16)
-    return { ciphertext, tag }
-  }
-
-  return { ciphertext: resultBytes }
+  const result = await crypto.subtle.encrypt(algoParams, cryptoKey, toArrayBuffer(data))
+  return { ciphertext: new Uint8Array(result) }
 }
 
 async function aesDecrypt(
@@ -127,8 +106,6 @@ async function aesDecrypt(
   mode: AesMode,
   tag?: Uint8Array
 ): Promise<Uint8Array> {
-  const algoName = mode === 'CTR' ? 'AES-CTR' : mode === 'GCM' ? 'AES-GCM' : 'AES-CBC'
-
   if (mode === 'ECB') {
     const decipher = forge.cipher.createDecipher('AES-ECB', uint8ToForgeBuffer(keyBytes))
     decipher.start()
@@ -138,32 +115,25 @@ async function aesDecrypt(
     return Uint8Array.from(out, (c) => c.charCodeAt(0))
   }
 
-  let inputData: BufferSource = data.buffer as ArrayBuffer
-  if (mode === 'GCM' && tag) {
-    const combined = new Uint8Array(data.length + tag.length)
-    combined.set(data)
-    combined.set(tag, data.length)
-    inputData = combined.buffer as ArrayBuffer
+  if (mode === 'GCM') {
+    return aesGcmDecrypt(tag ? concatBytes(data, tag) : data, keyBytes, ivBytes!)
   }
 
-  const algoParams: AlgorithmIdentifier | AesCtrParams | AesGcmParams | AesCbcParams =
-    mode === 'CTR'
-      ? { name: 'AES-CTR', counter: ivBytes!.buffer as ArrayBuffer, length: 64 }
-      : mode === 'GCM'
-        ? { name: 'AES-GCM', iv: ivBytes!.buffer as ArrayBuffer, tagLength: 128 }
-        : { name: 'AES-CBC', iv: ivBytes!.buffer as ArrayBuffer }
+  const algoName = mode === 'CTR' ? 'AES-CTR' : 'AES-CBC'
+  const algoParams: AesCtrParams | AesCbcParams = mode === 'CTR'
+    ? { name: 'AES-CTR', counter: toArrayBuffer(ivBytes!), length: 64 }
+    : { name: 'AES-CBC', iv: toArrayBuffer(ivBytes!) }
 
   const cryptoKey = await crypto.subtle.importKey(
     'raw',
-    keyBytes.buffer as ArrayBuffer,
+    toArrayBuffer(keyBytes),
     algoName,
     false,
     ['decrypt']
   )
-  const result = await crypto.subtle.decrypt(algoParams, cryptoKey, inputData)
+  const result = await crypto.subtle.decrypt(algoParams, cryptoKey, toArrayBuffer(data))
   return new Uint8Array(result)
 }
-
 // ── DES/3DES via node-forge ────────────────────────────────────
 
 function desEncrypt(
@@ -282,8 +252,9 @@ export default function AesDesEncryptor(): React.JSX.Element {
       if (cipherType === 'AES') {
         if (action === 'encrypt') {
           const dataBytes = parseBytes(inputData, inputFormat)
-          const result = await aesEncrypt(dataBytes, keyBytes, ivBytes, aesMode, AES_KEY_SIZES[aesKeySize].bits)
-          setOutputData(formatOutput(result.ciphertext, outputFormat))
+          const result = await aesEncrypt(dataBytes, keyBytes, ivBytes, aesMode)
+          const outputBytes = result.tag ? concatBytes(result.ciphertext, result.tag) : result.ciphertext
+          setOutputData(formatOutput(outputBytes, outputFormat))
           if (result.tag) setOutputTag(bytesToHex(result.tag))
         } else {
           const dataBytes = parseBytes(inputData, inputFormat)
@@ -537,7 +508,7 @@ export default function AesDesEncryptor(): React.JSX.Element {
           <div className="ade-output-area">
             <div className="ade-output-header">
               <span className="ade-output-label">
-                {action === 'encrypt' ? '密文输出' : '明文输出'}
+                {action === 'encrypt' && mode === 'GCM' ? '密文输出（已附带 Auth Tag）' : action === 'encrypt' ? '密文输出' : '明文输出'}
               </span>
               <button className="ade-copy-btn" onClick={copyOutput}>
                 {copied ? <Check size={13} /> : <Copy size={13} />}

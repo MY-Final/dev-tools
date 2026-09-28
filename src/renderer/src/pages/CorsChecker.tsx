@@ -12,10 +12,13 @@ interface CorsResult {
   preflight: boolean
   preflightHeaders: Record<string, string> | null
   preflightStatus: number | null
+  requestSent: boolean
   conclusion: { type: 'success' | 'warning' | 'error'; message: string }
 }
 
 const METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS']
+const MUTATION_METHODS = ['POST', 'PUT', 'PATCH', 'DELETE']
+const PREFLIGHT_REQUEST_HEADER_VALUE = 'content-type'
 
 const CORS_HEADERS = [
   'access-control-allow-origin',
@@ -25,6 +28,30 @@ const CORS_HEADERS = [
   'access-control-expose-headers',
   'access-control-max-age'
 ]
+
+function isMutationMethod(method: string): boolean {
+  return MUTATION_METHODS.includes(method)
+}
+
+function headersToRecord(headers: Headers): Record<string, string> {
+  const result: Record<string, string> = {}
+  headers.forEach((value, key) => {
+    result[key] = value
+  })
+  return result
+}
+
+function pickCorsHeaders(headers: Record<string, string>): Record<string, string> {
+  const result: Record<string, string> = {}
+  for (const header of CORS_HEADERS) {
+    if (headers[header] !== undefined) result[header] = headers[header]
+  }
+  return result
+}
+
+function formatHeaders(headers: Record<string, string>): string {
+  return Object.entries(headers).map(([key, value]) => `${key}: ${value}`).join(String.fromCharCode(10))
+}
 
 function analyzeCorsHeaders(headers: Record<string, string>, preflightHeaders: Record<string, string> | null): { type: 'success' | 'warning' | 'error'; message: string } {
   const ao = headers['access-control-allow-origin'] || preflightHeaders?.['access-control-allow-origin']
@@ -43,67 +70,95 @@ export default function CorsChecker(): React.JSX.Element {
   const [result, setResult] = useState<CorsResult | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [allowMutation, setAllowMutation] = useState(false)
   const [copied, setCopied] = useState(false)
 
   const handleTest = useCallback(async () => {
-    if (!url.trim()) return
+    const targetUrl = url.trim()
+    if (!targetUrl) return
+    const mutationMethod = isMutationMethod(method)
+    const preflightOnly = mutationMethod && !allowMutation
     setLoading(true)
     setError('')
     setResult(null)
 
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 15000)
+
     try {
-      // Step 1: OPTIONS preflight
       let preflightHeaders: Record<string, string> | null = null
       let preflightStatus: number | null = null
+      let preflightError = ''
+      const needsPreflightProbe = method !== 'GET' && method !== 'HEAD' && method !== 'OPTIONS'
 
-      if (method !== 'GET' && method !== 'HEAD' && method !== 'OPTIONS') {
+      if (needsPreflightProbe) {
         try {
-          const preflightRes = await fetch(url.trim(), {
+          const preflightRes = await fetch(targetUrl, {
             method: 'OPTIONS',
-            mode: 'cors'
+            mode: 'cors',
+            signal: controller.signal,
+            headers: {
+              'Access-Control-Request-Method': method,
+              'Access-Control-Request-Headers': PREFLIGHT_REQUEST_HEADER_VALUE
+            }
           })
           preflightStatus = preflightRes.status
-          const ph: Record<string, string> = {}
-          preflightRes.headers.forEach((v, k) => { ph[k] = v })
-          preflightHeaders = ph
-        } catch {
-          // Preflight may fail; that's informative too
+          preflightHeaders = headersToRecord(preflightRes.headers)
+        } catch (err) {
+          if ((err as Error).name === 'AbortError') throw err
+          preflightError = (err as Error).message || '预检请求失败'
         }
       }
 
-      // Step 2: Actual request
-      const controller = new AbortController()
-      const timeout = setTimeout(() => controller.abort(), 15000)
-      const res = await fetch(url.trim(), {
+      if (preflightOnly) {
+        const safeHeaders = preflightHeaders ?? {}
+        const baseConclusion = analyzeCorsHeaders(safeHeaders, preflightHeaders)
+        const conclusion = preflightHeaders
+          ? {
+              ...baseConclusion,
+              message: `${baseConclusion.message}；未发送实际 ${method} 请求。`
+            }
+          : {
+              type: 'warning' as const,
+              message: preflightError
+                ? `仅执行 OPTIONS 安全检查：${preflightError}；未发送实际 ${method} 请求。`
+                : `仅执行 OPTIONS 安全检查，未发送实际 ${method} 请求。`
+            }
+        setResult({
+          url: targetUrl,
+          method,
+          status: preflightStatus ?? 0,
+          statusText: '未发送实际请求',
+          corsHeaders: pickCorsHeaders(safeHeaders),
+          allHeaders: formatHeaders(safeHeaders),
+          preflight: needsPreflightProbe,
+          preflightHeaders,
+          preflightStatus,
+          requestSent: false,
+          conclusion
+        })
+        return
+      }
+
+      const res = await fetch(targetUrl, {
         method,
         mode: 'cors',
-        signal: controller.signal
+        signal: controller.signal,
+        headers: mutationMethod ? { 'Content-Type': 'application/json' } : undefined
       })
-      clearTimeout(timeout)
-
-      const rawHeaders: Record<string, string> = {}
-      res.headers.forEach((v, k) => { rawHeaders[k] = v })
-
-      const corsHeaders: Record<string, string> = {}
-      for (const h of CORS_HEADERS) {
-        if (rawHeaders[h] !== undefined) corsHeaders[h] = rawHeaders[h]
-      }
-
-      let allHeadersStr = ''
-      for (const [k, v] of Object.entries(rawHeaders)) {
-        allHeadersStr += `${k}: ${v}\n`
-      }
+      const rawHeaders = headersToRecord(res.headers)
 
       setResult({
-        url: url.trim(),
+        url: targetUrl,
         method,
         status: res.status,
         statusText: res.statusText,
-        corsHeaders,
-        allHeaders: allHeadersStr.trim(),
+        corsHeaders: pickCorsHeaders(rawHeaders),
+        allHeaders: formatHeaders(rawHeaders),
         preflight: preflightHeaders !== null,
         preflightHeaders,
         preflightStatus,
+        requestSent: true,
         conclusion: analyzeCorsHeaders(rawHeaders, preflightHeaders)
       })
     } catch (err) {
@@ -112,13 +167,14 @@ export default function CorsChecker(): React.JSX.Element {
         : `请求失败: ${(err as Error).message}`
       setError(msg)
     } finally {
+      clearTimeout(timeout)
       setLoading(false)
     }
-  }, [url, method])
+  }, [url, method, allowMutation])
 
   const copyResult = useCallback(() => {
     if (!result) return
-    const text = `URL: ${result.url}\nMethod: ${result.method}\nStatus: ${result.status}\n\nCORS Headers:\n${Object.entries(result.corsHeaders).map(([k, v]) => `  ${k}: ${v}`).join('\n')}\n\n${result.conclusion.message}`
+    const text = `URL: ${result.url}\nMethod: ${result.method}\nStatus: ${result.status}\n实际请求: ${result.requestSent ? '已发送' : '未发送'}\n\nCORS Headers:\n${Object.entries(result.corsHeaders).map(([k, v]) => `  ${k}: ${v}`).join('\n')}\n\n${result.conclusion.message}`
     navigator.clipboard.writeText(text).then(() => {
       setCopied(true)
       setTimeout(() => setCopied(false), 1500)
@@ -134,29 +190,61 @@ export default function CorsChecker(): React.JSX.Element {
     ? 'cc-warning' : 'cc-error'
 
   return (
-    <div className="cc-page">
+    <div className="cc-page" aria-busy={loading}>
       {/* Input */}
       <div className="cc-input-row">
         <input
           className="cc-url-input"
           type="text"
           value={url}
-          onChange={(e) => setUrl(e.target.value)}
+          onChange={(e) => {
+            setUrl(e.target.value)
+            setAllowMutation(false)
+          }}
           placeholder="https://api.example.com/data"
+          aria-label="要检查的 URL"
         />
-        <select className="cc-method-select" value={method} onChange={(e) => setMethod(e.target.value)}>
+        <select
+          className="cc-method-select"
+          value={method}
+          onChange={(e) => {
+            setMethod(e.target.value)
+            setAllowMutation(false)
+          }}
+          aria-label="请求方法"
+        >
           {METHODS.map((m) => (
             <option key={m} value={m}>{m}</option>
           ))}
         </select>
         <button className="cc-btn cc-btn-test" onClick={handleTest} disabled={loading}>
-          {loading ? '测试中...' : <><Send size={14} /> 测试</>}
+          {loading
+            ? '测试中...'
+            : <><Send size={14} /> {isMutationMethod(method) && !allowMutation ? '仅安全检查' : '测试'}</>}
         </button>
       </div>
 
+      {loading && (
+        <div className="cc-empty-hint" role="status" aria-live="polite">
+          正在执行 CORS 检查…
+        </div>
+      )}
+
+      {isMutationMethod(method) && (
+        <label className="cc-empty-hint">
+          <input
+            type="checkbox"
+            checked={allowMutation}
+            onChange={(e) => setAllowMutation(e.target.checked)}
+            disabled={loading}
+          />{' '}
+          我确认发送实际 {method} 请求，可能修改目标数据
+        </label>
+      )}
+
       {/* Error */}
       {error && (
-        <div className="cc-error">
+        <div className="cc-error" role="alert">
           <AlertTriangle size={14} />
           <span>{error}</span>
         </div>
@@ -164,7 +252,7 @@ export default function CorsChecker(): React.JSX.Element {
 
       {/* Result */}
       {result && (
-        <div className="cc-result">
+        <div className="cc-result" aria-live="polite">
           {/* Conclusion */}
           <div className={`cc-conclusion cc-${conColor}`}>
             {conIcon === CheckCircle
@@ -191,6 +279,10 @@ export default function CorsChecker(): React.JSX.Element {
             <div className="cc-summary-item">
               <span className="cc-summary-label">响应状态</span>
               <span className="cc-summary-value">{result.status} {result.statusText}</span>
+            </div>
+            <div className="cc-summary-item">
+              <span className="cc-summary-label">实际请求</span>
+              <span className="cc-summary-value">{result.requestSent ? '已发送' : '未发送'}</span>
             </div>
           </div>
 
@@ -238,7 +330,9 @@ export default function CorsChecker(): React.JSX.Element {
         <div className="cc-empty">
           <ShieldOff size={32} className="cc-empty-icon" />
           <span className="cc-empty-text">输入 URL 并点击测试开始检查 CORS</span>
-          <span className="cc-empty-hint">此工具会发送实际请求到目标服务器，请确保 URL 可访问</span>
+          <span className="cc-empty-hint">
+            GET/HEAD 会发送实际请求；POST/PUT/PATCH/DELETE 默认只执行 OPTIONS 安全检查
+          </span>
         </div>
       )}
     </div>

@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback } from 'react'
 import { Copy, Check, RotateCcw, ArrowRightLeft } from 'lucide-react'
 import '../styles/data-converter.css'
+import { csvToJson, jsonToCsv } from '@renderer/lib/data-format-utils'
 
 type ConvertMode = 'csv2json' | 'json2csv' | 'xml2json' | 'json2xml'
 
@@ -44,66 +45,6 @@ const MODES: ModeDef[] = [
 ]
 
 // ── Converters ─────────────────────────────────────────────────
-
-function csvToJson(csv: string): string {
-  const lines = csv.trim().split(/\r?\n/).filter(Boolean)
-  if (lines.length === 0) return '[]'
-
-  const headers = parseCSVLine(lines[0])
-  const rows: Record<string, string>[] = []
-
-  for (let i = 1; i < lines.length; i++) {
-    const values = parseCSVLine(lines[i])
-    const row: Record<string, string> = {}
-    headers.forEach((h, j) => { row[h] = values[j] || '' })
-    rows.push(row)
-  }
-
-  return JSON.stringify(rows, null, 2)
-}
-
-function parseCSVLine(line: string): string[] {
-  const result: string[] = []
-  let current = ''
-  let inQuotes = false
-
-  for (let i = 0; i < line.length; i++) {
-    const ch = line[i]
-    if (inQuotes) {
-      if (ch === '"') {
-        if (line[i + 1] === '"') { current += '"'; i++ }
-        else inQuotes = false
-      } else current += ch
-    } else {
-      if (ch === '"') inQuotes = true
-      else if (ch === ',') { result.push(current.trim()); current = '' }
-      else current += ch
-    }
-  }
-  result.push(current.trim())
-  return result
-}
-
-function jsonToCsv(json: string): string {
-  const data = JSON.parse(json)
-  const arr = Array.isArray(data) ? data : [data]
-  if (arr.length === 0) return ''
-
-  const headers = Object.keys(arr[0])
-  const lines = [headers.join(',')]
-
-  for (const row of arr) {
-    const values = headers.map((h) => {
-      const v = row[h]
-      if (v === null || v === undefined) return ''
-      const s = String(v)
-      return s.includes(',') || s.includes('"') ? `"${s.replace(/"/g, '""')}"` : s
-    })
-    lines.push(values.join(','))
-  }
-
-  return lines.join('\n')
-}
 
 function xmlToJson(xml: string): string {
   const parser = new DOMParser()

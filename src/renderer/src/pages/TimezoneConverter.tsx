@@ -29,35 +29,49 @@ const COMMON_TIMEZONES = [
   { label: '多伦多', tz: 'America/Toronto' }
 ]
 
-function formatTime(date: Date, tz: string): { time: string; date: string; weekday: string; hours: number; minutes: number } {
-  try {
-    const str = date.toLocaleString('en-US', { timeZone: tz, hour12: false })
-    const parsed = new Date(str)
-    const h = parsed.getHours()
-    const m = parsed.getMinutes()
-    const time = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`
-    const dateStr = parsed.toLocaleDateString('zh-CN', { timeZone: tz })
-    const weekday = parsed.toLocaleDateString('zh-CN', { timeZone: tz, weekday: 'short' })
-    return { time, date: dateStr, weekday, hours: h, minutes: m }
-  } catch {
-    return { time: '--:--', date: '', weekday: '', hours: 0, minutes: 0 }
-  }
+interface TimeZoneInfo {
+  time: string
+  date: string
+  weekday: string
+  hours: number
+  minutes: number
+  offset: string
 }
 
-function getOffset(date: Date, tz: string): string {
+function formatTime(date: Date, tz: string): TimeZoneInfo {
   try {
-    const local = date.getTime()
-    const tzStr = date.toLocaleString('en-US', { timeZone: tz })
-    const tzDate = new Date(tzStr)
-    const diff = tzDate.getTime() - local
-    const hours = Math.round(diff / (1000 * 60 * 60))
-    const sign = hours >= 0 ? '+' : ''
-    return `UTC${sign}${hours}`
+    const formatter = new Intl.DateTimeFormat('zh-CN', {
+      timeZone: tz,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hourCycle: 'h23',
+      weekday: 'short',
+      timeZoneName: 'longOffset'
+    })
+    const parts = formatter.formatToParts(date)
+    const value = (type: Intl.DateTimeFormatPartTypes): string =>
+      parts.find((part) => part.type === type)?.value ?? ''
+
+    const hours = Number(value('hour'))
+    const minutes = Number(value('minute'))
+    const rawOffset = value('timeZoneName')
+    const offset = rawOffset === 'GMT' ? 'UTC' : rawOffset.replace(/^GMT/, 'UTC')
+
+    return {
+      time: String(hours).padStart(2, '0') + ':' + String(minutes).padStart(2, '0'),
+      date: value('year') + '-' + value('month') + '-' + value('day'),
+      weekday: value('weekday'),
+      hours,
+      minutes,
+      offset: offset || 'UTC'
+    }
   } catch {
-    return ''
+    return { time: '--:--', date: '', weekday: '', hours: 0, minutes: 0, offset: '' }
   }
 }
-
 export default function TimezoneConverter(): React.JSX.Element {
   const [zones, setZones] = useState<TimezoneEntry[]>([
     { id: 1, label: '北京', timezone: 'Asia/Shanghai' },
@@ -87,8 +101,7 @@ export default function TimezoneConverter(): React.JSX.Element {
   const copyAll = useCallback(async () => {
     const text = zones
       .map((z) => {
-        const { time, date, weekday } = formatTime(now, z.timezone)
-        const offset = getOffset(now, z.timezone)
+        const { time, date, weekday, offset } = formatTime(now, z.timezone)
         return `${z.label}  ${time}  ${weekday} ${date} (${offset})`
       })
       .join('\n')
@@ -153,9 +166,8 @@ export default function TimezoneConverter(): React.JSX.Element {
         {zones.length > 0 && (
           <div className="tzc-list">
             {zones.map((z) => {
-              const { time, date, weekday } = formatTime(now, z.timezone)
-              const offset = getOffset(now, z.timezone)
-              const isNight = formatTime(now, z.timezone).hours < 6 || formatTime(now, z.timezone).hours >= 22
+              const { time, date, weekday, hours, offset } = formatTime(now, z.timezone)
+              const isNight = hours < 6 || hours >= 22
               return (
                 <div key={z.id} className={`tzc-item ${isNight ? 'night' : ''}`}>
                   <div className="tzc-item-info">

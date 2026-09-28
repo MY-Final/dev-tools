@@ -12,14 +12,14 @@ const ALL_TAGS = ['前端', '后端', '运维', '通用', '安全', '网络']
 // ── Category accent colors ─────────────────────────────────────
 
 const CATEGORY_ACCENTS: Record<string, string> = {
-  '换算工具': 'accent-blue',
-  '网络工具': 'accent-green',
-  '系统工具': 'accent-purple',
+  换算工具: 'accent-blue',
+  网络工具: 'accent-green',
+  系统工具: 'accent-purple',
   '编码/加密': 'accent-orange',
-  '开发工具': 'accent-cyan',
-  '文本工具': 'accent-pink',
-  '速查表': 'accent-yellow',
-  '备忘录': 'accent-purple'
+  开发工具: 'accent-cyan',
+  文本工具: 'accent-pink',
+  速查表: 'accent-yellow',
+  备忘录: 'accent-purple'
 }
 
 interface HomeProps {
@@ -94,7 +94,9 @@ export default function Home({ onSelectTool }: HomeProps): React.JSX.Element {
             </div>
             <div className="home-stat-divider" />
             <div className="home-stat">
-              <span className="home-stat-value">{totalTools - tools.filter(t => t.category === '速查表').length}</span>
+              <span className="home-stat-value">
+                {totalTools - tools.filter((t) => t.category === '速查表').length}
+              </span>
               <span className="home-stat-label">功能工具</span>
             </div>
           </div>
@@ -106,14 +108,11 @@ export default function Home({ onSelectTool }: HomeProps): React.JSX.Element {
               className="home-search-input"
               type="text"
               placeholder="搜索工具..."
+              aria-label="搜索工具"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
-            {search && (
-              <span className="home-search-result">
-                {filteredTools.length} 个结果
-              </span>
-            )}
+            {search && <span className="home-search-result">{filteredTools.length} 个结果</span>}
           </div>
 
           {/* Tag filter */}
@@ -139,23 +138,25 @@ export default function Home({ onSelectTool }: HomeProps): React.JSX.Element {
 
       {/* Tool grid */}
       <section className="home-tools-section">
-        {[...categories.entries()].map(
-          ([category, { tools: categoryTools }]) => {
-            const accentClass = CATEGORY_ACCENTS[category] || ''
-            return (
-              <div key={category} className="home-category">
-                <div className="home-category-header">
-                  <h3 className="home-category-title">{category}</h3>
-                  <span className="home-category-count">{categoryTools.length}</span>
-                </div>
-                <div className="home-tool-grid">
-                  {categoryTools.map((t) => {
-                    const Icon = t.icon
-                    return (
+        {[...categories.entries()].map(([category, { tools: categoryTools }]) => {
+          const accentClass = CATEGORY_ACCENTS[category] || ''
+          return (
+            <div key={category} className="home-category">
+              <div className="home-category-header">
+                <h3 className="home-category-title">{category}</h3>
+                <span className="home-category-count">{categoryTools.length}</span>
+              </div>
+              <div className="home-tool-grid">
+                {categoryTools.map((t) => {
+                  const Icon = t.icon
+                  const isFavorite = favorites.includes(t.id)
+                  return (
+                    <div key={t.id} className={`home-tool-card ${accentClass}`}>
                       <button
-                        key={t.id}
-                        className={`home-tool-card ${accentClass}`}
+                        type="button"
+                        className="home-tool-card-main"
                         onClick={() => onSelectTool(t.id)}
+                        aria-label={`打开${t.name}`}
                       >
                         <div className="home-tool-icon">
                           <Icon size={18} />
@@ -165,25 +166,25 @@ export default function Home({ onSelectTool }: HomeProps): React.JSX.Element {
                           <span className="home-tool-desc">{t.desc}</span>
                         </div>
                         <ArrowRight size={14} className="home-tool-arrow" />
-                        <button
-                          className={`home-tool-star ${favorites.includes(t.id) ? 'active' : ''}`}
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            updateFavorites(t.id)
-                          }}
-                          title={favorites.includes(t.id) ? '取消收藏' : '收藏'}
-                        >
-                          <Star size={14} fill={favorites.includes(t.id) ? 'currentColor' : 'none'} />
-                        </button>
-                        {t.isNew && <span className="home-tool-badge">NEW</span>}
                       </button>
-                    )
-                  })}
-                </div>
+                      <button
+                        type="button"
+                        className={`home-tool-star ${isFavorite ? 'active' : ''}`}
+                        onClick={() => updateFavorites(t.id)}
+                        title={isFavorite ? '取消收藏' : '收藏'}
+                        aria-pressed={isFavorite}
+                        aria-label={isFavorite ? `取消收藏${t.name}` : `收藏${t.name}`}
+                      >
+                        <Star size={14} fill={isFavorite ? 'currentColor' : 'none'} />
+                      </button>
+                      {t.isNew && <span className="home-tool-badge">NEW</span>}
+                    </div>
+                  )
+                })}
               </div>
-            )
-          }
-        )}
+            </div>
+          )
+        })}
 
         {filteredTools.length === 0 && (
           <div className="home-empty">

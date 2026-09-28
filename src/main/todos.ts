@@ -36,6 +36,37 @@ function isDateString(value: string): boolean {
   return /^\d{4}-\d{2}-\d{2}$/.test(value)
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+function isTimestampString(value: string): boolean {
+  return value.length > 0 && !Number.isNaN(Date.parse(value))
+}
+
+function isTodoItem(value: unknown): value is TodoItem {
+  if (!isRecord(value)) return false
+
+  return (
+    typeof value.id === 'string' &&
+    value.id.length > 0 &&
+    typeof value.title === 'string' &&
+    value.title.trim().length > 0 &&
+    typeof value.note === 'string' &&
+    typeof value.date === 'string' &&
+    isDateString(value.date) &&
+    typeof value.completed === 'boolean' &&
+    typeof value.createdAt === 'string' &&
+    isTimestampString(value.createdAt) &&
+    typeof value.updatedAt === 'string' &&
+    isTimestampString(value.updatedAt)
+  )
+}
+
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error)
+}
+
 function createId(): string {
   return `todo_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
 }
@@ -57,10 +88,20 @@ export class TodoStore {
       }
 
       const raw = readFileSync(this.filePath, 'utf-8')
-      const parsed = JSON.parse(raw) as Partial<TodosData>
+      const parsed: unknown = JSON.parse(raw)
+      if (!isRecord(parsed) || !Array.isArray(parsed.items)) {
+        throw new Error('Invalid todos data')
+      }
+
+      const items = parsed.items.filter(isTodoItem)
+      if (items.length !== parsed.items.length) {
+        console.warn(`Discarded ${parsed.items.length - items.length} invalid todo item(s)`)
+        this.backupCorruptedFile()
+      }
+
       return {
         version: TODOS_VERSION,
-        items: Array.isArray(parsed.items) ? parsed.items : []
+        items
       }
     } catch (error) {
       console.error('Failed to load todos:', error)
@@ -81,15 +122,27 @@ export class TodoStore {
     }
   }
 
-  private save(): void {
+  private save(data: TodosData): void {
     try {
       const dir = join(this.filePath, '..')
       if (!existsSync(dir)) {
         mkdirSync(dir, { recursive: true })
       }
-      writeFileSync(this.filePath, JSON.stringify(this.data, null, 2), 'utf-8')
+      writeFileSync(this.filePath, JSON.stringify(data, null, 2), 'utf-8')
     } catch (error) {
       console.error('Failed to save todos:', error)
+      throw new Error(`Failed to save todos to ${this.filePath}: ${getErrorMessage(error)}`)
+    }
+  }
+
+  private commit(nextData: TodosData): void {
+    const previousData = this.data
+    this.data = nextData
+    try {
+      this.save(nextData)
+    } catch (error) {
+      this.data = previousData
+      throw error
     }
   }
 
@@ -117,8 +170,7 @@ export class TodoStore {
       updatedAt: now
     }
 
-    this.data.items = [...this.data.items, item]
-    this.save()
+    this.commit({ ...this.data, items: [...this.data.items, item] })
     return item
   }
 
@@ -146,20 +198,17 @@ export class TodoStore {
       updatedAt: new Date().toISOString()
     }
 
-    this.data.items = [
-      ...this.data.items.slice(0, index),
-      next,
-      ...this.data.items.slice(index + 1)
-    ]
-    this.save()
+    this.commit({
+      ...this.data,
+      items: [...this.data.items.slice(0, index), next, ...this.data.items.slice(index + 1)]
+    })
     return next
   }
 
   deleteItem(id: string): boolean {
-    const before = this.data.items.length
-    this.data.items = this.data.items.filter((item) => item.id !== id)
-    const changed = this.data.items.length !== before
-    if (changed) this.save()
+    const items = this.data.items.filter((item) => item.id !== id)
+    const changed = items.length !== this.data.items.length
+    if (changed) this.commit({ ...this.data, items })
     return changed
   }
 
@@ -168,13 +217,12 @@ export class TodoStore {
       throw new Error('Invalid todo date')
     }
 
-    const before = this.data.items.length
-    this.data.items = this.data.items.filter((item) => {
+    const items = this.data.items.filter((item) => {
       if (!item.completed) return true
       return date ? item.date !== date : false
     })
-    const removed = before - this.data.items.length
-    if (removed > 0) this.save()
+    const removed = this.data.items.length - items.length
+    if (removed > 0) this.commit({ ...this.data, items })
     return removed
   }
 }

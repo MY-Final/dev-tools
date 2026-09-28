@@ -1,86 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react'
+import { createDefaultSettings, type AppSettings } from '../../../shared/contracts'
 
-export interface AppSettings {
-  appearance: {
-    theme: 'light' | 'dark' | 'system'
-    fontSize: 'small' | 'medium' | 'large'
-    sidebarCollapsed: boolean
-    showSidebarShortDesc: boolean
-  }
-  editor: {
-    jsonIndent: 2 | 4
-    autoCopy: boolean
-    timestampFormat: 'seconds' | 'milliseconds'
-  }
-  updater: {
-    autoCheck: boolean
-  }
-  window: {
-    closeBehavior: 'ask' | 'minimize-to-tray' | 'exit'
-  }
-  translator: {
-    baseUrl: string
-    apiKey: string
-    model: string
-    systemPrompt: string
-    temperature: number
-    maxTokens: number
-  }
-  npmRegistry: string
-  mavenSearchUrl: string
-  proxy: {
-    enabled: boolean
-    url: string
-  }
-  shortcuts: {
-    toggleSidebar: string
-    openSettings: string
-    goHome: string
-  }
-  favorites: string[]
-}
-
-const DEFAULT_SHORTCUTS = {
-  toggleSidebar: 'Alt+b',
-  openSettings: 'Ctrl+,',
-  goHome: 'Escape'
-}
-
-const DEFAULT_SETTINGS: AppSettings = {
-  appearance: {
-    theme: 'dark',
-    fontSize: 'medium',
-    sidebarCollapsed: false,
-    showSidebarShortDesc: true
-  },
-  editor: {
-    jsonIndent: 2,
-    autoCopy: false,
-    timestampFormat: 'seconds'
-  },
-  updater: {
-    autoCheck: true
-  },
-  window: {
-    closeBehavior: 'ask'
-  },
-  translator: {
-    baseUrl: '',
-    apiKey: '',
-    model: 'gpt-3.5-turbo',
-    systemPrompt: 'You are a professional translator. Translate the following text from {sourceLang} to {targetLang}. Only output the translated text, nothing else. Do not add explanations, notes, or quotation marks.',
-    temperature: 0.3,
-    maxTokens: 4096
-  },
-  npmRegistry: '',
-  mavenSearchUrl: '',
-  proxy: {
-    enabled: false,
-    url: ''
-  },
-  shortcuts: { ...DEFAULT_SHORTCUTS },
-  favorites: []
-}
+export type { AppSettings } from '../../../shared/contracts'
 
 interface SettingsContextType {
   settings: AppSettings
@@ -101,7 +22,7 @@ interface SettingsContextType {
 const SettingsContext = createContext<SettingsContextType | null>(null)
 
 export function SettingsProvider({ children }: { children: ReactNode }): React.JSX.Element {
-  const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS)
+  const [settings, setSettings] = useState<AppSettings>(createDefaultSettings)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {

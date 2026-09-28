@@ -4,6 +4,7 @@
 
 .home-page {
   width: 100%;
+  min-width: 0;
   height: 100%;
   overflow-y: auto;
   background: var(--color-background);
@@ -13,6 +14,7 @@
 
 .home-hero {
   position: relative;
+  min-width: 0;
   padding: 64px 40px 40px;
   text-align: center;
   overflow: hidden;
@@ -37,6 +39,7 @@
 .home-hero-content {
   position: relative;
   z-index: 1;
+  min-width: 0;
 }
 
 .home-hero-badge {
@@ -84,6 +87,7 @@
 
 .home-stats {
   display: inline-flex;
+  max-width: 100%;
   align-items: center;
   gap: 0;
   padding: 4px;
@@ -155,7 +159,10 @@
 
 .home-search-input::placeholder {
   color: var(--color-text-muted);
-  font-family: 'Inter', -apple-system, sans-serif;
+  font-family:
+    'Inter',
+    -apple-system,
+    sans-serif;
 }
 
 .home-search-input:focus {
@@ -213,6 +220,8 @@
 /* ── Tools section ──────────────────────── */
 
 .home-tools-section {
+  width: 100%;
+  min-width: 0;
   padding: 8px 40px 64px;
   max-width: 1100px;
   margin: 0 auto;
@@ -249,28 +258,43 @@
 
 .home-tool-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
 }
 
 /* ── Tool card ──────────────────────────── */
 
 .home-tool-card {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 16px 18px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: stretch;
+  gap: 0;
+  padding: 0;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: 14px;
-  cursor: pointer;
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  text-align: left;
   position: relative;
   overflow: hidden;
   font-family: inherit;
   color: inherit;
   width: 100%;
+  min-width: 0;
+}
+
+.home-tool-card-main {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-width: 0;
+  padding: 16px 18px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
 }
 
 .home-tool-card::before {
@@ -283,16 +307,31 @@
   border-radius: 0 3px 3px 0;
   opacity: 0;
   transition: opacity 0.25s ease;
+  z-index: 1;
 }
 
 /* Category accent borders on hover */
-.home-tool-card.accent-blue::before { background: #3b82f6; }
-.home-tool-card.accent-green::before { background: #22c55e; }
-.home-tool-card.accent-purple::before { background: #a855f7; }
-.home-tool-card.accent-orange::before { background: #f97316; }
-.home-tool-card.accent-cyan::before { background: #06b6d4; }
-.home-tool-card.accent-pink::before { background: #ec4899; }
-.home-tool-card.accent-yellow::before { background: #eab308; }
+.home-tool-card.accent-blue::before {
+  background: #3b82f6;
+}
+.home-tool-card.accent-green::before {
+  background: #22c55e;
+}
+.home-tool-card.accent-purple::before {
+  background: #a855f7;
+}
+.home-tool-card.accent-orange::before {
+  background: #f97316;
+}
+.home-tool-card.accent-cyan::before {
+  background: #06b6d4;
+}
+.home-tool-card.accent-pink::before {
+  background: #ec4899;
+}
+.home-tool-card.accent-yellow::before {
+  background: #eab308;
+}
 
 .home-tool-card:hover {
   border-color: var(--color-border-hover);
@@ -306,6 +345,12 @@
 
 .home-tool-card:active {
   transform: translateY(0);
+}
+
+.home-tool-card-main:focus-visible {
+  outline: 2px solid var(--color-accent-soft);
+  outline-offset: -3px;
+  border-radius: 14px;
 }
 
 .home-tool-icon {
@@ -349,6 +394,7 @@
   font-size: 12px;
   color: var(--color-text-muted);
   line-height: 1.4;
+  overflow-wrap: anywhere;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -363,7 +409,8 @@
   flex-shrink: 0;
 }
 
-.home-tool-card:hover .home-tool-arrow {
+.home-tool-card:hover .home-tool-arrow,
+.home-tool-card:focus-within .home-tool-arrow {
   opacity: 0.5;
   transform: translateX(0);
 }
@@ -372,7 +419,7 @@
 .home-tool-badge {
   position: absolute;
   top: 8px;
-  right: 8px;
+  right: 56px;
   padding: 2px 7px;
   background: var(--color-accent-soft);
   color: #fff;
@@ -388,8 +435,8 @@
   position: absolute;
   top: 8px;
   right: 8px;
-  width: 28px;
-  height: 28px;
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -397,13 +444,15 @@
   background: transparent;
   color: var(--color-text-muted);
   cursor: pointer;
-  border-radius: 6px;
+  border-radius: 8px;
   opacity: 0;
   transition: all 0.2s ease;
   z-index: 2;
 }
 
-.home-tool-card:hover .home-tool-star {
+.home-tool-card:hover .home-tool-star,
+.home-tool-card:focus-within .home-tool-star,
+.home-tool-star.active {
   opacity: 1;
 }
 
@@ -479,5 +528,45 @@
   .home-stat-divider {
     width: 24px;
     height: 1px;
+  }
+}
+
+@media (min-width: 801px) and (max-width: 1023px) {
+  .home-tool-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 390px) {
+  .home-hero {
+    padding: 40px 12px 28px;
+  }
+
+  .home-tools-section {
+    padding: 8px 12px 36px;
+  }
+
+  .home-stat {
+    padding: 10px 18px;
+  }
+
+  .home-tool-card-main {
+    gap: 10px;
+    padding: 14px;
+  }
+
+  .home-tool-icon {
+    width: 36px;
+    height: 36px;
+  }
+}
+
+@media (pointer: coarse) {
+  .home-tool-star {
+    top: 4px;
+    right: 4px;
+    width: 44px;
+    height: 44px;
+    opacity: 1;
   }
 }

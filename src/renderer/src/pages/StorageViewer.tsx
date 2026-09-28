@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useCallback } from 'react'
 import { Database, Trash2, Copy, Check, Edit3, X, Save, RefreshCw, HardDrive } from 'lucide-react'
 import '../styles/storage-viewer.css'
 
@@ -25,18 +25,42 @@ function getEntries(storageType: StorageType): StorageEntry[] {
   return entries.sort((a, b) => a.key.localeCompare(b.key))
 }
 
+function getStorageByteSize(storage: Storage): number {
+  let total = 0
+  for (let i = 0; i < storage.length; i++) {
+    const key = storage.key(i)
+    if (key === null) continue
+    total += new Blob([key]).size
+    total += new Blob([storage.getItem(key) ?? '']).size
+  }
+  return total
+}
+
 // ── Component ──────────────────────────────────────────────────
 
 export default function StorageViewer(): React.JSX.Element {
   const [storageType, setStorageType] = useState<StorageType>('localStorage')
-  const [entries, setEntries] = useState<StorageEntry[]>([])
+  const [entries, setEntries] = useState<StorageEntry[]>(() => {
+    try {
+      return getEntries('localStorage')
+    } catch {
+      return []
+    }
+  })
   const [selectedKey, setSelectedKey] = useState<string | null>(null)
   const [editingKey, setEditingKey] = useState<string | null>(null)
   const [editingValue, setEditingValue] = useState('')
   const [newKey, setNewKey] = useState('')
   const [newValue, setNewValue] = useState('')
   const [copiedKey, setCopiedKey] = useState<string | null>(null)
-  const [error, setError] = useState('')
+  const [error, setError] = useState(() => {
+    try {
+      getEntries('localStorage')
+      return ''
+    } catch (err) {
+      return err instanceof Error ? err.message : '读取存储失败'
+    }
+  })
   const [showAdd, setShowAdd] = useState(false)
 
   const refresh = useCallback(() => {
@@ -48,9 +72,17 @@ export default function StorageViewer(): React.JSX.Element {
     }
   }, [storageType])
 
-  useEffect(() => {
-    refresh()
-  }, [refresh])
+  const selectStorageType = useCallback((nextStorageType: StorageType) => {
+    setStorageType(nextStorageType)
+    setSelectedKey(null)
+    setEditingKey(null)
+    try {
+      setEntries(getEntries(nextStorageType))
+      setError('')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '读取存储失败')
+    }
+  }, [])
 
   const selectEntry = useCallback(
     (key: string) => {
@@ -69,12 +101,7 @@ export default function StorageViewer(): React.JSX.Element {
     if (!editingKey) return
     try {
       const storage = getStorage(storageType)
-      if (editingValue) {
-        storage.setItem(editingKey, editingValue)
-      } else {
-        storage.removeItem(editingKey)
-        setSelectedKey(null)
-      }
+      storage.setItem(editingKey, editingValue)
       setEditingKey(null)
       setEntries(getEntries(storageType))
       setError('')
@@ -140,7 +167,7 @@ export default function StorageViewer(): React.JSX.Element {
   }, [storageType])
 
   const totalSize = entries.reduce((sum, e) => sum + e.rawSize, 0)
-  const estimatedUsed = new Blob([JSON.stringify(localStorage)]).size + new Blob([JSON.stringify(sessionStorage)]).size
+  const estimatedUsed = getStorageByteSize(localStorage) + getStorageByteSize(sessionStorage)
 
   return (
     <div className="sv-page">
@@ -156,11 +183,7 @@ export default function StorageViewer(): React.JSX.Element {
             <button
               key={t}
               className={`sv-type-btn ${storageType === t ? 'active' : ''}`}
-              onClick={() => {
-                setStorageType(t)
-                setSelectedKey(null)
-                setEditingKey(null)
-              }}
+              onClick={() => selectStorageType(t)}
             >
               <Database size={13} />
               {t}

@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react'
 import { Fingerprint, Copy, Check, RotateCcw } from 'lucide-react'
 import '../styles/hmac-generator.css'
+import { hexToBytes, toArrayBuffer } from '../lib/crypto-utils'
 
 type Algorithm = 'SHA-1' | 'SHA-256' | 'SHA-384' | 'SHA-512'
 type InputFormat = 'text' | 'hex' | 'base64'
@@ -16,26 +17,23 @@ const ALGORITHMS: { id: Algorithm; label: string; bits: number }[] = [
 // ── Helpers ────────────────────────────────────────────────────
 
 function parseInput(input: string, format: InputFormat): Uint8Array {
-  if (!input) return new Uint8Array(0)
   switch (format) {
     case 'text':
       return new TextEncoder().encode(input)
-    case 'hex': {
-      const hex = input.replace(/\s/g, '')
-      const bytes = new Uint8Array(hex.length / 2)
-      for (let i = 0; i < hex.length; i += 2)
-        bytes[i / 2] = parseInt(hex.substring(i, i + 2), 16)
-      return bytes
-    }
+    case 'hex':
+      return hexToBytes(input)
     case 'base64': {
-      const binary = atob(input)
-      const bytes = new Uint8Array(binary.length)
-      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
-      return bytes
+      try {
+        const binary = atob(input)
+        const bytes = new Uint8Array(binary.length)
+        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
+        return bytes
+      } catch {
+        throw new Error('无效的 Base64 字符串')
+      }
     }
   }
 }
-
 function toHex(bytes: Uint8Array): string {
   return Array.from(bytes)
     .map((b) => b.toString(16).padStart(2, '0'))
@@ -64,15 +62,18 @@ export default function HmacGenerator(): React.JSX.Element {
 
   // Real-time computation
   useEffect(() => {
-    if (!keyInput || !messageInput) {
-      setResult('')
-      setError('')
-      return
-    }
-
     let cancelled = false
 
     const run = async (): Promise<void> => {
+      await Promise.resolve()
+      if (cancelled) return
+
+      if (!keyInput) {
+        setResult('')
+        setError('')
+        return
+      }
+
       try {
         const keyBytes = parseInput(keyInput, keyFormat)
         const messageBytes = parseInput(messageInput, messageFormat)
@@ -85,13 +86,13 @@ export default function HmacGenerator(): React.JSX.Element {
 
         const cryptoKey = await crypto.subtle.importKey(
           'raw',
-          keyBytes.buffer as ArrayBuffer,
+          toArrayBuffer(keyBytes),
           { name: 'HMAC', hash: algorithm },
           false,
           ['sign']
         )
 
-        const signature = await crypto.subtle.sign('HMAC', cryptoKey, messageBytes.buffer as ArrayBuffer)
+        const signature = await crypto.subtle.sign('HMAC', cryptoKey, toArrayBuffer(messageBytes))
         const bytes = new Uint8Array(signature)
 
         if (!cancelled) {
@@ -106,7 +107,7 @@ export default function HmacGenerator(): React.JSX.Element {
       }
     }
 
-    run()
+    void run()
     return () => {
       cancelled = true
     }

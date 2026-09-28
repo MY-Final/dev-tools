@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback } from 'react'
 import { Copy, Check, RotateCcw, ArrowRight } from 'lucide-react'
 import '../styles/json-converter.css'
+import { jsonToToml, jsonToTypeScript, jsonToYaml } from '@renderer/lib/data-format-utils'
 
 type ConvertMode = 'ts' | 'toml' | 'xml' | 'yaml'
 
@@ -53,48 +54,6 @@ const SAMPLES: Record<ConvertMode, string> = {
   yaml: SAMPLE_YAML,
 }
 
-// ── JSON to TypeScript ─────────────────────────────────────────
-
-function toPascalCase(s: string): string {
-  return s.replace(/[^a-zA-Z0-9]+(.)/g, (_, c) => c.toUpperCase()).replace(/^[a-z]/, (c) => c.toUpperCase())
-}
-
-function jsonToTS(obj: unknown, name = 'Root'): string {
-  const interfaces: string[] = []
-
-  function convert(val: unknown, typeName: string): string {
-    if (val === null || val === undefined) return 'null'
-    if (typeof val === 'string') return 'string'
-    if (typeof val === 'number') return 'number'
-    if (typeof val === 'boolean') return 'boolean'
-
-    if (Array.isArray(val)) {
-      if (val.length === 0) return 'unknown[]'
-      const itemTypes = [...new Set(val.map((item) => convert(item, typeName + 'Item')))]
-      return itemTypes.length === 1 ? `${itemTypes[0]}[]` : `(${itemTypes.join(' | ')})[]`
-    }
-
-    // Object — generate an interface
-    const entries = Object.entries(val as Record<string, unknown>)
-    if (entries.length === 0) return 'Record<string, unknown>'
-
-    // Check if this type already has an interface (avoid duplicates)
-    if (!interfaces.some((iface) => iface.startsWith(`interface ${typeName}`))) {
-      const props = entries.map(([key, v]) => {
-        const propTypeName = toPascalCase(key) || 'Prop'
-        const typeRef = convert(v, propTypeName + 'Type')
-        return `  ${key}: ${typeRef}`
-      })
-      interfaces.push(`interface ${typeName} {\n${props.join('\n')}\n}`)
-    }
-
-    return typeName
-  }
-
-  convert(obj, name)
-  return interfaces.join('\n\n')
-}
-
 // ── JSON to XML ────────────────────────────────────────────────
 
 function jsonToXml(json: string): string {
@@ -134,77 +93,6 @@ function escXml(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 }
 
-// ── JSON to TOML ───────────────────────────────────────────────
-
-function jsonToToml(obj: unknown, prefix = ''): string {
-  if (obj === null || obj === undefined) return ''
-  if (typeof obj !== 'object') return `${prefix}= ${formatTomlValue(obj)}\n`
-  if (Array.isArray(obj)) {
-    if (obj.every((i) => typeof i !== 'object' || i === null)) {
-      return `${prefix}= [${obj.map((i) => formatTomlValue(i)).join(', ')}]\n`
-    }
-    return obj.map((item) => jsonToToml(item, prefix)).join('')
-  }
-  const entries = Object.entries(obj as Record<string, unknown>)
-  const primitives: string[] = []
-  const tables: string[] = []
-  for (const [k, v] of entries) {
-    if (v === null || v === undefined) continue
-    if (typeof v !== 'object' || (Array.isArray(v) && v.every((i) => typeof i !== 'object'))) {
-      primitives.push(`${k}= ${formatTomlValue(v)}`)
-    } else {
-      tables.push(formatTomlTable(k, v, prefix ? prefix + '.' + k : k))
-    }
-  }
-  let out = prefix ? `[${prefix}]\n` : ''
-  out += primitives.join('\n')
-  if (primitives.length > 0) out += '\n'
-  out += tables.map((t) => '\n' + t).join('')
-  return out
-}
-
-function formatTomlValue(v: unknown): string {
-  if (v === null) return ''
-  if (typeof v === 'string') return JSON.stringify(v)
-  if (typeof v === 'boolean') return v ? 'true' : 'false'
-  if (Array.isArray(v)) return `[${v.map((i) => formatTomlValue(i)).join(', ')}]`
-  return String(v)
-}
-
-function formatTomlTable(key: string, val: unknown, path: string): string {
-  if (typeof val !== 'object') return `${key}= ${formatTomlValue(val)}\n`
-  if (Array.isArray(val)) return val.map((item) => formatTomlTable(key, item, path)).join('\n')
-  return jsonToToml(val, path)
-}
-
-// ── JSON to YAML ───────────────────────────────────────────────
-
-function jsonToYaml(obj: unknown, indent = 0): string {
-  const pad = '  '.repeat(indent)
-  if (obj === null || obj === undefined) return 'null'
-  if (typeof obj === 'string') {
-    if (obj.includes('\n') || obj.includes(': ') || obj.includes('#')) return JSON.stringify(obj)
-    return obj
-  }
-  if (typeof obj === 'boolean') return obj ? 'true' : 'false'
-  if (typeof obj === 'number') return String(obj)
-  if (Array.isArray(obj)) {
-    if (obj.length === 0) return '[]'
-    return obj.map((item) => {
-      if (typeof item === 'object' && item !== null) {
-        return '\n' + pad + '- ' + jsonToYaml(item, indent + 1).trimStart()
-      }
-      return '\n' + pad + '- ' + jsonToYaml(item, indent)
-    }).join('').trimStart()
-  }
-  const entries = Object.entries(obj as Record<string, unknown>)
-  if (entries.length === 0) return '{}'
-  return entries.map(([k, v]) => {
-    if (typeof v === 'object' && v !== null && !Array.isArray(v)) return `${k}:\n` + jsonToYaml(v, indent + 1)
-    return `${k}: ${jsonToYaml(v, indent)}`
-  }).join('\n')
-}
-
 // ── Component ──────────────────────────────────────────────────
 
 export default function JsonConverter(): React.JSX.Element {
@@ -220,7 +108,7 @@ export default function JsonConverter(): React.JSX.Element {
       const parsed = JSON.parse(input)
       let result = ''
       switch (mode) {
-        case 'ts': result = jsonToTS(parsed); break
+        case 'ts': result = jsonToTypeScript(parsed); break
         case 'toml': result = jsonToToml(parsed).trim(); break
         case 'xml': result = jsonToXml(input); break
         case 'yaml': result = jsonToYaml(parsed); break

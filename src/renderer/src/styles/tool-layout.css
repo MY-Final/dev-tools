@@ -4,6 +4,7 @@
 
 .tool-shell {
   width: 100%;
+  min-width: 0;
   min-height: 100%;
   display: flex;
   justify-content: center;
@@ -14,6 +15,7 @@
 .tool-shell-main {
   width: min(100%, 760px);
   min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 /* Result-heavy tools: lists, reports, generated batches. */
@@ -59,65 +61,66 @@
   width: 100%;
 }
 
-.tool-shell :is(
-  .converter-page,
-  .tc-page,
-  .cv-page,
-  .nb-page,
-  .uc-page,
-  .im-page,
-  .dfc-page,
-  .nf-page,
-  .nfm-page,
-  .re-page,
-  .cc-page,
-  .bc-page,
-  .url-page,
-  .hash-page,
-  .pwd-page,
-  .jwt-page,
-  .jd-page,
-  .token-page,
-  .token-generator-page,
-  .cron-page,
-  .lorem-page,
-  .li-page,
-  .regex-page,
-  .rx-page,
-  .diff-page,
-  .ud-page,
-  .htmljsx-page,
-  .hmac-page,
-  .cert-page,
-  .ssh-page,
-  .skg-page,
-  .tn-page,
-  .re-page,
-  .v4c-page,
-  .sc-page,
-  .pg2-page,
-  .myip-page,
-  .ts-page,
-  .kt-page,
-  .mt-page,
-  .clm-page,
-  .uv-page,
-  .si-page,
-  .sv-page,
-  .ta-page,
-  .ui-page,
-  .tzc-page,
-  .tr-page,
-  .mvn-page,
-  .npm-page,
-  .dh-page,
-  .uap-page,
-  .jc-page,
-  .dc-page,
-  .xp-page,
-  .wst-page,
-  .cors-page
-) {
+.tool-shell
+  :is(
+    .converter-page,
+    .tc-page,
+    .cv-page,
+    .nb-page,
+    .uc-page,
+    .im-page,
+    .dfc-page,
+    .nf-page,
+    .nfm-page,
+    .re-page,
+    .cc-page,
+    .bc-page,
+    .url-page,
+    .hash-page,
+    .pwd-page,
+    .jwt-page,
+    .jd-page,
+    .token-page,
+    .token-generator-page,
+    .cron-page,
+    .lorem-page,
+    .li-page,
+    .regex-page,
+    .rx-page,
+    .diff-page,
+    .ud-page,
+    .htmljsx-page,
+    .hmac-page,
+    .cert-page,
+    .ssh-page,
+    .skg-page,
+    .tn-page,
+    .re-page,
+    .v4c-page,
+    .sc-page,
+    .pg2-page,
+    .myip-page,
+    .ts-page,
+    .kt-page,
+    .mt-page,
+    .clm-page,
+    .uv-page,
+    .si-page,
+    .sv-page,
+    .ta-page,
+    .ui-page,
+    .tzc-page,
+    .tr-page,
+    .mvn-page,
+    .npm-page,
+    .dh-page,
+    .uap-page,
+    .jc-page,
+    .dc-page,
+    .xp-page,
+    .wst-page,
+    .cors-page
+  ) {
   height: auto;
   min-height: 0;
   padding: 0;
@@ -135,64 +138,67 @@
   overflow: visible;
 }
 
-.tool-shell :is(
-  .converter-card,
-  .tc-card,
-  .cv-card,
-  .nb-card,
-  .uc-card,
-  .im-card,
-  .dfc-card,
-  .nf-card,
-  .nfm-card,
-  .re-card,
-  .cc-card,
-  .bc-card,
-  .url-card,
-  .hash-card,
-  .pwd-card,
-  .jwt-card,
-  .jd-card,
-  .token-card,
-  .tg-card,
-  .cron-card,
-  .lorem-card,
-  .li-card,
-  .regex-card,
-  .rx-card,
-  .diff-card,
-  .ud-card,
-  .htmljsx-card,
-  .hmac-card,
-  .cert-card,
-  .ssh-card,
-  .skg-card,
-  .tn-card,
-  .v4c-card,
-  .sc-card,
-  .pg2-card,
-  .myip-card,
-  .ts-card,
-  .kt-card,
-  .mt-card,
-  .clm-card,
-  .uv-card,
-  .si-card,
-  .sv-card,
-  .ta-card,
-  .ui-card,
-  .tzc-card,
-  .tr-card,
-  .mvn-card,
-  .npm-card,
-  .dh-card,
-  .uap-card,
-  .jc-card,
-  .dc-card,
-  .xp-card,
-  .wst-card,
-  .cors-card
-) {
+.tool-shell
+  :is(
+    .converter-card,
+    .tc-card,
+    .cv-card,
+    .nb-card,
+    .uc-card,
+    .im-card,
+    .dfc-card,
+    .nf-card,
+    .nfm-card,
+    .re-card,
+    .cc-card,
+    .bc-card,
+    .url-card,
+    .hash-card,
+    .pwd-card,
+    .jwt-card,
+    .jd-card,
+    .token-card,
+    .tg-card,
+    .cron-card,
+    .lorem-card,
+    .li-card,
+    .regex-card,
+    .rx-card,
+    .diff-card,
+    .ud-card,
+    .htmljsx-card,
+    .hmac-card,
+    .cert-card,
+    .ssh-card,
+    .skg-card,
+    .tn-card,
+    .v4c-card,
+    .sc-card,
+    .pg2-card,
+    .myip-card,
+    .ts-card,
+    .kt-card,
+    .mt-card,
+    .clm-card,
+    .uv-card,
+    .si-card,
+    .sv-card,
+    .ta-card,
+    .ui-card,
+    .tzc-card,
+    .tr-card,
+    .mvn-card,
+    .npm-card,
+    .dh-card,
+    .uap-card,
+    .jc-card,
+    .dc-card,
+    .xp-card,
+    .wst-card,
+    .cors-card
+  ) {
+  width: 100%;
+  min-width: 0;
   max-width: none;
 }
 
@@ -200,64 +206,65 @@
   max-width: none;
 }
 
-.tool-shell :is(
-  .converter-header,
-  .tc-header,
-  .cv-header,
-  .nb-header,
-  .uc-header,
-  .im-header,
-  .dfc-header,
-  .nf-header,
-  .nfm-header,
-  .re-header,
-  .cc-header,
-  .bc-header,
-  .url-header,
-  .hash-header,
-  .pwd-header,
-  .jwt-header,
-  .jd-header,
-  .token-header,
-  .tg-header,
-  .cron-header,
-  .lorem-header,
-  .li-header,
-  .regex-header,
-  .rx-header,
-  .diff-header,
-  .ud-header,
-  .htmljsx-header,
-  .hmac-header,
-  .cert-header,
-  .ssh-header,
-  .skg-header,
-  .tn-header,
-  .v4c-header,
-  .sc-header,
-  .pg2-header,
-  .myip-header,
-  .ts-header,
-  .kt-header,
-  .mt-header,
-  .clm-header,
-  .uv-header,
-  .si-header,
-  .sv-header,
-  .ta-header,
-  .ui-header,
-  .tzc-header,
-  .tr-header,
-  .mvn-header,
-  .npm-header,
-  .dh-header,
-  .uap-header,
-  .jc-header,
-  .dc-header,
-  .xp-header,
-  .wst-header,
-  .cors-header
-) {
+.tool-shell
+  :is(
+    .converter-header,
+    .tc-header,
+    .cv-header,
+    .nb-header,
+    .uc-header,
+    .im-header,
+    .dfc-header,
+    .nf-header,
+    .nfm-header,
+    .re-header,
+    .cc-header,
+    .bc-header,
+    .url-header,
+    .hash-header,
+    .pwd-header,
+    .jwt-header,
+    .jd-header,
+    .token-header,
+    .tg-header,
+    .cron-header,
+    .lorem-header,
+    .li-header,
+    .regex-header,
+    .rx-header,
+    .diff-header,
+    .ud-header,
+    .htmljsx-header,
+    .hmac-header,
+    .cert-header,
+    .ssh-header,
+    .skg-header,
+    .tn-header,
+    .v4c-header,
+    .sc-header,
+    .pg2-header,
+    .myip-header,
+    .ts-header,
+    .kt-header,
+    .mt-header,
+    .clm-header,
+    .uv-header,
+    .si-header,
+    .sv-header,
+    .ta-header,
+    .ui-header,
+    .tzc-header,
+    .tr-header,
+    .mvn-header,
+    .npm-header,
+    .dh-header,
+    .uap-header,
+    .jc-header,
+    .dc-header,
+    .xp-header,
+    .wst-header,
+    .cors-header
+  ) {
   text-align: center;
 }
 
@@ -346,5 +353,24 @@
 @media (max-width: 1100px) {
   .tool-shell {
     padding: 28px 18px;
+  }
+}
+
+@media (max-width: 767px) {
+  .tool-shell {
+    padding: 24px 12px 36px;
+  }
+
+  .tool-shell-main {
+    width: 100%;
+  }
+
+  .tool-shell :is(input, select, textarea, button) {
+    max-width: 100%;
+  }
+
+  .tool-shell :is(pre, code) {
+    max-width: 100%;
+    overflow-x: auto;
   }
 }

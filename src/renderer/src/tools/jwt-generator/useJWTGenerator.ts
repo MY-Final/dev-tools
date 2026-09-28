@@ -1,4 +1,11 @@
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo, useEffect } from 'react'
+import {
+  base64UrlDecodeText,
+  base64UrlEncodeText,
+  randomInt,
+  randomString,
+  signJwtHmac
+} from '@renderer/lib/crypto-utils'
 
 export type Algorithm = 'HS256' | 'HS384' | 'HS512'
 
@@ -41,52 +48,29 @@ const PAYLOAD_TEMPLATES = {
 }
 
 const RANDOM_FIELDS = {
-  userId: () => `u_${Math.floor(100000 + Math.random() * 900000)}`,
+  userId: () => `u_${100000 + randomInt(900000)}`,
   username: () => {
     const names = ['alice', 'bob', 'charlie', 'david', 'eve', 'frank', 'grace']
-    return names[Math.floor(Math.random() * names.length)] + Math.floor(Math.random() * 100)
+    return names[randomInt(names.length)] + randomInt(100)
   },
   email: () => {
-    const num = Math.floor(100000 + Math.random() * 900000)
+    const num = 100000 + randomInt(900000)
     return `test${num}@example.com`
   },
   role: () => {
     const roles = ['admin', 'user', 'editor', 'viewer']
-    return roles[Math.floor(Math.random() * roles.length)]
+    return roles[randomInt(roles.length)]
   },
-  tenantId: () => `tenant_${Math.floor(1000 + Math.random() * 9000)}`,
+  tenantId: () => `tenant_${1000 + randomInt(9000)}`,
   permissions: () => {
     const perms = ['read', 'write', 'delete', 'admin']
-    const count = 1 + Math.floor(Math.random() * 3)
+    const count = 1 + randomInt(3)
     const selected: string[] = []
     for (let i = 0; i < count; i++) {
-      selected.push(perms[Math.floor(Math.random() * perms.length)])
+      selected.push(perms[randomInt(perms.length)])
     }
     return JSON.stringify([...new Set(selected)])
   }
-}
-
-function base64UrlEncode(str: string): string {
-  return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
-}
-
-function base64UrlDecode(str: string): string {
-  let s = str.replace(/-/g, '+').replace(/_/g, '/')
-  while (s.length % 4) s += '='
-  return atob(s)
-}
-
-function simpleSign(message: string, secret: string, algorithm: Algorithm): string {
-  let hash = 0
-  const combined = message + secret + algorithm
-  for (let i = 0; i < combined.length; i++) {
-    const char = combined.charCodeAt(i)
-    hash = ((hash << 5) - hash + char) | 0
-  }
-
-  const hex = Math.abs(hash).toString(16).padStart(8, '0')
-  const repeatCount = algorithm === 'HS256' ? 4 : algorithm === 'HS384' ? 6 : 8
-  return hex.repeat(repeatCount)
 }
 
 function getExpirationSeconds(expiration: Expiration): number {
@@ -108,6 +92,10 @@ function getExpirationSeconds(expiration: Expiration): number {
   }
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 export function useJWTGenerator() {
   const [headerJson, setHeaderJson] = useState(JSON.stringify(DEFAULT_HEADER, null, 2))
@@ -116,6 +104,7 @@ export function useJWTGenerator() {
   const [showSecret, setShowSecret] = useState(false)
   const [algorithm, setAlgorithm] = useState<Algorithm>('HS256')
   const [expiration, setExpiration] = useState<Expiration>('1h')
+  const [signedJwt, setSignedJwt] = useState<{ key: string; token: string }>({ key: '', token: '' })
   const [toast, setToast] = useState('')
 
   const showToast = useCallback((message: string) => {
@@ -126,8 +115,8 @@ export function useJWTGenerator() {
   // Validate JSON during render (not in effects)
   const headerError = useMemo(() => {
     try {
-      JSON.parse(headerJson)
-      return ''
+      const parsed: unknown = JSON.parse(headerJson)
+      return isRecord(parsed) ? '' : 'Header must be a JSON object'
     } catch {
       return 'Invalid JSON'
     }
@@ -135,36 +124,62 @@ export function useJWTGenerator() {
 
   const payloadError = useMemo(() => {
     try {
-      JSON.parse(payloadJson)
-      return ''
+      const parsed: unknown = JSON.parse(payloadJson)
+      return isRecord(parsed) ? '' : 'Payload must be a JSON object'
     } catch {
       return 'Invalid JSON'
     }
   }, [payloadJson])
 
-  const jwt = useMemo(() => {
-    if (headerError || payloadError) return ''
+  const generationKey = useMemo(
+    () => JSON.stringify({ headerJson, payloadJson, secret, algorithm, expiration }),
+    [headerJson, payloadJson, secret, algorithm, expiration]
+  )
 
-    try {
-      const header = JSON.parse(headerJson)
-      const payload = JSON.parse(payloadJson)
+  useEffect(() => {
+    if (headerError || payloadError) return
 
-      // eslint-disable-next-line react-hooks/purity
-      const now = Math.floor(Date.now() / 1000)
-      payload.iat = now
-      payload.exp = now + getExpirationSeconds(expiration)
+    let cancelled = false
 
-      const encodedHeader = base64UrlEncode(JSON.stringify(header))
-      const encodedPayload = base64UrlEncode(JSON.stringify(payload))
-      const signature = simpleSign(`${encodedHeader}.${encodedPayload}`, secret, algorithm)
-      const encodedSignature = base64UrlEncode(signature)
+    const generate = async (): Promise<void> => {
+      try {
+        const header = JSON.parse(headerJson) as Record<string, unknown>
+        const payload = JSON.parse(payloadJson) as Record<string, unknown>
+        const now = Math.floor(Date.now() / 1000)
 
-      return `${encodedHeader}.${encodedPayload}.${encodedSignature}`
-    } catch {
-      return ''
+        header.alg = algorithm
+        payload.iat = now
+        payload.exp = now + getExpirationSeconds(expiration)
+
+        const encodedHeader = base64UrlEncodeText(JSON.stringify(header))
+        const encodedPayload = base64UrlEncodeText(JSON.stringify(payload))
+        const encodedSignature = await signJwtHmac(
+          `${encodedHeader}.${encodedPayload}`,
+          secret,
+          algorithm
+        )
+
+        if (!cancelled) {
+          setSignedJwt({
+            key: generationKey,
+            token: `${encodedHeader}.${encodedPayload}.${encodedSignature}`
+          })
+        }      } catch {
+        if (!cancelled) setSignedJwt({ key: generationKey, token: '' })
+      }
     }
-  }, [headerJson, payloadJson, secret, algorithm, expiration, headerError, payloadError])
 
+    void generate()
+    return () => {
+      cancelled = true
+    }
+  }, [generationKey, headerJson, payloadJson, secret, algorithm, expiration, headerError, payloadError])
+
+  const jwt = useMemo(
+    () =>
+      !headerError && !payloadError && signedJwt.key === generationKey ? signedJwt.token : '',
+    [headerError, payloadError, signedJwt, generationKey]
+  )
   const jwtParts = useMemo(() => {
     if (!jwt) return null
 
@@ -173,8 +188,8 @@ export function useJWTGenerator() {
 
     try {
       return {
-        header: JSON.stringify(JSON.parse(base64UrlDecode(parts[0])), null, 2),
-        payload: JSON.stringify(JSON.parse(base64UrlDecode(parts[1])), null, 2),
+        header: JSON.stringify(JSON.parse(base64UrlDecodeText(parts[0])), null, 2),
+        payload: JSON.stringify(JSON.parse(base64UrlDecodeText(parts[1])), null, 2),
         signature: parts[2]
       }
     } catch {
@@ -186,11 +201,11 @@ export function useJWTGenerator() {
     (alg: Algorithm) => {
       setAlgorithm(alg)
       try {
-        const header = JSON.parse(headerJson)
+        const header = JSON.parse(headerJson) as Record<string, unknown>
         header.alg = alg
         setHeaderJson(JSON.stringify(header, null, 2))
       } catch {
-        // ignore
+        // Ignore invalid JSON until the user fixes it.
       }
     },
     [headerJson]
@@ -203,7 +218,7 @@ export function useJWTGenerator() {
   const addClaim = useCallback(
     (claim: ClaimField) => {
       try {
-        const payload = JSON.parse(payloadJson)
+        const payload = JSON.parse(payloadJson) as Record<string, unknown>
         const now = Math.floor(Date.now() / 1000)
 
         switch (claim) {
@@ -229,7 +244,7 @@ export function useJWTGenerator() {
 
         setPayloadJson(JSON.stringify(payload, null, 2))
       } catch {
-        // ignore
+        // Ignore invalid JSON until the user fixes it.
       }
     },
     [payloadJson, expiration]
@@ -238,12 +253,12 @@ export function useJWTGenerator() {
   const applyRoleTemplate = useCallback(
     (role: RoleTemplate) => {
       try {
-        const payload = JSON.parse(payloadJson)
+        const payload = JSON.parse(payloadJson) as Record<string, unknown>
         const template = ROLE_TEMPLATES[role]
         Object.assign(payload, template)
         setPayloadJson(JSON.stringify(payload, null, 2))
       } catch {
-        // ignore
+        // Ignore invalid JSON until the user fixes it.
       }
     },
     [payloadJson]
@@ -278,13 +293,7 @@ export function useJWTGenerator() {
   const generateRandomSecret = useCallback(
     (length: 32 | 64 | 128 = 32) => {
       const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
-      let result = ''
-      const array = new Uint32Array(length)
-      crypto.getRandomValues(array)
-      for (let i = 0; i < length; i++) {
-        result += chars[array[i] % chars.length]
-      }
-      setSecret(result)
+      setSecret(randomString(length, chars))
       showToast('Secret 已生成')
     },
     [showToast]

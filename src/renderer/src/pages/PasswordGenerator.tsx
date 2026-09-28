@@ -1,5 +1,6 @@
 import { useState, useCallback, useMemo } from 'react'
 import { Copy, Check, RefreshCw, Shield, Lock, Eye, EyeOff, KeyRound } from 'lucide-react'
+import { randomInt } from '../lib/crypto-utils'
 
 interface PasswordConfig {
   length: number
@@ -20,25 +21,39 @@ const CHAR_SETS = {
 }
 
 function generatePassword(config: PasswordConfig): string {
-  let chars = ''
-  if (config.uppercase) chars += CHAR_SETS.uppercase
-  if (config.lowercase) chars += CHAR_SETS.lowercase
-  if (config.numbers) chars += CHAR_SETS.numbers
-  if (config.symbols) chars += CHAR_SETS.symbols
+  const selectedSets: string[] = []
+  if (config.uppercase) selectedSets.push(CHAR_SETS.uppercase)
+  if (config.lowercase) selectedSets.push(CHAR_SETS.lowercase)
+  if (config.numbers) selectedSets.push(CHAR_SETS.numbers)
+  if (config.symbols) selectedSets.push(CHAR_SETS.symbols)
 
-  if (config.excludeSimilar) {
-    for (const c of SIMILAR_CHARS) {
-      chars = chars.replace(new RegExp(c.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), '')
+  if (selectedSets.length === 0 || config.length < selectedSets.length) return ''
+
+  const normalize = (value: string): string => {
+    let result = value
+    if (config.excludeSimilar) {
+      for (const char of SIMILAR_CHARS) result = result.replaceAll(char, '')
     }
+    return result
   }
 
-  if (!chars) return ''
+  const pools = selectedSets.map(normalize).filter(Boolean)
+  if (pools.length === 0) return ''
 
-  const array = new Uint32Array(config.length)
-  crypto.getRandomValues(array)
-  return Array.from(array, (v) => chars[v % chars.length]).join('')
+  const chars = pools.join('')
+  const result: string[] = pools.map((pool) => pool[randomInt(pool.length)])
+
+  while (result.length < config.length) {
+    result.push(chars[randomInt(chars.length)])
+  }
+
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = randomInt(i + 1)
+    ;[result[i], result[j]] = [result[j], result[i]]
+  }
+
+  return result.join('')
 }
-
 function calculateEntropy(password: string, config: PasswordConfig): number {
   let poolSize = 0
   if (config.uppercase) poolSize += 26

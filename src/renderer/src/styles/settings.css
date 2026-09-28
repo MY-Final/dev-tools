@@ -142,6 +142,12 @@
 .settings-section-header {
   scroll-margin-top: 24px;
   display: flex;
+  width: 100%;
+  appearance: none;
+  color: inherit;
+  font-family: inherit;
+  text-align: left;
+  border-bottom: 0;
   align-items: center;
   justify-content: space-between;
   padding: 14px 18px;
@@ -149,7 +155,9 @@
   border-radius: 12px 12px 0 0;
   cursor: pointer;
   user-select: none;
-  transition: border-color 0.16s ease, background 0.16s ease;
+  transition:
+    border-color 0.16s ease,
+    background 0.16s ease;
 }
 
 .settings-section-header:has(+ .settings-section-body:not(.open)) {
@@ -200,7 +208,11 @@
   padding: 0 18px;
   border-bottom: 0;
   border-radius: 0 0 12px 12px;
-  transition: max-height 0.28s ease, opacity 0.2s ease, padding 0.2s ease, border-bottom 0.2s ease;
+  transition:
+    max-height 0.28s ease,
+    opacity 0.2s ease,
+    padding 0.2s ease,
+    border-bottom 0.2s ease;
 }
 
 .settings-section-body.open {
@@ -273,7 +285,10 @@
   color: var(--color-text);
   font-family: 'JetBrains Mono', monospace;
   outline: none;
-  transition: border-color 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
+  transition:
+    border-color 0.16s ease,
+    box-shadow 0.16s ease,
+    background 0.16s ease;
 }
 
 .settings-input,
@@ -354,6 +369,18 @@
   box-shadow: 0 0 0 5px var(--color-accent-soft-subtle);
 }
 
+.settings-toggle input:focus-visible + .settings-toggle-slider {
+  outline: 2px solid var(--color-accent-soft);
+  outline-offset: 3px;
+}
+
+@supports not selector(:focus-visible) {
+  .settings-toggle input:focus + .settings-toggle-slider {
+    outline: 2px solid var(--color-accent-soft);
+    outline-offset: 3px;
+  }
+}
+
 .settings-segmented {
   display: inline-flex;
   align-items: center;
@@ -384,7 +411,9 @@
 .settings-option.active {
   background: var(--color-surface);
   color: var(--color-text);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12), 0 0 0 1px var(--color-border);
+  box-shadow:
+    0 1px 4px rgba(0, 0, 0, 0.12),
+    0 0 0 1px var(--color-border);
 }
 
 .settings-option-label {
@@ -491,8 +520,12 @@
 }
 
 @keyframes updater-spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .updater-progress {
@@ -737,7 +770,6 @@
   .settings-content {
     padding: 0;
   }
-
 }
 
 @media (max-width: 640px) {

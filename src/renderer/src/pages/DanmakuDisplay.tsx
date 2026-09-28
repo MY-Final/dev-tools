@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { ArrowLeft, ArrowRight, ArrowUp, ArrowDown, Monitor, X, Clock } from 'lucide-react'
 import { useDanmakuDisplay } from '../tools/danmaku-display/useDanmakuDisplay'
 import type { ScrollDirection } from '../tools/danmaku-display/useDanmakuDisplay'
@@ -14,6 +15,16 @@ function formatCountdown(sec: number): string {
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
 }
 
+const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)'
+
+function prefersReducedMotion(): boolean {
+  return (
+    typeof window !== 'undefined' &&
+    typeof window.matchMedia === 'function' &&
+    window.matchMedia(REDUCED_MOTION_QUERY).matches
+  )
+}
+
 export default function DanmakuDisplay(): React.JSX.Element {
   const {
     config,
@@ -26,6 +37,21 @@ export default function DanmakuDisplay(): React.JSX.Element {
     countdownTotal
   } = useDanmakuDisplay()
 
+  const [systemReducedMotion, setSystemReducedMotion] = useState(prefersReducedMotion)
+  const [motionOverride, setMotionOverride] = useState<boolean | null>(null)
+  const reduceMotion = motionOverride ?? systemReducedMotion
+  const effectiveMode = reduceMotion ? 'static' : config.mode
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return undefined
+    const media = window.matchMedia(REDUCED_MOTION_QUERY)
+    const handleChange = (event: MediaQueryListEvent): void => {
+      setSystemReducedMotion(event.matches)
+    }
+    media.addEventListener('change', handleChange)
+    return () => media.removeEventListener('change', handleChange)
+  }, [])
+
   const dirIcon: Record<ScrollDirection, React.ReactNode> = {
     left: <ArrowLeft size={16} />,
     right: <ArrowRight size={16} />,
@@ -33,7 +59,7 @@ export default function DanmakuDisplay(): React.JSX.Element {
     down: <ArrowDown size={16} />
   }
 
-  const previewAnimClass = config.mode === 'scroll' ? `scroll-${config.direction}` : 'static'
+  const previewAnimClass = effectiveMode === 'scroll' ? `scroll-${config.direction}` : 'static'
   const speedSec = Math.round(60 - (config.speed - 1) * (52 / 9))
 
   const dirAnimClass: Record<ScrollDirection, string> = {
@@ -71,6 +97,7 @@ export default function DanmakuDisplay(): React.JSX.Element {
 
           <textarea
             className="dd-textarea"
+            aria-label="弹幕消息内容"
             value={config.text}
             onChange={(e) => update('text', e.target.value)}
             placeholder="输入你要展示的消息…"
@@ -83,6 +110,7 @@ export default function DanmakuDisplay(): React.JSX.Element {
               <input
                 type="range"
                 className="dd-slider"
+                aria-label="字体大小"
                 min={24}
                 max={200}
                 value={config.fontSize}
@@ -96,6 +124,7 @@ export default function DanmakuDisplay(): React.JSX.Element {
               <input
                 type="color"
                 className="dd-color-input"
+                aria-label="字体颜色"
                 value={config.fontColor}
                 onChange={(e) => update('fontColor', e.target.value)}
               />
@@ -105,6 +134,7 @@ export default function DanmakuDisplay(): React.JSX.Element {
               <input
                 type="color"
                 className="dd-color-input"
+                aria-label="背景颜色"
                 value={config.bgColor}
                 onChange={(e) => update('bgColor', e.target.value)}
               />
@@ -116,12 +146,14 @@ export default function DanmakuDisplay(): React.JSX.Element {
                 <button
                   className={`dd-mode-btn ${config.mode === 'scroll' ? 'active' : ''}`}
                   onClick={() => update('mode', 'scroll')}
+                  aria-pressed={config.mode === 'scroll'}
                 >
                   滚动
                 </button>
                 <button
                   className={`dd-mode-btn ${config.mode === 'static' ? 'active' : ''}`}
                   onClick={() => update('mode', 'static')}
+                  aria-pressed={config.mode === 'static'}
                 >
                   静止
                 </button>
@@ -138,6 +170,12 @@ export default function DanmakuDisplay(): React.JSX.Element {
                         key={d}
                         className={`dd-dir-btn ${config.direction === d ? 'active' : ''}`}
                         onClick={() => update('direction', d)}
+                        aria-label={
+                          { left: '向左滚动', right: '向右滚动', up: '向上滚动', down: '向下滚动' }[
+                            d
+                          ]
+                        }
+                        aria-pressed={config.direction === d}
                         title={
                           { left: '向左滚动', right: '向右滚动', up: '向上滚动', down: '向下滚动' }[
                             d
@@ -155,6 +193,7 @@ export default function DanmakuDisplay(): React.JSX.Element {
                   <input
                     type="range"
                     className="dd-slider"
+                    aria-label="滚动速度"
                     min={1}
                     max={10}
                     value={config.speed}
@@ -175,6 +214,7 @@ export default function DanmakuDisplay(): React.JSX.Element {
                   type="checkbox"
                   checked={config.returnTimeEnabled}
                   onChange={(e) => update('returnTimeEnabled', e.target.checked)}
+                  aria-label="启用返回时间"
                 />
                 <span className="dd-toggle-slider" />
               </label>
@@ -188,12 +228,14 @@ export default function DanmakuDisplay(): React.JSX.Element {
                     <button
                       className={`dd-mode-btn ${config.returnTimeType === 'absolute' ? 'active' : ''}`}
                       onClick={() => update('returnTimeType', 'absolute')}
+                      aria-pressed={config.returnTimeType === 'absolute'}
                     >
                       指定时间
                     </button>
                     <button
                       className={`dd-mode-btn ${config.returnTimeType === 'relative' ? 'active' : ''}`}
                       onClick={() => update('returnTimeType', 'relative')}
+                      aria-pressed={config.returnTimeType === 'relative'}
                     >
                       相对时间
                     </button>
@@ -206,6 +248,7 @@ export default function DanmakuDisplay(): React.JSX.Element {
                     <input
                       type="time"
                       className="dd-time-input"
+                      aria-label="返回时间"
                       value={config.returnTimeAbsolute}
                       onChange={(e) => update('returnTimeAbsolute', e.target.value)}
                     />
@@ -219,6 +262,7 @@ export default function DanmakuDisplay(): React.JSX.Element {
                     <input
                       type="number"
                       className="dd-number-input"
+                      aria-label="多少分钟后回来"
                       min={1}
                       max={1440}
                       value={config.returnTimeRelative}
@@ -248,6 +292,24 @@ export default function DanmakuDisplay(): React.JSX.Element {
                 />
               </label>
             </div>
+
+            <div className="dd-control-row">
+              <span className="dd-control-label">动画</span>
+              <label className="dd-motion-label">
+                <input
+                  type="checkbox"
+                  checked={reduceMotion}
+                  onChange={(e) => setMotionOverride(e.target.checked)}
+                  aria-label="减少动画并固定显示消息"
+                />
+                <span>减少动画（固定显示消息）</span>
+              </label>
+            </div>
+            {reduceMotion && (
+              <p className="dd-motion-note" role="status" aria-live="polite">
+                已减少动画，滚动消息将改为静止显示。
+              </p>
+            )}
           </div>
 
           <div className="dd-preview" style={{ background: config.bgColor }}>
@@ -270,16 +332,27 @@ export default function DanmakuDisplay(): React.JSX.Element {
 
       {/* ── 全屏覆盖层 ── */}
       {isFullscreen && (
-        <div className="dd-overlay" style={{ background: config.bgColor }} onClick={exitFullscreen}>
-          <button className="dd-overlay-close" onClick={exitFullscreen}>
-            <X size={20} />
+        <div
+          className={`dd-overlay ${reduceMotion ? 'dd-overlay--reduced-motion' : ''}`}
+          style={{ background: config.bgColor }}
+          onClick={exitFullscreen}
+          role="region"
+          aria-label="全屏弹幕显示"
+        >
+          <button
+            type="button"
+            className="dd-overlay-close"
+            onClick={exitFullscreen}
+            aria-label="退出全屏显示"
+          >
+            <X size={20} aria-hidden="true" />
           </button>
 
           {/* 当前时间 */}
           {config.showClock && <div className="dd-overlay-clock">{overlayTime}</div>}
 
-          <div className={`dd-overlay-body ${config.mode === 'scroll' ? 'dd-overlay-scroll' : ''}`}>
-            {config.mode === 'scroll' ? (
+          <div className={`dd-overlay-body ${effectiveMode === 'scroll' ? 'dd-overlay-scroll' : ''}`}>
+            {effectiveMode === 'scroll' ? (
               <span
                 className={`dd-overlay-text ${dirAnimClass[config.direction]}`}
                 style={{
@@ -320,7 +393,7 @@ export default function DanmakuDisplay(): React.JSX.Element {
             )}
           </div>
 
-          {config.mode === 'scroll' && hasReturnTime && countdownTotal > 0 && (
+          {effectiveMode === 'scroll' && hasReturnTime && countdownTotal > 0 && (
             <div
               className="dd-overlay-countdown dd-overlay-countdown-bottom"
               style={{ color: config.fontColor }}

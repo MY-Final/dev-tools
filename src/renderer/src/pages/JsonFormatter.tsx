@@ -30,6 +30,7 @@ import { json } from '@codemirror/lang-json'
 import { EditorView } from '@codemirror/view'
 import { search } from '@codemirror/search'
 import { useJsonFormatter, type Indent } from '@renderer/tools/json-formatter/useJsonFormatter'
+import { jsonToTypeScript, repairJsonText, type JsonRepairResult } from '@renderer/lib/data-format-utils'
 
 const INDENTS: Indent[] = [2, 4, 6, 8]
 
@@ -126,12 +127,6 @@ interface SelectedNodeInfo {
 interface QueryResult {
   path: string
   value: JsonTreeValue
-}
-
-interface RepairPreview {
-  original: string
-  repaired: string
-  changes: string[]
 }
 
 const largeJsonLimits = {
@@ -323,78 +318,6 @@ function runJsonPathQuery(value: JsonTreeValue, path: string): { results: QueryR
   return { results, error: '' }
 }
 
-function repairJsonText(value: string): RepairPreview {
-  const changes: string[] = []
-  const start = Math.min(
-    ...['{', '['].map((token) => {
-      const found = value.indexOf(token)
-      return found === -1 ? Number.POSITIVE_INFINITY : found
-    })
-  )
-  const lastObject = value.lastIndexOf('}')
-  const lastArray = value.lastIndexOf(']')
-  const end = Math.max(lastObject, lastArray)
-  let repaired = Number.isFinite(start) && end > start ? value.slice(start, end + 1) : value
-  if (repaired !== value) changes.push('提取文本中的 JSON 块')
-
-  const applyRule = (label: string, replacer: (text: string) => string): void => {
-    const next = replacer(repaired)
-    if (next !== repaired) changes.push(label)
-    repaired = next
-  }
-
-  applyRule('移除 // 注释', (text) => text.replace(/\/\/.*$/gm, ''))
-  applyRule('移除 /* */ 注释', (text) => text.replace(/\/\*[\s\S]*?\*\//g, ''))
-  applyRule('移除 trailing comma', (text) => text.replace(/,\s*([}\]])/g, '$1'))
-  applyRule('给未加引号的 key 补双引号', (text) => text.replace(/([{,]\s*)([A-Za-z_$][\w$-]*)(\s*:)/g, '$1"$2"$3'))
-  applyRule('单引号字符串转双引号', (text) =>
-    text.replace(/'([^'\\]*(?:\\.[^'\\]*)*)'/g, (_match, content: string) => `"${content.replace(/"/g, '\\"')}"`)
-  )
-  applyRule('Python 布尔/空值转 JSON', (text) =>
-    text.replace(/\bTrue\b/g, 'true').replace(/\bFalse\b/g, 'false').replace(/\bNone\b/g, 'null')
-  )
-
-  return { original: value, repaired, changes }
-}
-
-function sanitizeTypeName(value: string): string {
-  const name = value.replace(/[^A-Za-z0-9_$]/g, ' ').replace(/(^|\s+)(\w)/g, (_match, _space: string, char: string) => char.toUpperCase()).replace(/\s+/g, '')
-  return /^[A-Za-z_$]/.test(name) ? name : `Type${name}`
-}
-
-function formatTsKey(key: string): string {
-  return /^[A-Za-z_$][\w$]*$/.test(key) ? key : JSON.stringify(key)
-}
-
-function mergeTypeNames(types: string[]): string {
-  const unique = [...new Set(types)]
-  return unique.length === 1 ? unique[0] : unique.join(' | ')
-}
-
-function inferTsType(value: JsonTreeValue, name: string, interfaces: string[]): string {
-  if (value === null) return 'null'
-  if (Array.isArray(value)) {
-    if (!value.length) return 'unknown[]'
-    const itemTypes = value.map((item) => inferTsType(item, `${name}Item`, interfaces))
-    return `Array<${mergeTypeNames(itemTypes)}>`
-  }
-  if (isJsonRecord(value)) {
-    const typeName = sanitizeTypeName(name)
-    const fields = Object.entries(value)
-      .map(([key, item]) => `  ${formatTsKey(key)}: ${inferTsType(item, key, interfaces)}`)
-      .join('\n')
-    interfaces.push(`export interface ${typeName} {\n${fields}\n}`)
-    return typeName
-  }
-  return typeof value
-}
-
-function generateTypeScript(value: JsonTreeValue): string {
-  const interfaces: string[] = []
-  const rootType = inferTsType(value, 'Root', interfaces)
-  return `${interfaces.reverse().join('\n\n')}\n\nexport type JsonRoot = ${rootType}`.trim()
-}
-
 function countTreeNodes(value: JsonTreeValue): number {
   if (Array.isArray(value)) return 1 + value.reduce<number>((sum, item) => sum + countTreeNodes(item), 0)
   if (isJsonRecord(value)) return 1 + Object.values(value).reduce<number>((sum, item) => sum + countTreeNodes(item), 0)
@@ -575,7 +498,7 @@ export default function JsonFormatter(): React.JSX.Element {
   const [jsonPathQuery, setJsonPathQuery] = useState('$')
   const [generatedTypes, setGeneratedTypes] = useState('')
   const [forcedPath, setForcedPath] = useState('')
-  const [repairPreview, setRepairPreview] = useState<RepairPreview | null>(null)
+  const [repairPreview, setRepairPreview] = useState<JsonRepairResult | null>(null)
   const [lastInputBeforeRepair, setLastInputBeforeRepair] = useState('')
   const [sidePanel, setSidePanel] = useState<SidePanel>(null)
 
@@ -634,9 +557,6 @@ export default function JsonFormatter(): React.JSX.Element {
     return runJsonPathQuery(jsonData, jsonPathQuery)
   }, [jsonData, jsonPathQuery])
 
-  useEffect(() => {
-    setActiveMatchIndex(0)
-  }, [searchQuery])
 
   // Keyboard shortcut
   const handleKeyDown = useCallback(
@@ -696,7 +616,7 @@ export default function JsonFormatter(): React.JSX.Element {
   }, [input, showCopiedToast])
 
   const handleApplyRepair = useCallback(() => {
-    if (!repairPreview) return
+    if (!repairPreview || !repairPreview.ok) return
     setLastInputBeforeRepair(repairPreview.original)
     setInput(repairPreview.repaired)
     setRepairPreview(null)
@@ -750,7 +670,7 @@ export default function JsonFormatter(): React.JSX.Element {
 
   const handleGenerateTypes = useCallback(() => {
     if (jsonData === null) return
-    setGeneratedTypes(generateTypeScript(jsonData))
+    setGeneratedTypes(jsonToTypeScript(jsonData, 'Root', { exportInterfaces: true, rootAlias: 'JsonRoot', rootFirst: true }))
     setSidePanel('types')
   }, [jsonData])
 
@@ -1001,10 +921,10 @@ export default function JsonFormatter(): React.JSX.Element {
           <div className="jf-repair-preview">
             <div>
               <strong>Repair 预览</strong>
-              <span>{repairPreview.changes.length ? repairPreview.changes.join(' / ') : '没有检测到可自动修复的规则'}</span>
+              <span>{repairPreview.ok ? repairPreview.changes.length ? repairPreview.changes.join(' / ') : '没有检测到可自动修复的规则' : `修复后仍不是合法 JSON：${repairPreview.error}`}</span>
             </div>
             <div className="jf-repair-actions">
-              <button className="jf-mini-btn" onClick={handleApplyRepair}>应用修复</button>
+              <button className="jf-mini-btn" onClick={handleApplyRepair} disabled={!repairPreview.ok}>应用修复</button>
               <button className="jf-mini-btn" onClick={() => setRepairPreview(null)}>取消</button>
             </div>
           </div>
@@ -1033,7 +953,10 @@ export default function JsonFormatter(): React.JSX.Element {
                   <input
                     className="jf-input"
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value)
+                      setActiveMatchIndex(0)
+                    }}
                     placeholder="搜 key / value / path..."
                   />
                   <button className="jf-mini-btn" onClick={handlePrevMatch} disabled={!searchMatches.length} title="上一个匹配">

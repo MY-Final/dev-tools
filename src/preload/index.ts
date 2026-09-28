@@ -1,5 +1,4 @@
 import { contextBridge, ipcRenderer } from 'electron'
-import { electronAPI } from '@electron-toolkit/preload'
 import type {
   AppSettings,
   UpdateStatus,
@@ -9,8 +8,41 @@ import type {
   DockerTagResult,
   CreateTodoInput,
   UpdateTodoInput,
-  TodoItem
+  TodoItem,
+  RuntimeVersions
 } from './index.d'
+
+function getRuntimeVersions(): RuntimeVersions {
+  return {
+    electron: process.versions.electron ?? '',
+    chrome: process.versions.chrome ?? '',
+    node: process.versions.node ?? ''
+  }
+}
+
+const runtimeAPI = {
+  getVersions: (): RuntimeVersions => getRuntimeVersions()
+}
+
+const COMMAND_PALETTE_TOGGLE_CHANNEL = 'command-palette:toggle'
+
+// Compatibility surface used by existing renderer components. Keep it narrowly scoped:
+// no generic invoke/send methods and no direct process.env access.
+const electronCompatAPI = {
+  process: {
+    platform: process.platform,
+    versions: getRuntimeVersions()
+  },
+  ipcRenderer: {
+    on: (channel: string, callback: () => void): (() => void) => {
+      if (channel !== COMMAND_PALETTE_TOGGLE_CHANNEL) return () => undefined
+
+      const handler = (): void => callback()
+      ipcRenderer.on(channel, handler)
+      return () => ipcRenderer.removeListener(channel, handler)
+    }
+  }
+}
 
 // Settings API
 const settingsAPI = {
@@ -155,7 +187,8 @@ const todosAPI = {
 // just add to the DOM global.
 if (process.contextIsolated) {
   try {
-    contextBridge.exposeInMainWorld('electron', electronAPI)
+    contextBridge.exposeInMainWorld('runtime', runtimeAPI)
+    contextBridge.exposeInMainWorld('electron', electronCompatAPI)
     contextBridge.exposeInMainWorld('api', settingsAPI)
     contextBridge.exposeInMainWorld('updater', updaterAPI)
     contextBridge.exposeInMainWorld('maven', mavenAPI)
@@ -169,15 +202,16 @@ if (process.contextIsolated) {
     console.error(error)
   }
 } else {
-  // Fallback for non-isolated context (development mode)
-  ;(window as any).electron = electronAPI
-  ;(window as any).api = settingsAPI
-  ;(window as any).updater = updaterAPI
-  ;(window as any).maven = mavenAPI
-  ;(window as any).env = envAPI
-  ;(window as any).translator = translatorAPI
-  ;(window as any).npm = npmAPI
-  ;(window as any).docker = dockerAPI
-  ;(window as any).wsProxy = wsProxyAPI
-  ;(window as any).todos = todosAPI
+  const target = window as unknown as Record<string, unknown>
+  target.runtime = runtimeAPI
+  target.electron = electronCompatAPI
+  target.api = settingsAPI
+  target.updater = updaterAPI
+  target.maven = mavenAPI
+  target.env = envAPI
+  target.translator = translatorAPI
+  target.npm = npmAPI
+  target.docker = dockerAPI
+  target.wsProxy = wsProxyAPI
+  target.todos = todosAPI
 }

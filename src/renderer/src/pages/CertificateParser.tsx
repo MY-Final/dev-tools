@@ -47,6 +47,29 @@ const DN_LABELS: Record<string, string> = {
   emailAddress: 'Email'
 }
 
+interface EcPublicKeyShape {
+  ec?: {
+    curve?: {
+      fieldSize?: number
+      keySize?: number
+      n?: { bitLength?: () => number }
+      q?: { bitLength?: () => number }
+    }
+  }
+}
+
+function getEcKeySize(publicKey: unknown): number {
+  if (typeof publicKey !== 'object' || publicKey === null || !('ec' in publicKey)) return 0
+
+  const curve = (publicKey as EcPublicKeyShape).ec?.curve
+  if (!curve) return 0
+  if (typeof curve.fieldSize === 'number') return curve.fieldSize
+  if (typeof curve.keySize === 'number') return curve.keySize
+  if (typeof curve.n?.bitLength === 'function') return curve.n.bitLength()
+  if (typeof curve.q?.bitLength === 'function') return curve.q.bitLength()
+  return 0
+}
+
 function parseCertificate(pem: string): CertInfo {
   const cert = forge.pki.certificateFromPem(pem)
 
@@ -61,8 +84,9 @@ function parseCertificate(pem: string): CertInfo {
   const now = new Date()
   const validFrom = cert.validity.notBefore
   const validTo = cert.validity.notAfter
-  const daysRemaining = Math.ceil((validTo.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-  const isExpired = daysRemaining < 0
+  const remainingTime = validTo.getTime() - now.getTime()
+  const daysRemaining = Math.ceil(remainingTime / (1000 * 60 * 60 * 24))
+  const isExpired = remainingTime < 0
   const isExpiringSoon = !isExpired && daysRemaining <= 30
 
   // SAN (Subject Alternative Names)
@@ -89,7 +113,7 @@ function parseCertificate(pem: string): CertInfo {
     publicKeySize = ((pubKey as forge.pki.rsa.PublicKey).n as forge.jsbn.BigInteger).bitLength()
   } else if ('ec' in (pubKey as object)) {
     publicKeyAlgorithm = 'EC'
-    publicKeySize = 256 // default
+    publicKeySize = getEcKeySize(pubKey)
   }
 
   // Signature Algorithm
@@ -304,10 +328,13 @@ export default function CertificateParser(): React.JSX.Element {
               )}
               <span>
                 {certInfo.isExpired
-                  ? `证书已过期 ${Math.abs(certInfo.daysRemaining)} 天`
+                  ? Math.abs(certInfo.daysRemaining) > 0
+                    ? `证书已过期 ${Math.abs(certInfo.daysRemaining)} 天`
+                    : '证书已过期（不足 1 天）'
                   : certInfo.isExpiringSoon
                     ? `证书将在 ${certInfo.daysRemaining} 天后过期`
                     : `证书有效，剩余 ${certInfo.daysRemaining} 天`}
+
               </span>
             </div>
 
@@ -412,7 +439,7 @@ export default function CertificateParser(): React.JSX.Element {
                 </div>
                 <div className="cp-field">
                   <span className="cp-field-key">Key Size</span>
-                  <span className="cp-field-value">{certInfo.publicKeySize} bits</span>
+                  <span className="cp-field-value">{certInfo.publicKeySize > 0 ? `${certInfo.publicKeySize} bits` : 'Unknown'}</span>
                 </div>
               </div>
             </div>

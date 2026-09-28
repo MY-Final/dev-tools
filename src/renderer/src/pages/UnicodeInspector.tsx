@@ -104,7 +104,7 @@ function getBlock(cp: number): string {
   for (const [start, end, name] of UNICODE_BLOCKS) {
     if (cp >= start && cp <= end) return name
   }
-  return 'Unknown Block'
+  return '未收录（内置常用区段之外）'
 }
 
 function getUtf8Hex(cp: number): string {
@@ -142,7 +142,7 @@ function getCategory(cp: number): string {
   if (cp >= 0x30 && cp <= 0x39) return UNICODE_CATEGORIES['Nd']
   if (cp < 0x20 || cp === 0x7f) return UNICODE_CATEGORIES['Cc']
   if (cp >= 0x80 && cp <= 0x9f) return UNICODE_CATEGORIES['Cc']
-  return 'Other'
+  return 'Category unavailable (limited mapping)'
 }
 
 function analyzeChar(char: string): CharInfo | null {
@@ -231,7 +231,7 @@ export default function UnicodeInspector(): React.JSX.Element {
       <div className="ui-card">
         <div className="ui-header">
           <h2 className="ui-title">Unicode Inspector</h2>
-          <p className="ui-subtitle">输入字符，查看详细 Unicode 信息</p>
+          <p className="ui-subtitle">输入字符，查看编码与有限 Unicode 信息（分类/Block 为内置常用范围）</p>
         </div>
 
         <div className="ui-input-area">

@@ -10,7 +10,8 @@
     "lint": "eslint --cache .",
     "typecheck:node": "tsc --noEmit -p tsconfig.node.json --composite false",
     "typecheck:web": "tsc --noEmit -p tsconfig.web.json --composite false",
-    "typecheck": "npm run typecheck:node && npm run typecheck:web",
+    "typecheck:web-app": "tsc --noEmit -p web/tsconfig.json --composite false",
+    "typecheck": "npm run typecheck:node && npm run typecheck:web && npm run typecheck:web-app",
     "start": "electron-vite preview",
     "dev": "electron-vite dev",
     "build": "npm run typecheck && electron-vite build",
@@ -19,7 +20,7 @@
     "build:win": "npm run build && electron-builder --win",
     "build:mac": "npm run build && electron-builder --mac",
     "build:linux": "npm run build && electron-builder --linux",
-    "build:web": "vite build --config web/vite.config.ts",
+    "build:web": "npm run typecheck:web-app && vite build --config web/vite.config.ts",
     "dev:web": "vite --config web/vite.config.ts",
     "release": "pwsh scripts/release.ps1",
     "new-tool": "node scripts/new-tool.js"

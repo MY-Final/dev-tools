@@ -18,7 +18,7 @@ interface UUIDInfo {
 
 function parseUUID(input: string): UUIDInfo | null {
   // Clean input
-  let raw = input.trim()
+  const raw = input.trim()
     .replace(/[{}]/g, '')
     .replace(/^urn:uuid:/i, '')
     .replace(/-/g, '')
@@ -56,9 +56,12 @@ function parseUUID(input: string): UUIDInfo | null {
     ? parseInt(hex.substring(16, 20), 16) & 0x3FFF
     : null
 
-  const nodeMac = /^[0-9a-fA-F]{12}$/.test(node)
-    ? node.toLowerCase().replace(/(..)(..)(..)(..)(..)(..)/, '$1:$2:$3:$4:$5:$6')
-    : null
+  const firstNodeByte = parseInt(node.substring(0, 2), 16)
+  const isUnicastNode = (firstNodeByte & 0x01) === 0
+  const nodeMac =
+    (version === 1 || version === 2) && variant === 'RFC 4122' && isUnicastNode
+      ? node.toLowerCase().replace(/(..)(..)(..)(..)(..)(..)/, '$1:$2:$3:$4:$5:$6')
+      : null
 
   return {
     hex,
@@ -192,7 +195,7 @@ export default function UUIDDecoder(): React.JSX.Element {
             {/* MAC (v1) */}
             {info.nodeMac && (
               <div className="ud-section">
-                <h4 className="ud-section-title">MAC 地址 (v1)</h4>
+                <h4 className="ud-section-title">MAC 地址 (v{info.version})</h4>
                 <div className="ud-row"><span className="ud-row-label">MAC</span><code className="ud-row-value">{info.nodeMac}</code>
                   <button className="ud-copy-mini" onClick={() => copy('mac', info.nodeMac!)}>
                     {copied === 'mac' ? <Check size={12} /> : <Copy size={12} />}

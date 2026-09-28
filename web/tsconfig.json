@@ -2,14 +2,17 @@
   "extends": "../tsconfig.web.json",
   "compilerOptions": {
     "composite": false,
-    "types": ["vite/client"],
+    "types": [
+      "vite/client"
+    ],
     "paths": {
-      "@renderer/*": ["../src/renderer/src/*"]
+      "@renderer/*": [
+        "../src/renderer/src/*"
+      ]
     }
   },
   "include": [
-    "../src/renderer/src/env.d.ts",
-    "../src/renderer/src/**/*",
-    "../src/renderer/src/**/*.tsx"
+    "api/**/*.ts",
+    "../src/shared/**/*"
   ]
 }

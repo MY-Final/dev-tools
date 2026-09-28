@@ -72,6 +72,9 @@ const CHAR_POOLS = {
 }
 
 // Common CJK characters subset (~2000 most used)
+const RANDOM_CHUNK_SIZE = 16384
+
+// Common CJK characters subset (~2000 most used)
 const CJK_CHARS =
   '的一是在不了有和人这中大为上个国我以要他时来用们生到作地于出就分对成会可主发年动同工也能下过子说产种面而方后多定行学法所民得经十三之进着等部度家电力里如水化高自二理起小物现实加量都两体制机当使点从业本去把性好应开它合还因由其些然前外天政四日那社义事平形相全表间样与关各重新线内数正心反你明看原又么利比或但质气第向道命此变条只没结解问意建月公无系军很情者最立代想已通并提直题党程展五果料象员革位入常文总次品式活设及管特件长求老头基资边流路级少图山统接知较将组见计别她手角期根论运农指几九区强放决西被干做必战先回则任取据处队南给色光门即保治北造百规热领七海口东导器压志世金增争济阶油思术极交受联什认六共权收证改清己美再采转更单风切打白教速花带安场身车例真务具万每目至达走积示议声报斗完类八离华名确才科张信马节话米整空元况今集温传土许步群广石记需段研界拉林律叫且究观越织装影算低持音众书布复容儿须际商非验连断深难近矿千周委素技备半办青省列习响约支般史感劳便团往酸历市克何除消构府称太准精值号率族维划选标写存候毛亲快效斯院查江型眼王按格养易置派层片始却专状育厂京识适属圆包火住调满县局照参红细引听该铁价严龙飞'
 
@@ -82,35 +85,42 @@ function generateText(config: GenConfig): string {
   if (config.punctuation) pool += CHAR_POOLS.punctuation
   if (config.symbols) pool += CHAR_POOLS.symbols
 
-  // Treat Chinese separately — insert Chinese chars at random positions
   const hasCjk = config.chinese && CJK_CHARS.length > 0
+  if (!pool && !hasCjk) return ''
 
-  if (!pool && !hasCjk) pool = CHAR_POOLS.english
+  const result: string[] = []
+  let randomValues = new Uint32Array(0)
 
-  const array = new Uint32Array(config.length)
-  crypto.getRandomValues(array)
-  let result = ''
-  for (let i = 0; i < config.length; i++) {
-    // ~30% chance of Chinese if enabled
-    if (hasCjk && Math.random() < 0.3) {
-      result += CJK_CHARS[array[i] % CJK_CHARS.length]
-    } else {
-      result += pool[array[i] % pool.length]
+  for (let start = 0; start < config.length; start += RANDOM_CHUNK_SIZE) {
+    const chunkLength = Math.min(RANDOM_CHUNK_SIZE, config.length - start)
+    randomValues = new Uint32Array(chunkLength)
+    crypto.getRandomValues(randomValues)
+
+    for (let i = 0; i < chunkLength; i++) {
+      const randomValue = randomValues[i]
+      const useCjk = hasCjk && (pool.length === 0 || randomValue % 100 < 30)
+      if (useCjk) {
+        result.push(CJK_CHARS[randomValue % CJK_CHARS.length])
+      } else {
+        result.push(pool[randomValue % pool.length])
+      }
     }
   }
 
-  // Inject newlines
+  let generated = result.join('')
+
+  // Inject newlines without relying on a second random-value allocation.
   if (config.newlines && config.length > 20) {
-    const lines = result.split('')
+    const chars = generated.split('')
     const newlineCount = Math.floor(config.length / 40)
     for (let i = 0; i < newlineCount; i++) {
-      const pos = 30 + Math.floor(Math.random() * (lines.length - 10))
-      if (pos < lines.length) lines[pos] = '\n'
+      const pos = 30 + Math.floor(Math.random() * Math.max(1, chars.length - 30))
+      if (pos < chars.length) chars[pos] = '\n'
     }
-    result = lines.join('')
+    generated = chars.join('')
   }
 
-  return result
+  return generated
 }
 
 interface StatItem {

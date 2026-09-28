@@ -16,7 +16,7 @@
 
   --color-text: #f0f6fc;
   --color-text-secondary: #8b949e;
-  --color-text-muted: #6e7681;
+  --color-text-muted: #8b949e;
   --color-text-inverse: #0d1117;
 
   --color-accent: #58a6ff;
@@ -34,6 +34,7 @@
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
   --shadow-md: 0 3px 6px rgba(0, 0, 0, 0.4), 0 2px 4px rgba(0, 0, 0, 0.3);
   --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5), 0 4px 8px rgba(0, 0, 0, 0.4);
+  --shadow-xl: 0 20px 60px rgba(0, 0, 0, 0.5), 0 8px 20px rgba(0, 0, 0, 0.34);
   --shadow-glow: 0 0 20px rgba(88, 166, 255, 0.15);
 
   /* 柔和极简风 - 莫兰迪蓝紫 */
@@ -72,7 +73,7 @@
 
   --color-text: #1a1d21;
   --color-text-secondary: #5e6772;
-  --color-text-muted: #8b949e;
+  --color-text-muted: #5e6772;
   --color-text-inverse: #ffffff;
 
   --color-accent: #7c6bc4;
@@ -145,6 +146,7 @@ body {
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow-wrap: anywhere;
   transition:
     background-color 0.3s,
     color 0.3s;
@@ -167,4 +169,33 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--color-border-hover);
+}
+
+/* ── 可见焦点与触控基础 ── */
+:where(
+  button,
+  [role='button'],
+  a[href],
+  input,
+  select,
+  textarea,
+  summary,
+  [tabindex]:not([tabindex='-1'])
+):focus-visible {
+  outline: 2px solid var(--color-accent-soft);
+  outline-offset: 2px;
+}
+
+@media (pointer: coarse) {
+  button,
+  [role='button'],
+  a[href] {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .home-tag,
+  .nav-flyout-item {
+    min-height: 44px;
+  }
 }

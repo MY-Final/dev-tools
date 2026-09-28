@@ -4,13 +4,18 @@
 
 .app-layout {
   display: flex;
+  width: 100%;
   height: 100vh;
+  height: 100dvh;
+  min-width: 0;
   overflow: hidden;
   background: var(--color-background);
 }
 
 .main-content {
-  flex: 1;
+  flex: 1 1 0;
+  width: 0;
+  min-width: 0;
   overflow-y: auto;
   overflow-x: hidden;
   padding: 0;
@@ -42,7 +47,9 @@
 }
 
 @keyframes page-loading-spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* ========================================
@@ -213,8 +220,12 @@ body {
 }
 
 @keyframes cmd-overlay-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .cmd-palette {
@@ -231,8 +242,14 @@ body {
 }
 
 @keyframes cmd-in {
-  from { opacity: 0; transform: translateY(-12px) scale(0.97); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+  from {
+    opacity: 0;
+    transform: translateY(-12px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .cmd-palette-input-wrap {
@@ -343,4 +360,209 @@ body {
   border: 1px solid var(--color-border);
   border-radius: 4px;
   line-height: 1.5;
+}
+
+/* ========================================
+   可访问性与共享状态
+   ======================================== */
+
+.skip-link {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  z-index: 10001;
+  padding: 10px 14px;
+  border: 1px solid var(--color-accent-soft);
+  border-radius: 10px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: var(--shadow-lg);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  transform: translateY(-160%);
+  transition: transform 0.16s ease;
+}
+
+.skip-link:focus,
+.skip-link:focus-visible {
+  outline: 2px solid var(--color-accent-soft);
+  outline-offset: 2px;
+  transform: translateY(0);
+}
+
+.status-message {
+  display: block;
+  min-width: 0;
+}
+
+.status-message--success {
+  color: var(--color-success);
+}
+
+.status-message--error {
+  color: var(--color-danger);
+}
+
+.status-message--sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ========================================
+   共享 Dialog
+   ======================================== */
+
+.dialog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.42);
+  animation: dialog-overlay-in 0.15s ease;
+}
+
+.dialog {
+  display: flex;
+  flex-direction: column;
+  width: min(100%, 560px);
+  max-height: min(82dvh, 82vh);
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: 18px;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-xl);
+  animation: dialog-in 0.16s ease;
+}
+
+.dialog-header,
+.dialog-footer {
+  display: flex;
+  align-items: center;
+  padding: 18px 22px;
+}
+
+.dialog-header {
+  justify-content: space-between;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.dialog-footer {
+  justify-content: flex-end;
+  gap: 10px;
+  border-top: 1px solid var(--color-border);
+}
+
+.dialog-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: var(--color-text);
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.dialog-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--color-border);
+  border-radius: 9px;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.dialog-close:hover {
+  background: var(--color-surface-hover);
+  color: var(--color-text);
+}
+
+.dialog-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 22px;
+}
+
+@keyframes dialog-overlay-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* 不支持 :focus-visible 时保留可见焦点 */
+@supports not selector(:focus-visible) {
+  :where(button, [role='button'], a[href], input, select, textarea, summary, [tabindex]):focus {
+    outline: 2px solid var(--color-accent-soft);
+    outline-offset: 2px;
+  }
+}
+
+/* ========================================
+   响应式 App Shell
+   ======================================== */
+
+.sidebar-mobile-toggle,
+.sidebar-mobile-backdrop,
+.sidebar-mobile-header {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .main-content {
+    padding-top: 52px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .cmd-palette-overlay,
+  .cmd-palette,
+  .dialog-overlay,
+  .dialog,
+  .toast-item {
+    animation: none !important;
+  }
 }

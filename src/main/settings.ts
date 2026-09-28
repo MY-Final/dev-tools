@@ -93,15 +93,37 @@ const DEFAULT_SETTINGS: AppSettings = {
   favorites: []
 }
 
+interface SettingsData {
+  version?: number
+  appearance?: Partial<AppSettings['appearance']>
+  editor?: Partial<AppSettings['editor']>
+  updater?: Partial<AppSettings['updater']>
+  window?: Partial<AppSettings['window']>
+  translator?: Partial<AppSettings['translator']>
+  npmRegistry?: string
+  mavenSearchUrl?: string
+  proxy?: Partial<AppSettings['proxy']>
+  shortcuts?: Partial<AppSettings['shortcuts']>
+  favorites?: string[]
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error)
+}
+
 // ────────────────────────────────────────────────────────────────
 // Migration Functions
 // ────────────────────────────────────────────────────────────────
 
-type MigrationFn = (data: any) => any
+type MigrationFn = (data: SettingsData) => SettingsData
 
 const migrations: Record<number, MigrationFn> = {
   // v0 → v1: 添加 translator 配置
-  1: (data: any) => {
+  1: (data) => {
     return {
       ...data,
       version: 1,
@@ -110,7 +132,7 @@ const migrations: Record<number, MigrationFn> = {
   },
 
   // v1 → v2: 添加 proxy 配置
-  2: (data: any) => {
+  2: (data) => {
     return {
       ...data,
       version: 2,
@@ -119,7 +141,7 @@ const migrations: Record<number, MigrationFn> = {
   },
 
   // v2 → v3: 添加窗口关闭行为配置
-  3: (data: any) => {
+  3: (data) => {
     return {
       ...data,
       version: 3,
@@ -128,7 +150,7 @@ const migrations: Record<number, MigrationFn> = {
   }
 
   // 未来版本迁移示例:
-  // 3: (data: any) => {
+  // 3: (data) => {
   //   return {
   //     ...data,
   //     version: 3,
@@ -142,9 +164,10 @@ const migrations: Record<number, MigrationFn> = {
  * @param data 旧版本配置
  * @returns 迁移后的配置
  */
-function migrateSettings(data: any): AppSettings {
-  let migrated = { ...data }
-  const currentVersion = migrated.version || 0
+function migrateSettings(data: unknown): SettingsData {
+  const source = isRecord(data) ? data : {}
+  let migrated: SettingsData = { ...source }
+  const currentVersion = typeof migrated.version === 'number' ? migrated.version : 0
 
   // 如果是未来版本，降级到当前版本（向后兼容）
   if (currentVersion > SETTINGS_VERSION) {
@@ -204,7 +227,9 @@ export class SettingsStore implements ISettingsStore {
     try {
       if (existsSync(this.filePath)) {
         const data = readFileSync(this.filePath, 'utf-8')
-        const parsed = JSON.parse(data)
+        const parsed: unknown = JSON.parse(data)
+        const storedVersion =
+          isRecord(parsed) && typeof parsed.version === 'number' ? parsed.version : 0
 
         // 执行版本迁移
         const migrated = migrateSettings(parsed)
@@ -213,9 +238,8 @@ export class SettingsStore implements ISettingsStore {
         const merged = this.mergeWithDefaults(migrated)
 
         // 如果版本号变化，保存迁移后的配置
-        if (!parsed.version || parsed.version !== SETTINGS_VERSION) {
-          this.settings = merged
-          this.save()
+        if (storedVersion !== SETTINGS_VERSION) {
+          this.save(merged)
           console.log(`Settings migrated to v${SETTINGS_VERSION}`)
         }
 
@@ -242,7 +266,7 @@ export class SettingsStore implements ISettingsStore {
     }
   }
 
-  private mergeWithDefaults(data: Partial<AppSettings>): AppSettings {
+  private mergeWithDefaults(data: SettingsData): AppSettings {
     return {
       version: SETTINGS_VERSION,
       appearance: { ...DEFAULT_SETTINGS.appearance, ...data.appearance },
@@ -258,17 +282,30 @@ export class SettingsStore implements ISettingsStore {
     }
   }
 
-  private save(): void {
+  private save(settings: AppSettings): void {
     try {
       const dir = join(this.filePath, '..')
       if (!existsSync(dir)) {
         mkdirSync(dir, { recursive: true })
       }
       // 确保版本号始终写入
-      const toSave = { ...this.settings, version: SETTINGS_VERSION }
+      const toSave = { ...settings, version: SETTINGS_VERSION }
       writeFileSync(this.filePath, JSON.stringify(toSave, null, 2), 'utf-8')
     } catch (error) {
       console.error('Failed to save settings:', error)
+      throw new Error(`Failed to save settings to ${this.filePath}: ${getErrorMessage(error)}`)
+    }
+  }
+
+  private commit(nextSettings: AppSettings): AppSettings {
+    const previousSettings = this.settings
+    this.settings = nextSettings
+    try {
+      this.save(nextSettings)
+      return this.getSettings()
+    } catch (error) {
+      this.settings = previousSettings
+      throw error
     }
   }
 
@@ -297,74 +334,71 @@ export class SettingsStore implements ISettingsStore {
   }
 
   updateAppearance(updates: Partial<AppSettings['appearance']>): AppSettings {
-    this.settings.appearance = { ...this.settings.appearance, ...updates }
-    this.save()
-    return this.getSettings()
+    return this.commit({
+      ...this.settings,
+      appearance: { ...this.settings.appearance, ...updates }
+    })
   }
 
   updateEditor(updates: Partial<AppSettings['editor']>): AppSettings {
-    this.settings.editor = { ...this.settings.editor, ...updates }
-    this.save()
-    return this.getSettings()
+    return this.commit({
+      ...this.settings,
+      editor: { ...this.settings.editor, ...updates }
+    })
   }
 
   updateUpdater(updates: Partial<AppSettings['updater']>): AppSettings {
-    this.settings.updater = { ...this.settings.updater, ...updates }
-    this.save()
-    return this.getSettings()
+    return this.commit({
+      ...this.settings,
+      updater: { ...this.settings.updater, ...updates }
+    })
   }
 
   updateWindow(updates: Partial<AppSettings['window']>): AppSettings {
-    this.settings.window = { ...this.settings.window, ...updates }
-    this.save()
-    return this.getSettings()
+    return this.commit({
+      ...this.settings,
+      window: { ...this.settings.window, ...updates }
+    })
   }
 
   updateTranslator(updates: Partial<AppSettings['translator']>): AppSettings {
-    this.settings.translator = { ...this.settings.translator, ...updates }
-    this.save()
-    return this.getSettings()
+    return this.commit({
+      ...this.settings,
+      translator: { ...this.settings.translator, ...updates }
+    })
   }
 
   updateNpmRegistry(npmRegistry: string): AppSettings {
-    this.settings.npmRegistry = npmRegistry
-    this.save()
-    return this.getSettings()
+    return this.commit({ ...this.settings, npmRegistry })
   }
 
   updateMavenSearchUrl(mavenSearchUrl: string): AppSettings {
-    this.settings.mavenSearchUrl = mavenSearchUrl
-    this.save()
-    return this.getSettings()
+    return this.commit({ ...this.settings, mavenSearchUrl })
   }
 
   updateProxy(updates: Partial<AppSettings['proxy']>): AppSettings {
-    this.settings.proxy = { ...this.settings.proxy, ...updates }
-    this.save()
-    return this.getSettings()
+    return this.commit({
+      ...this.settings,
+      proxy: { ...this.settings.proxy, ...updates }
+    })
   }
 
   updateShortcuts(updates: Partial<AppSettings['shortcuts']>): AppSettings {
-    this.settings.shortcuts = { ...this.settings.shortcuts, ...updates }
-    this.save()
-    return this.getSettings()
+    return this.commit({
+      ...this.settings,
+      shortcuts: { ...this.settings.shortcuts, ...updates }
+    })
   }
 
   updateFavorites(toolId: string): AppSettings {
-    const idx = this.settings.favorites.indexOf(toolId)
-    if (idx === -1) {
-      this.settings.favorites = [...this.settings.favorites, toolId]
-    } else {
-      this.settings.favorites = this.settings.favorites.filter((id) => id !== toolId)
-    }
-    this.save()
-    return this.getSettings()
+    const favorites = this.settings.favorites.includes(toolId)
+      ? this.settings.favorites.filter((id) => id !== toolId)
+      : [...this.settings.favorites, toolId]
+    return this.commit({ ...this.settings, favorites })
   }
 
   resetToDefaults(): AppSettings {
-    this.settings = { ...DEFAULT_SETTINGS }
-    this.save()
-    return this.getSettings()
+    return this.commit({ ...DEFAULT_SETTINGS })
   }
 }
 
