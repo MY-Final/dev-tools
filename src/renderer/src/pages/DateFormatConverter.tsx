@@ -35,19 +35,69 @@ const FORMATS: FormatDef[] = [
 ]
 
 
+function isValidDateParts(
+  year: number,
+  month: number,
+  day: number,
+  hour = 0,
+  minute = 0,
+  second = 0,
+  millisecond = 0
+): boolean {
+  const date = new Date(year, month - 1, day, hour, minute, second, millisecond)
+  return (
+    date.getFullYear() === year &&
+    date.getMonth() === month - 1 &&
+    date.getDate() === day &&
+    date.getHours() === hour &&
+    date.getMinutes() === minute &&
+    date.getSeconds() === second &&
+    date.getMilliseconds() === millisecond
+  )
+}
+
 function parseInput(input: string): Date | null {
   const s = input.trim()
   if (!s) return null
-  // Try ISO
-  if (/^\d{4}-\d{2}-\d{2}T/.test(s)) return new Date(s)
-  // Try Unix timestamp (seconds)
-  if (/^\d{10}$/.test(s)) return new Date(parseInt(s) * 1000)
-  // Try Unix timestamp (milliseconds)
-  if (/^\d{13}$/.test(s)) return new Date(parseInt(s))
-  // Try local date
-  const d = new Date(s)
-  if (!isNaN(d.getTime())) return d
-  return null
+
+  // ISO 8601. Validate the date portion strictly because new Date() normalizes
+  // invalid dates such as 2025-02-30 instead of rejecting them.
+  const isoMatch = s.match(/^(\d{4})-(\d{2})-(\d{2})(?:T.*)?$/)
+  if (isoMatch) {
+    const [, yearText, monthText, dayText] = isoMatch
+    if (!isValidDateParts(Number(yearText), Number(monthText), Number(dayText))) return null
+    const isoDate = new Date(s)
+    return isNaN(isoDate.getTime()) ? null : isoDate
+  }
+
+  // Unix timestamp (seconds / milliseconds)
+  if (/^-?\d{10}$/.test(s)) return new Date(Number(s) * 1000)
+  if (/^-?\d{13}$/.test(s)) return new Date(Number(s))
+
+  // Local date strings: yyyy-MM-dd or yyyy/MM/dd, optionally with time.
+  const localMatch = s.match(
+    /^(\d{4})[-/](\d{2})[-/](\d{2})(?:[ T](\d{2}):(\d{2})(?::(\d{2})(?:\.(\d{1,3}))?)?)?$/
+  )
+  if (localMatch) {
+    const [, yearText, monthText, dayText, hourText, minuteText, secondText, msText] = localMatch
+    const year = Number(yearText)
+    const month = Number(monthText)
+    const day = Number(dayText)
+    const hour = Number(hourText ?? 0)
+    const minute = Number(minuteText ?? 0)
+    const second = Number(secondText ?? 0)
+    const millisecond = Number((msText ?? '').padEnd(3, '0') || 0)
+    if (!isValidDateParts(year, month, day, hour, minute, second, millisecond)) return null
+    return new Date(year, month - 1, day, hour, minute, second, millisecond)
+  }
+
+  // Reject arbitrary numeric strings; they are ambiguous and Date() has
+  // surprising legacy parsing behavior for values such as "0".
+  if (/^[+-]?\d+$/.test(s)) return null
+
+  // RFC 2822 and other non-ambiguous platform-supported date strings.
+  const parsed = new Date(s)
+  return isNaN(parsed.getTime()) ? null : parsed
 }
 
 export default function DateFormatConverter(): React.JSX.Element {
@@ -112,11 +162,16 @@ export default function DateFormatConverter(): React.JSX.Element {
           </div>
           <input
             className="dfc-input"
+            aria-label="输入日期"
             value={input}
             onChange={(e) => handleInput(e.target.value)}
             placeholder={`不输入则显示当前时间: ${now.toLocaleString('zh-CN')}`}
           />
-          {input && !parsed && <div className="dfc-error">无法解析该日期格式</div>}
+          {input && !parsed && (
+            <div className="dfc-error" role="alert">
+              无法解析该日期格式
+            </div>
+          )}
         </div>
 
         <div className="dfc-formats">
@@ -124,7 +179,12 @@ export default function DateFormatConverter(): React.JSX.Element {
             <div key={f.id} className="dfc-format-item">
               <div className="dfc-format-label">{f.label}</div>
               <div className="dfc-format-value">{f.format(displayDate)}</div>
-              <button className="dfc-format-copy" onClick={() => copy(f.format(displayDate), f.id)}>
+              <button
+                className="dfc-format-copy"
+                onClick={() => copy(f.format(displayDate), f.id)}
+                aria-label={`复制 ${f.label}`}
+                title={`复制 ${f.label}`}
+              >
                 {copied === f.id ? <Check size={12} /> : <Copy size={12} />}
               </button>
             </div>
@@ -134,12 +194,18 @@ export default function DateFormatConverter(): React.JSX.Element {
             <div className="dfc-format-label">自定义格式</div>
             <input
               className="dfc-custom-fmt"
+              aria-label="自定义日期格式"
               value={customFmt}
               onChange={(e) => setCustomFmt(e.target.value)}
               placeholder="yyyy-MM-dd HH:mm:ss"
             />
             <div className="dfc-format-value">{customFormat(displayDate)}</div>
-            <button className="dfc-format-copy" onClick={() => copy(customFormat(displayDate), 'custom')}>
+            <button
+              className="dfc-format-copy"
+              onClick={() => copy(customFormat(displayDate), 'custom')}
+              aria-label="复制自定义日期格式"
+              title="复制自定义日期格式"
+            >
               {copied === 'custom' ? <Check size={12} /> : <Copy size={12} />}
             </button>
           </div>

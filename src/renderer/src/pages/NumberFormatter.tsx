@@ -10,10 +10,21 @@ interface ResultItem {
   value: string
 }
 
-function formatNumber(value: string, style: Style, locale: string, currency: string, fractionDigits: number): string {
-  const n = parseFloat(value)
-  if (isNaN(n)) return '—'
+function parseNumericInput(input: string): number | null {
+  const trimmed = input.trim()
+  if (!trimmed) return null
+  if (!/^[+-]?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?$/i.test(trimmed)) return null
+  const value = Number(trimmed)
+  return Number.isFinite(value) ? value : null
+}
 
+function formatNumber(
+  n: number,
+  style: Style,
+  locale: string,
+  currency: string,
+  fractionDigits: number
+): string {
   switch (style) {
     case 'decimal':
       return new Intl.NumberFormat(locale, { minimumFractionDigits: fractionDigits, maximumFractionDigits: fractionDigits }).format(n)
@@ -78,14 +89,14 @@ export default function NumberFormatter(): React.JSX.Element {
   const [fractionDigits, setFractionDigits] = useState(2)
   const [copiedId, setCopiedId] = useState<string | null>(null)
 
-  const n = parseFloat(input)
-  const hasInput = input.trim() && !isNaN(n)
+  const n = parseNumericInput(input)
+  const hasInput = n !== null
 
   const results: ResultItem[] = hasInput
     ? ALL_STYLES.map((s) => ({
         id: s.id,
         label: s.label,
-        value: formatNumber(input, s.id, locale, currency, fractionDigits)
+        value: formatNumber(n, s.id, locale, currency, fractionDigits)
       }))
     : []
 
@@ -105,6 +116,7 @@ export default function NumberFormatter(): React.JSX.Element {
         <div className="nfm-input-area">
           <input
             className="nfm-input"
+            aria-label="输入数字"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="输入数字..."
@@ -114,19 +126,37 @@ export default function NumberFormatter(): React.JSX.Element {
         <div className="nfm-options">
           <div className="nfm-option">
             <span className="nfm-option-label">地区</span>
-            <select className="nfm-select" value={locale} onChange={(e) => setLocale(e.target.value)}>
+            <select
+              className="nfm-select"
+              aria-label="地区"
+              value={locale}
+              onChange={(e) => setLocale(e.target.value)}
+            >
               {LOCALES.map((l) => (<option key={l.id} value={l.id}>{l.label}</option>))}
             </select>
           </div>
           <div className="nfm-option">
             <span className="nfm-option-label">货币</span>
-            <select className="nfm-select" value={currency} onChange={(e) => setCurrency(e.target.value)}>
+            <select
+              className="nfm-select"
+              aria-label="货币"
+              value={currency}
+              onChange={(e) => setCurrency(e.target.value)}
+            >
               {CURRENCIES.map((c) => (<option key={c} value={c}>{c}</option>))}
             </select>
           </div>
           <div className="nfm-option">
             <span className="nfm-option-label">小数位</span>
-            <input className="nfm-digits" type="number" min={0} max={20} value={fractionDigits} onChange={(e) => setFractionDigits(parseInt(e.target.value) || 0)} />
+            <input
+              className="nfm-digits"
+              type="number"
+              min={0}
+              max={20}
+              aria-label="小数位数"
+              value={fractionDigits}
+              onChange={(e) => setFractionDigits(parseInt(e.target.value) || 0)}
+            />
           </div>
         </div>
 
@@ -148,7 +178,9 @@ export default function NumberFormatter(): React.JSX.Element {
         )}
 
         {input && !hasInput && (
-          <div className="nfm-error">请输入有效数字</div>
+          <div className="nfm-error" role="alert">
+            请输入有效数字
+          </div>
         )}
       </div>
     </div>
