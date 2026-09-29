@@ -2,7 +2,15 @@ import { useState, useCallback } from 'react'
 import { Copy, Check } from 'lucide-react'
 import '../styles/number-formatter.css'
 
-type Style = 'decimal' | 'currency' | 'percent' | 'scientific' | 'engineering' | 'hex' | 'octal' | 'binary'
+type Style =
+  | 'decimal'
+  | 'currency'
+  | 'percent'
+  | 'scientific'
+  | 'engineering'
+  | 'hex'
+  | 'octal'
+  | 'binary'
 
 interface ResultItem {
   id: Style
@@ -27,13 +35,22 @@ function formatNumber(
 ): string {
   switch (style) {
     case 'decimal':
-      return new Intl.NumberFormat(locale, { minimumFractionDigits: fractionDigits, maximumFractionDigits: fractionDigits }).format(n)
+      return new Intl.NumberFormat(locale, {
+        minimumFractionDigits: fractionDigits,
+        maximumFractionDigits: fractionDigits
+      }).format(n)
     case 'currency':
       try {
         return new Intl.NumberFormat(locale, { style: 'currency', currency }).format(n)
-      } catch { return `${currency} ${n.toFixed(2)}` }
+      } catch {
+        return `${currency} ${n.toFixed(2)}`
+      }
     case 'percent':
-      return new Intl.NumberFormat(locale, { style: 'percent', minimumFractionDigits: fractionDigits, maximumFractionDigits: fractionDigits }).format(n / 100)
+      return new Intl.NumberFormat(locale, {
+        style: 'percent',
+        minimumFractionDigits: fractionDigits,
+        maximumFractionDigits: fractionDigits
+      }).format(n / 100)
     case 'scientific':
       return n.toExponential(fractionDigits)
     case 'engineering': {
@@ -44,7 +61,25 @@ function formatNumber(
       const engExp = Math.floor(exp / 3) * 3
       const mantissa = abs / Math.pow(10, engExp)
       const sign = negative ? '-' : ''
-      const suffixes: Record<string, string> = { '-24': 'y', '-21': 'z', '-18': 'a', '-15': 'f', '-12': 'p', '-9': 'n', '-6': 'µ', '-3': 'm', '0': '', '3': 'k', '6': 'M', '9': 'G', '12': 'T', '15': 'P', '18': 'E', '21': 'Z', '24': 'Y' }
+      const suffixes: Record<string, string> = {
+        '-24': 'y',
+        '-21': 'z',
+        '-18': 'a',
+        '-15': 'f',
+        '-12': 'p',
+        '-9': 'n',
+        '-6': 'µ',
+        '-3': 'm',
+        '0': '',
+        '3': 'k',
+        '6': 'M',
+        '9': 'G',
+        '12': 'T',
+        '15': 'P',
+        '18': 'E',
+        '21': 'Z',
+        '24': 'Y'
+      }
       const suffix = suffixes[engExp.toString()] || `e${engExp}`
       return `${sign}${mantissa.toFixed(fractionDigits)} ${suffix}`
     }
@@ -102,7 +137,13 @@ export default function NumberFormatter(): React.JSX.Element {
 
   const copyResult = useCallback(async (id: string, value: string) => {
     if (value === '—') return
-    try { await navigator.clipboard.writeText(value); setCopiedId(id); setTimeout(() => setCopiedId(null), 1500) } catch { /* ignore */ }
+    try {
+      await navigator.clipboard.writeText(value)
+      setCopiedId(id)
+      setTimeout(() => setCopiedId(null), 1500)
+    } catch {
+      /* ignore */
+    }
   }, [])
 
   return (
@@ -132,7 +173,11 @@ export default function NumberFormatter(): React.JSX.Element {
               value={locale}
               onChange={(e) => setLocale(e.target.value)}
             >
-              {LOCALES.map((l) => (<option key={l.id} value={l.id}>{l.label}</option>))}
+              {LOCALES.map((l) => (
+                <option key={l.id} value={l.id}>
+                  {l.label}
+                </option>
+              ))}
             </select>
           </div>
           <div className="nfm-option">
@@ -143,7 +188,11 @@ export default function NumberFormatter(): React.JSX.Element {
               value={currency}
               onChange={(e) => setCurrency(e.target.value)}
             >
-              {CURRENCIES.map((c) => (<option key={c} value={c}>{c}</option>))}
+              {CURRENCIES.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
             </select>
           </div>
           <div className="nfm-option">

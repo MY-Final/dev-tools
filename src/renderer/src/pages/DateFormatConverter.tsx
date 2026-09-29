@@ -23,17 +23,35 @@ interface FormatDef {
 
 const FORMATS: FormatDef[] = [
   { id: 'ISO 8601', label: 'ISO 8601', format: (d) => d.toISOString() },
-  { id: 'Unix (秒)', label: 'Unix 时间戳 (秒)', format: (d) => Math.floor(d.getTime() / 1000).toString() },
+  {
+    id: 'Unix (秒)',
+    label: 'Unix 时间戳 (秒)',
+    format: (d) => Math.floor(d.getTime() / 1000).toString()
+  },
   { id: 'Unix (毫秒)', label: 'Unix 时间戳 (毫秒)', format: (d) => d.getTime().toString() },
   { id: 'RFC 2822', label: 'RFC 2822', format: (d) => d.toUTCString() },
   { id: 'UTC String', label: 'UTC String', format: (d) => d.toUTCString() },
   { id: 'Locale (zh-CN)', label: 'Locale (zh-CN)', format: (d) => d.toLocaleString('zh-CN') },
   { id: 'Locale (en-US)', label: 'Locale (en-US)', format: (d) => d.toLocaleString('en-US') },
-  { id: 'YYYY-MM-DD', label: 'YYYY-MM-DD', format: (d) => `${d.getFullYear()}-${(d.getMonth()+1).toString().padStart(2,'0')}-${d.getDate().toString().padStart(2,'0')}` },
-  { id: 'DD/MM/YYYY', label: 'DD/MM/YYYY', format: (d) => `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')}/${d.getFullYear()}` },
-  { id: 'MM/DD/YYYY', label: 'MM/DD/YYYY', format: (d) => `${(d.getMonth()+1).toString().padStart(2,'0')}/${d.getDate().toString().padStart(2,'0')}/${d.getFullYear()}` }
+  {
+    id: 'YYYY-MM-DD',
+    label: 'YYYY-MM-DD',
+    format: (d) =>
+      `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}-${d.getDate().toString().padStart(2, '0')}`
+  },
+  {
+    id: 'DD/MM/YYYY',
+    label: 'DD/MM/YYYY',
+    format: (d) =>
+      `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()}`
+  },
+  {
+    id: 'MM/DD/YYYY',
+    label: 'MM/DD/YYYY',
+    format: (d) =>
+      `${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getDate().toString().padStart(2, '0')}/${d.getFullYear()}`
+  }
 ]
-
 
 function isValidDateParts(
   year: number,
@@ -114,7 +132,10 @@ export default function DateFormatConverter(): React.JSX.Element {
 
   const handleInput = useCallback((value: string) => {
     setInput(value)
-    if (!value.trim()) { setParsed(null); return }
+    if (!value.trim()) {
+      setParsed(null)
+      return
+    }
     const d = parseInput(value)
     setParsed(d)
   }, [])
@@ -124,23 +145,34 @@ export default function DateFormatConverter(): React.JSX.Element {
     setParsed(now)
   }, [now])
 
-  const customFormat = useCallback((d: Date): string => {
-    try {
-      const pad = (n: number, len = 2) => n.toString().padStart(len, '0')
-      return customFmt
-        .replace(/yyyy/g, d.getFullYear().toString())
-        .replace(/yy/g, d.getFullYear().toString().slice(-2))
-        .replace(/MM/g, pad(d.getMonth() + 1))
-        .replace(/dd/g, pad(d.getDate()))
-        .replace(/HH/g, pad(d.getHours()))
-        .replace(/mm/g, pad(d.getMinutes()))
-        .replace(/ss/g, pad(d.getSeconds()))
-        .replace(/SSS/g, pad(d.getMilliseconds(), 3))
-    } catch { return '格式错误' }
-  }, [customFmt])
+  const customFormat = useCallback(
+    (d: Date): string => {
+      try {
+        const pad = (n: number, len = 2): string => n.toString().padStart(len, '0')
+        return customFmt
+          .replace(/yyyy/g, d.getFullYear().toString())
+          .replace(/yy/g, d.getFullYear().toString().slice(-2))
+          .replace(/MM/g, pad(d.getMonth() + 1))
+          .replace(/dd/g, pad(d.getDate()))
+          .replace(/HH/g, pad(d.getHours()))
+          .replace(/mm/g, pad(d.getMinutes()))
+          .replace(/ss/g, pad(d.getSeconds()))
+          .replace(/SSS/g, pad(d.getMilliseconds(), 3))
+      } catch {
+        return '格式错误'
+      }
+    },
+    [customFmt]
+  )
 
   const copy = useCallback(async (text: string, key: string) => {
-    try { await navigator.clipboard.writeText(text); setCopied(key); setTimeout(() => setCopied(null), 1500) } catch { /* ignore */ }
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopied(key)
+      setTimeout(() => setCopied(null), 1500)
+    } catch {
+      /* ignore */
+    }
   }, [])
 
   const displayDate = parsed || now
@@ -213,7 +245,8 @@ export default function DateFormatConverter(): React.JSX.Element {
 
         <div className="dfc-help">
           <span>格式参考: </span>
-          <code>yyyy</code> 年 <code>MM</code> 月 <code>dd</code> 日 <code>HH</code> 时 <code>mm</code> 分 <code>ss</code> 秒 <code>SSS</code> 毫秒
+          <code>yyyy</code> 年 <code>MM</code> 月 <code>dd</code> 日 <code>HH</code> 时{' '}
+          <code>mm</code> 分 <code>ss</code> 秒 <code>SSS</code> 毫秒
         </div>
       </div>
     </div>
