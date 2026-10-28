@@ -14,9 +14,21 @@ export interface JsonRepairResult {
   error: string
 }
 
+export interface CsvRenamedHeader {
+  from: string
+  to: string
+}
+
 export interface CsvTable {
   headers: string[]
+  /** 数据行保留原始列数，可能与 headers 长度不同 */
   rows: string[][]
+  /** 最大列数（表头与所有数据行的最大值），仅 parseCsvTable 填充 */
+  width?: number
+  /** 列数与原始表头不一致的数据行下标（不含表头），仅 parseCsvTable 填充 */
+  ragged?: number[]
+  /** 因重复被自动改名的表头，仅 parseCsvTable 填充 */
+  renamedHeaders?: CsvRenamedHeader[]
 }
 
 export interface JsonToTypeScriptOptions {
@@ -594,19 +606,81 @@ export function jsonToYaml(input: unknown, indent = 0): string {
   return formatYamlString(String(value))
 }
 
-export function parseCsvRecords(value: string): string[][] {
+export type CsvDelimiter = ',' | ';' | '\t' | '|'
+
+export const CSV_DELIMITERS: readonly CsvDelimiter[] = [',', ';', '\t', '|']
+
+const CSV_BOM = '\uFEFF'
+
+/**
+ * 统计首行（引号外）各候选分隔符的出现次数，取最多者。
+ * 平局时按 CSV_DELIMITERS 顺序优先，即逗号优先。
+ */
+export function detectCsvDelimiter(value: string): CsvDelimiter {
+  const text = value.startsWith(CSV_BOM) ? value.slice(1) : value
+  const counts = new Map<CsvDelimiter, number>(CSV_DELIMITERS.map((d) => [d, 0]))
+  let inQuotes = false
+  let fieldStart = true
+
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i]
+
+    if (inQuotes) {
+      if (char === '"') {
+        if (text[i + 1] === '"') i++
+        else inQuotes = false
+      }
+      continue
+    }
+
+    if (char === '\n' || char === '\r') break
+
+    if (char === '"' && fieldStart) {
+      inQuotes = true
+      fieldStart = false
+      continue
+    }
+
+    const delimiter = CSV_DELIMITERS.find((d) => d === char)
+    if (delimiter) {
+      counts.set(delimiter, (counts.get(delimiter) ?? 0) + 1)
+      fieldStart = true
+    } else {
+      fieldStart = false
+    }
+  }
+
+  let best: CsvDelimiter = ','
+  let bestCount = counts.get(',') ?? 0
+  for (const delimiter of CSV_DELIMITERS) {
+    const count = counts.get(delimiter) ?? 0
+    if (count > bestCount) {
+      best = delimiter
+      bestCount = count
+    }
+  }
+  return best
+}
+
+/**
+ * 按记录解析 CSV。引号规则：只有字段开头（文件开头、分隔符或换行之后）的 " 才进入引号模式；
+ * 非引号状态下出现在字段中间的 " 按普通字符处理（例如 5" screen）。
+ */
+export function parseCsvRecords(value: string, delimiter: CsvDelimiter = ','): string[][] {
+  const text = value.startsWith(CSV_BOM) ? value.slice(1) : value
   const records: string[][] = []
   let row: string[] = []
   let field = ''
   let inQuotes = false
+  let fieldStart = true
   let recordStarted = false
 
-  for (let i = 0; i < value.length; i++) {
-    const char = value[i]
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i]
 
     if (inQuotes) {
       if (char === '"') {
-        if (value[i + 1] === '"') {
+        if (text[i + 1] === '"') {
           field += '"'
           i++
         } else {
@@ -618,32 +692,36 @@ export function parseCsvRecords(value: string): string[][] {
       continue
     }
 
-    if (char === '"') {
+    if (char === '"' && fieldStart) {
       inQuotes = true
+      fieldStart = false
       recordStarted = true
       continue
     }
 
-    if (char === ',') {
+    if (char === delimiter) {
       row.push(field)
       field = ''
+      fieldStart = true
       recordStarted = true
       continue
     }
 
     if (char === '\n' || char === '\r') {
-      if (char === '\r' && value[i + 1] === '\n') i++
+      if (char === '\r' && text[i + 1] === '\n') i++
       if (recordStarted || row.length > 0 || field.length > 0) {
         row.push(field)
         records.push(row)
       }
       row = []
       field = ''
+      fieldStart = true
       recordStarted = false
       continue
     }
 
     field += char
+    fieldStart = false
     recordStarted = true
   }
 
@@ -655,29 +733,86 @@ export function parseCsvRecords(value: string): string[][] {
   return records
 }
 
-export function parseCsvTable(value: string): CsvTable {
-  const records = parseCsvRecords(value)
-  if (records.length === 0) return { headers: [], rows: [] }
+/** 重复名称自动追加 _2、_3 后缀；空名不参与去重（保持为空，由调用方决定占位名）。 */
+function dedupeCsvNames(names: string[]): { names: string[]; renamed: CsvRenamedHeader[] } {
+  const originals = new Set(names)
+  const used = new Set<string>()
+  const result: string[] = []
+  const renamed: CsvRenamedHeader[] = []
 
-  const headers = records[0]
-  const rows = records.slice(1).map((row) => headers.map((_header, index) => row[index] ?? ''))
-  return { headers, rows }
+  for (const name of names) {
+    if (name === '' || !used.has(name)) {
+      used.add(name)
+      result.push(name)
+      continue
+    }
+    let suffix = 2
+    let candidate = `${name}_${suffix}`
+    while (used.has(candidate) || originals.has(candidate)) {
+      suffix++
+      candidate = `${name}_${suffix}`
+    }
+    used.add(candidate)
+    result.push(candidate)
+    renamed.push({ from: name, to: candidate })
+  }
+
+  return { names: result, renamed }
 }
 
-export function escapeCsvCell(value: string): string {
-  if (value.includes(',') || value.includes('"') || value.includes('\n') || value.includes('\r')) {
+export interface CsvParseOptions {
+  /** 不传则自动识别（见 detectCsvDelimiter） */
+  delimiter?: CsvDelimiter
+}
+
+/**
+ * 解析为表格。rows 保留各行原始列数，不做截断；表头不足时用空字符串补齐到 width。
+ * ragged 记录与原始表头列数不一致的数据行下标；renamedHeaders 记录因重复被改名的表头。
+ */
+export function parseCsvTable(value: string, options: CsvParseOptions = {}): CsvTable {
+  const delimiter = options.delimiter ?? detectCsvDelimiter(value)
+  const records = parseCsvRecords(value, delimiter)
+  if (records.length === 0)
+    return { headers: [], rows: [], width: 0, ragged: [], renamedHeaders: [] }
+
+  const [headerRecord, ...rows] = records
+  const headerCount = headerRecord.length
+  const width = rows.reduce((max, row) => Math.max(max, row.length), headerCount)
+  const paddedHeaders = Array.from({ length: width }, (_header, index) => headerRecord[index] ?? '')
+  const { names, renamed } = dedupeCsvNames(paddedHeaders)
+
+  const ragged: number[] = []
+  rows.forEach((row, index) => {
+    if (row.length !== headerCount) ragged.push(index)
+  })
+
+  return { headers: names, rows, width, ragged, renamedHeaders: renamed }
+}
+
+export function escapeCsvCell(value: string, delimiter: CsvDelimiter = ','): string {
+  if (
+    value.includes(delimiter) ||
+    value.includes('"') ||
+    value.includes('\n') ||
+    value.includes('\r')
+  ) {
     return `"${value.replace(/"/g, '""')}"`
   }
   return value
 }
 
-export function stringifyCsv(data: CsvTable): string {
-  if (data.headers.length === 0) return ''
-  const rows = [
-    data.headers.map(escapeCsvCell).join(','),
-    ...data.rows.map((row) => data.headers.map((_header, index) => escapeCsvCell(row[index] ?? '')).join(','))
-  ]
-  return rows.join('\n')
+function formatCsvLine(cells: string[], delimiter: CsvDelimiter): string {
+  // 单个空字段的记录必须写成 ""，否则空行会在解析时被跳过，导致整行丢失
+  if (cells.length === 1 && cells[0] === '') return '""'
+  return cells.map((cell) => escapeCsvCell(cell, delimiter)).join(delimiter)
+}
+
+/** 序列化时不截断、不补齐数据行，保证原始列都被写回。 */
+export function stringifyCsv(data: CsvTable, delimiter: CsvDelimiter = ','): string {
+  const lines: string[] = []
+  if (data.headers.length > 0) lines.push(formatCsvLine(data.headers, delimiter))
+  for (const row of data.rows) lines.push(formatCsvLine(row, delimiter))
+  return lines.join('\n')
 }
 
 function formatCsvValue(value: JsonValue): string {
@@ -687,13 +822,19 @@ function formatCsvValue(value: JsonValue): string {
   return JSON.stringify(value)
 }
 
+/** 超出表头的列以 column_N 作为键保留，避免 JSON 导出丢数据。 */
 export function csvTableToJson(table: CsvTable): string {
-  if (table.headers.length === 0) return '[]'
+  const width = table.rows.reduce((max, row) => Math.max(max, row.length), table.headers.length)
+  if (width === 0) return '[]'
+
+  const keys = dedupeCsvNames(
+    Array.from({ length: width }, (_key, index) => table.headers[index] || `column_${index + 1}`)
+  ).names
 
   const rows = table.rows.map((row) => {
     const item: Record<string, string> = {}
-    table.headers.forEach((header, index) => {
-      item[header] = row[index] ?? ''
+    keys.forEach((key, index) => {
+      item[key] = row[index] ?? ''
     })
     return item
   })
@@ -725,7 +866,7 @@ export function jsonToCsv(value: string): string {
     }
   }
 
-  const lines = [headers.map(escapeCsvCell).join(',')]
+  const lines = [headers.map((header) => escapeCsvCell(header)).join(',')]
   for (const record of records) {
     lines.push(
       headers

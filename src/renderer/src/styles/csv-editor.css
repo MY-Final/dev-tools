@@ -268,6 +268,74 @@
   color: var(--color-danger, #e53e3e);
 }
 
+/* ── Options ─────────────────────────── */
+
+.csv-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.6875rem;
+  color: var(--color-text-muted);
+}
+
+.csv-select {
+  padding: 5px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 0.6875rem;
+  font-family: inherit;
+  outline: none;
+  cursor: pointer;
+}
+
+.csv-select:focus {
+  border-color: var(--color-accent-soft);
+}
+
+.csv-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.6875rem;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+
+/* ── Notices ─────────────────────────── */
+
+.csv-notices {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.csv-notice {
+  padding: 6px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 0.6875rem;
+  line-height: 1.5;
+}
+
+.csv-notice-warn {
+  border-color: var(--color-warning);
+  background: var(--color-warning-subtle);
+}
+
+.csv-notice-info {
+  border-color: var(--color-accent-soft);
+  background: var(--color-accent-soft-subtle);
+}
+
+.csv-row-ragged .csv-row-num {
+  color: var(--color-warning) !important;
+}
+
 /* ── Empty ───────────────────────────── */
 
 .csv-empty {
