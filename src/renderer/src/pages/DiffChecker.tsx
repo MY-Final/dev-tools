@@ -1,5 +1,15 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
-import { Copy, Check, RotateCcw, ArrowLeftRight, Minus, Plus, ArrowLeft, ArrowRight, FileText } from 'lucide-react'
+import {
+  Copy,
+  Check,
+  RotateCcw,
+  ArrowLeftRight,
+  Minus,
+  Plus,
+  ArrowLeft,
+  ArrowRight,
+  FileText
+} from 'lucide-react'
 import '../styles/diff-checker.css'
 
 interface DiffLine {
@@ -10,7 +20,9 @@ interface DiffLine {
 }
 
 type MergeSource = 'left' | 'right'
-type VisibleDiffLine = { type: 'line'; line: DiffLine; index: number } | { type: 'gap'; key: string; count: number }
+type VisibleDiffLine =
+  | { type: 'line'; line: DiffLine; index: number }
+  | { type: 'gap'; key: string; count: number }
 
 interface MergeToast {
   id: number
@@ -92,6 +104,33 @@ const users = ["Alice", "Bob", "Charlie", "Diana"];
 users.forEach(user => console.log(greet(user)));
 console.log(\`Total: \${users.length} users\`);`
 
+function buildVisibleDiffLines(diffLines: DiffLine[] | null): VisibleDiffLine[] {
+  if (!diffLines) return []
+  const context = 3
+  const visible = new Set<number>()
+  diffLines.forEach((line, index) => {
+    if (line.type === 'same') return
+    const start = Math.max(0, index - context)
+    const end = Math.min(diffLines.length - 1, index + context)
+    for (let i = start; i <= end; i += 1) visible.add(i)
+  })
+
+  if (!visible.size) return diffLines.map((line, index) => ({ type: 'line', line, index }))
+
+  const result: VisibleDiffLine[] = []
+  let previous = -1
+  Array.from(visible)
+    .sort((a, b) => a - b)
+    .forEach((index) => {
+      if (previous !== -1 && index - previous > 1) {
+        result.push({ type: 'gap', key: `${previous}-${index}`, count: index - previous - 1 })
+      }
+      result.push({ type: 'line', line: diffLines[index], index })
+      previous = index
+    })
+  return result
+}
+
 export default function DiffChecker(): React.JSX.Element {
   const [leftText, setLeftText] = useState('')
   const [rightText, setRightText] = useState('')
@@ -125,10 +164,20 @@ export default function DiffChecker(): React.JSX.Element {
     setMergeChoices({})
   }, [])
 
-  useEffect(() => {
-    setMergedText(rightText)
+  const changeLeftText = useCallback(
+    (value: string) => {
+      setLeftText(value)
+      setMergedText(rightText)
+      setMergeChoices({})
+    },
+    [rightText]
+  )
+
+  const changeRightText = useCallback((value: string) => {
+    setRightText(value)
+    setMergedText(value)
     setMergeChoices({})
-  }, [leftText, rightText])
+  }, [])
 
   useEffect(() => {
     return () => {
@@ -171,32 +220,43 @@ export default function DiffChecker(): React.JSX.Element {
     mergeTipTimer.current = window.setTimeout(() => setMergeTip(null), 1800)
   }, [])
 
-  const buildMergedText = useCallback((choices: Record<number, MergeSource>): string => {
-    if (!diffLines) return ''
+  const buildMergedText = useCallback(
+    (choices: Record<number, MergeSource>): string => {
+      if (!diffLines) return ''
 
-    return diffLines
-      .flatMap((line, index) => {
-        const source = choices[index] ?? 'right'
-        if (line.type === 'same') return [line.text]
-        if (line.type === 'removed') return source === 'left' ? [line.text] : []
-        return source === 'right' ? [line.text] : []
-      })
-      .join('\n')
-  }, [diffLines])
+      return diffLines
+        .flatMap((line, index) => {
+          const source = choices[index] ?? 'right'
+          if (line.type === 'same') return [line.text]
+          if (line.type === 'removed') return source === 'left' ? [line.text] : []
+          return source === 'right' ? [line.text] : []
+        })
+        .join('\n')
+    },
+    [diffLines]
+  )
 
-  const applyLineMerge = useCallback((lineIndex: number, source: MergeSource) => {
-    if (!diffLines) return
-    const nextChoices = { ...mergeChoices, [lineIndex]: source }
-    setMergeChoices(nextChoices)
-    setMergedText(buildMergedText(nextChoices))
-    showMergeTip(source === 'left' ? '已将左侧这一行应用到合并结果' : '已将右侧这一行应用到合并结果')
-  }, [buildMergedText, diffLines, mergeChoices, showMergeTip])
+  const applyLineMerge = useCallback(
+    (lineIndex: number, source: MergeSource) => {
+      if (!diffLines) return
+      const nextChoices = { ...mergeChoices, [lineIndex]: source }
+      setMergeChoices(nextChoices)
+      setMergedText(buildMergedText(nextChoices))
+      showMergeTip(
+        source === 'left' ? '已将左侧这一行应用到合并结果' : '已将右侧这一行应用到合并结果'
+      )
+    },
+    [buildMergedText, diffLines, mergeChoices, showMergeTip]
+  )
 
-  const applyAllMerge = useCallback((source: MergeSource) => {
-    setMergedText(source === 'left' ? leftText : rightText)
-    setMergeChoices({})
-    showMergeTip(source === 'left' ? '合并结果已完全采用左侧' : '合并结果已完全采用右侧')
-  }, [leftText, rightText, showMergeTip])
+  const applyAllMerge = useCallback(
+    (source: MergeSource) => {
+      setMergedText(source === 'left' ? leftText : rightText)
+      setMergeChoices({})
+      showMergeTip(source === 'left' ? '合并结果已完全采用左侧' : '合并结果已完全采用右侧')
+    },
+    [leftText, rightText, showMergeTip]
+  )
 
   const copyMerged = useCallback(async () => {
     if (!mergedText) return
@@ -213,32 +273,10 @@ export default function DiffChecker(): React.JSX.Element {
     return { added, removed, same, changed: added + removed }
   }, [diffLines])
 
-  const visibleDiffLines = useMemo<VisibleDiffLine[]>(() => {
-    if (!diffLines) return []
-    const context = 3
-    const visible = new Set<number>()
-    diffLines.forEach((line, index) => {
-      if (line.type === 'same') return
-      const start = Math.max(0, index - context)
-      const end = Math.min(diffLines.length - 1, index + context)
-      for (let i = start; i <= end; i += 1) visible.add(i)
-    })
-
-    if (!visible.size) return diffLines.map((line, index) => ({ type: 'line', line, index }))
-
-    const result: VisibleDiffLine[] = []
-    let previous = -1
-    Array.from(visible)
-      .sort((a, b) => a - b)
-      .forEach((index) => {
-        if (previous !== -1 && index - previous > 1) {
-          result.push({ type: 'gap', key: `${previous}-${index}`, count: index - previous - 1 })
-        }
-        result.push({ type: 'line', line: diffLines[index], index })
-        previous = index
-      })
-    return result
-  }, [diffLines])
+  const visibleDiffLines = useMemo<VisibleDiffLine[]>(
+    () => buildVisibleDiffLines(diffLines),
+    [diffLines]
+  )
 
   const syncEditorScroll = useCallback((source: HTMLTextAreaElement) => {
     if (isSyncingScroll.current) return
@@ -289,13 +327,21 @@ export default function DiffChecker(): React.JSX.Element {
             <ArrowLeftRight size={14} />
             交换
           </button>
-          <button className="df-btn df-btn-ghost" onClick={() => applyAllMerge('left')} disabled={!leftText && !rightText} title="合并结果完全采用左侧">
-            <ArrowRight size={14} />
-            左 → 中
+          <button
+            className="df-btn df-btn-ghost"
+            onClick={() => applyAllMerge('left')}
+            disabled={!leftText && !rightText}
+            title="合并结果完全采用左侧"
+          >
+            <ArrowRight size={14} />左 → 中
           </button>
-          <button className="df-btn df-btn-ghost" onClick={() => applyAllMerge('right')} disabled={!leftText && !rightText} title="合并结果完全采用右侧">
-            <ArrowLeft size={14} />
-            中 ← 右
+          <button
+            className="df-btn df-btn-ghost"
+            onClick={() => applyAllMerge('right')}
+            disabled={!leftText && !rightText}
+            title="合并结果完全采用右侧"
+          >
+            <ArrowLeft size={14} />中 ← 右
           </button>
           <button className="df-btn df-btn-ghost" onClick={copyMerged} disabled={!mergedText}>
             {copiedMerged ? <Check size={14} /> : <Copy size={14} />}
@@ -305,7 +351,11 @@ export default function DiffChecker(): React.JSX.Element {
             <RotateCcw size={14} />
             清空
           </button>
-          {mergeTip && <div key={mergeTip.id} className="df-merge-tip">{mergeTip.message}</div>}
+          {mergeTip && (
+            <div key={mergeTip.id} className="df-merge-tip">
+              {mergeTip.message}
+            </div>
+          )}
         </div>
 
         {/* Editors */}
@@ -315,53 +365,53 @@ export default function DiffChecker(): React.JSX.Element {
             <em>左右为来源版本，中间为可编辑合并结果</em>
           </div>
           <div className="df-editors">
-          <div className="df-editor-pane">
-            <div className="df-editor-label">
-              <Minus size={12} />
-              原始文本
+            <div className="df-editor-pane">
+              <div className="df-editor-label">
+                <Minus size={12} />
+                原始文本
+              </div>
+              <textarea
+                ref={leftEditorRef}
+                className="df-textarea"
+                value={leftText}
+                onChange={(e) => changeLeftText(e.target.value)}
+                onScroll={(e) => syncEditorScroll(e.currentTarget)}
+                placeholder="粘贴原始文本..."
+                spellCheck={false}
+              />
             </div>
-            <textarea
-              ref={leftEditorRef}
-              className="df-textarea"
-              value={leftText}
-              onChange={(e) => setLeftText(e.target.value)}
-              onScroll={(e) => syncEditorScroll(e.currentTarget)}
-              placeholder="粘贴原始文本..."
-              spellCheck={false}
-            />
-          </div>
 
-          <div className="df-editor-pane df-editor-pane-merged">
-            <div className="df-editor-label">
-              <ArrowLeftRight size={12} />
-              合并结果
+            <div className="df-editor-pane df-editor-pane-merged">
+              <div className="df-editor-label">
+                <ArrowLeftRight size={12} />
+                合并结果
+              </div>
+              <textarea
+                ref={mergedEditorRef}
+                className="df-textarea"
+                value={mergedText}
+                onChange={(e) => setMergedText(e.target.value)}
+                onScroll={(e) => syncEditorScroll(e.currentTarget)}
+                placeholder="从左右差异选择内容，或直接编辑合并结果..."
+                spellCheck={false}
+              />
             </div>
-            <textarea
-              ref={mergedEditorRef}
-              className="df-textarea"
-              value={mergedText}
-              onChange={(e) => setMergedText(e.target.value)}
-              onScroll={(e) => syncEditorScroll(e.currentTarget)}
-              placeholder="从左右差异选择内容，或直接编辑合并结果..."
-              spellCheck={false}
-            />
-          </div>
 
-          <div className="df-editor-pane">
-            <div className="df-editor-label">
-              <Plus size={12} />
-              修改后文本
+            <div className="df-editor-pane">
+              <div className="df-editor-label">
+                <Plus size={12} />
+                修改后文本
+              </div>
+              <textarea
+                ref={rightEditorRef}
+                className="df-textarea"
+                value={rightText}
+                onChange={(e) => changeRightText(e.target.value)}
+                onScroll={(e) => syncEditorScroll(e.currentTarget)}
+                placeholder="粘贴修改后文本..."
+                spellCheck={false}
+              />
             </div>
-            <textarea
-              ref={rightEditorRef}
-              className="df-textarea"
-              value={rightText}
-              onChange={(e) => setRightText(e.target.value)}
-              onScroll={(e) => syncEditorScroll(e.currentTarget)}
-              placeholder="粘贴修改后文本..."
-              spellCheck={false}
-            />
-          </div>
           </div>
         </div>
 
@@ -369,48 +419,64 @@ export default function DiffChecker(): React.JSX.Element {
         <section className="df-result-card">
           {diffLines && stats ? (
             <>
-            <div className="df-result-header">
-              <div className="df-stats">
-                <span className="df-stat df-stat-add">+{stats.added}</span>
-                <span className="df-stat df-stat-rem">-{stats.removed}</span>
-                <span className="df-stat df-stat-change">{stats.changed} 行差异</span>
-                <span className="df-stat df-stat-same">{stats.same} 行相同</span>
-              </div>
-              <button className="df-btn df-btn-ghost" onClick={copyUnified}>
-                {copied ? <Check size={13} /> : <Copy size={13} />}
-                {copied ? '已复制' : '复制 diff'}
-              </button>
-            </div>
-
-            <div className="df-diff-output">
-              {visibleDiffLines.map((entry) => entry.type === 'gap' ? (
-                <div key={entry.key} className="df-diff-gap">隐藏 {entry.count} 行相同内容</div>
-              ) : (
-                <div key={entry.index} className={`df-diff-line df-diff-${entry.line.type}`}>
-                  <span className="df-line-num df-line-num-old">
-                    {entry.line.lineNumOld ?? ''}
-                  </span>
-                  <span className="df-line-num df-line-num-new">
-                    {entry.line.lineNumNew ?? ''}
-                  </span>
-                  <span className="df-line-sign">
-                    {entry.line.type === 'added' ? '+' : entry.line.type === 'removed' ? '-' : ' '}
-                  </span>
-                  <span className="df-line-text">{entry.line.text}</span>
-                  {entry.line.type !== 'same' && (
-                    <span className="df-line-actions">
-                      <button className={`df-line-merge ${mergeChoices[entry.index] === 'left' ? 'active' : ''}`} onClick={() => applyLineMerge(entry.index, 'left')} title="把左侧这行应用到合并结果">
-                        <ArrowRight size={12} />
-                      </button>
-                      <button className={`df-line-merge ${mergeChoices[entry.index] === 'right' ? 'active' : ''}`} onClick={() => applyLineMerge(entry.index, 'right')} title="把右侧这行应用到合并结果">
-                        <ArrowLeft size={12} />
-                      </button>
-                    </span>
-                  )}
+              <div className="df-result-header">
+                <div className="df-stats">
+                  <span className="df-stat df-stat-add">+{stats.added}</span>
+                  <span className="df-stat df-stat-rem">-{stats.removed}</span>
+                  <span className="df-stat df-stat-change">{stats.changed} 行差异</span>
+                  <span className="df-stat df-stat-same">{stats.same} 行相同</span>
                 </div>
-              ))}
-            </div>
-          </>
+                <button className="df-btn df-btn-ghost" onClick={copyUnified}>
+                  {copied ? <Check size={13} /> : <Copy size={13} />}
+                  {copied ? '已复制' : '复制 diff'}
+                </button>
+              </div>
+
+              <div className="df-diff-output">
+                {visibleDiffLines.map((entry) =>
+                  entry.type === 'gap' ? (
+                    <div key={entry.key} className="df-diff-gap">
+                      隐藏 {entry.count} 行相同内容
+                    </div>
+                  ) : (
+                    <div key={entry.index} className={`df-diff-line df-diff-${entry.line.type}`}>
+                      <span className="df-line-num df-line-num-old">
+                        {entry.line.lineNumOld ?? ''}
+                      </span>
+                      <span className="df-line-num df-line-num-new">
+                        {entry.line.lineNumNew ?? ''}
+                      </span>
+                      <span className="df-line-sign">
+                        {entry.line.type === 'added'
+                          ? '+'
+                          : entry.line.type === 'removed'
+                            ? '-'
+                            : ' '}
+                      </span>
+                      <span className="df-line-text">{entry.line.text}</span>
+                      {entry.line.type !== 'same' && (
+                        <span className="df-line-actions">
+                          <button
+                            className={`df-line-merge ${mergeChoices[entry.index] === 'left' ? 'active' : ''}`}
+                            onClick={() => applyLineMerge(entry.index, 'left')}
+                            title="把左侧这行应用到合并结果"
+                          >
+                            <ArrowRight size={12} />
+                          </button>
+                          <button
+                            className={`df-line-merge ${mergeChoices[entry.index] === 'right' ? 'active' : ''}`}
+                            onClick={() => applyLineMerge(entry.index, 'right')}
+                            title="把右侧这行应用到合并结果"
+                          >
+                            <ArrowLeft size={12} />
+                          </button>
+                        </span>
+                      )}
+                    </div>
+                  )
+                )}
+              </div>
+            </>
           ) : (
             <div className="df-empty-result">
               <FileText size={32} strokeWidth={1.5} />

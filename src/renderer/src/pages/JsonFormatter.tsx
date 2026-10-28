@@ -14,7 +14,6 @@ import {
   Key,
   BracesIcon,
   ArrowUpDown,
-  Sparkles,
   Search,
   ChevronUp,
   ChevronDown,
@@ -793,10 +792,6 @@ export default function JsonFormatter(): React.JSX.Element {
       <div className="jf-container">
         <div className="jf-hero">
           <div>
-            <div className="jf-eyebrow">
-              <Sparkles size={14} />
-              JSON workspace
-            </div>
             <h1 className="jf-title">JSON Formatter</h1>
             <p className="jf-subtitle">格式化、压缩、排序，并用带数量标记的树形视图审查结构。</p>
           </div>
@@ -804,15 +799,15 @@ export default function JsonFormatter(): React.JSX.Element {
           <div className="jf-hero-stats">
             <div className="jf-hero-stat">
               <span>{stats?.lines ?? 0}</span>
-              <small>lines</small>
+              <small>行</small>
             </div>
             <div className="jf-hero-stat">
               <span>{stats?.keys ?? 0}</span>
-              <small>keys</small>
+              <small>键</small>
             </div>
             <div className="jf-hero-stat">
               <span>{treeSummary?.arrays ?? 0}</span>
-              <small>arrays</small>
+              <small>数组</small>
             </div>
           </div>
         </div>

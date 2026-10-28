@@ -4,7 +4,6 @@
 
 .tool-shell-main:has(.df-page) {
   width: 100%;
-  height: calc(100vh - 28px);
 }
 
 /* ========================================
@@ -39,10 +38,8 @@
   min-height: 0;
   padding: 18px;
   background: var(--glass-bg);
-  backdrop-filter: blur(22px);
-  -webkit-backdrop-filter: blur(22px);
   border: 1px solid var(--glass-border);
-  border-radius: 18px;
+  border-radius: 16px;
   box-shadow: var(--shadow-lg);
 }
 
@@ -55,31 +52,30 @@
 }
 
 .df-title-mark {
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, var(--color-accent-soft), color-mix(in srgb, var(--color-accent-soft) 62%, #22c55e));
-  border-radius: 12px;
-  color: white;
-  box-shadow: 0 12px 28px color-mix(in srgb, var(--color-accent-soft) 24%, transparent);
+  background: var(--color-accent);
+  border-radius: var(--radius-md);
+  color: var(--color-text-inverse);
 }
 
 .df-title {
   margin: 0;
   color: var(--color-text);
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 26px;
-  font-weight: 850;
-  letter-spacing: -0.06em;
+  font-family: inherit;
+  font-size: var(--text-2xl);
+  font-weight: 600;
+  letter-spacing: -0.02em;
 }
 
 .df-subtitle {
-  margin: 5px 0 0;
+  margin: 4px 0 0;
   color: var(--color-text-muted);
-  font-size: 13px;
-  line-height: 1.5;
+  font-size: var(--text-base);
+  line-height: 1.55;
 }
 
 .df-header-meta {
@@ -96,7 +92,7 @@
   border: 1px solid var(--color-border);
   border-radius: 999px;
   font-family: 'JetBrains Mono', monospace;
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 700;
 }
 
@@ -112,7 +108,7 @@
   padding: 10px;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: 14px;
+  border-radius: 12px;
 }
 
 .df-toolbar-spacer {
@@ -127,8 +123,8 @@
   min-height: 34px;
   padding: 0 13px;
   border: 1px solid transparent;
-  border-radius: 10px;
-  font-size: 12px;
+  border-radius: 8px;
+  font-size: 0.75rem;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -139,7 +135,7 @@
 .df-btn-primary {
   background: var(--color-accent-soft);
   border-color: var(--color-accent-soft);
-  color: white;
+  color: var(--color-text-inverse);
   box-shadow: 0 10px 24px color-mix(in srgb, var(--color-accent-soft) 20%, transparent);
 }
 
@@ -177,7 +173,7 @@
   border-radius: 999px;
   box-shadow: var(--shadow-lg);
   color: var(--color-success, #22c55e);
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 800;
   pointer-events: none;
   animation: df-toast-in 0.18s ease;
@@ -227,13 +223,13 @@
 
 .df-editors-head span {
   color: var(--color-text-secondary);
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 800;
 }
 
 .df-editors-head em {
   color: var(--color-text-muted);
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-style: normal;
 }
 
@@ -255,9 +251,15 @@
 
 .df-editor-pane-merged {
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--color-accent-soft) 7%, transparent), transparent 42%),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-accent-soft) 7%, transparent),
+      transparent 42%
+    ),
     color-mix(in srgb, var(--color-surface) 92%, transparent);
-  box-shadow: inset 1px 0 0 color-mix(in srgb, var(--color-accent-soft) 20%, transparent), inset -1px 0 0 color-mix(in srgb, var(--color-accent-soft) 20%, transparent);
+  box-shadow:
+    inset 1px 0 0 color-mix(in srgb, var(--color-accent-soft) 20%, transparent),
+    inset -1px 0 0 color-mix(in srgb, var(--color-accent-soft) 20%, transparent);
 }
 
 .df-editor-pane-merged .df-editor-label {
@@ -270,10 +272,9 @@
   gap: 6px;
   padding: 10px 14px 0;
   color: var(--color-text-muted);
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 800;
   letter-spacing: 0.04em;
-  text-transform: uppercase;
 }
 
 .df-textarea {
@@ -284,7 +285,7 @@
   border: none;
   color: var(--color-text);
   font-family: 'JetBrains Mono', monospace;
-  font-size: 13px;
+  font-size: 0.8125rem;
   line-height: 1.65;
   outline: none;
   resize: vertical;
@@ -332,7 +333,7 @@
   min-height: 26px;
   color: var(--color-text);
   font-family: 'JetBrains Mono', monospace;
-  font-size: 13px;
+  font-size: 0.8125rem;
   line-height: 1.65;
 }
 
@@ -346,7 +347,7 @@
   border-bottom: 1px dashed var(--color-border);
   color: var(--color-text-muted);
   font-family: 'JetBrains Mono', monospace;
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 700;
 }
 
@@ -367,7 +368,7 @@
   flex-shrink: 0;
   padding: 0 8px;
   color: var(--color-text-muted);
-  font-size: 11px;
+  font-size: 0.6875rem;
   text-align: right;
   user-select: none;
   opacity: 0.55;
@@ -376,7 +377,7 @@
 .df-line-sign {
   width: 26px;
   flex-shrink: 0;
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 800;
   text-align: center;
   user-select: none;
@@ -435,7 +436,7 @@
 .df-line-merge.active {
   background: var(--color-accent-soft);
   border-color: var(--color-accent-soft);
-  color: white;
+  color: var(--color-text-inverse);
 }
 
 .df-empty-result {
@@ -453,13 +454,13 @@
 
 .df-empty-result strong {
   color: var(--color-text-secondary);
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 .df-empty-result p {
   max-width: 360px;
   margin: 0;
-  font-size: 12px;
+  font-size: 0.75rem;
   line-height: 1.6;
 }
 
@@ -471,7 +472,7 @@
 
   .df-card {
     padding: 20px;
-    border-radius: 18px;
+    border-radius: 16px;
   }
 
   .df-header,
@@ -513,7 +514,9 @@
   }
 
   .df-editor-pane-merged {
-    box-shadow: inset 0 1px 0 color-mix(in srgb, var(--color-accent-soft) 20%, transparent), inset 0 -1px 0 color-mix(in srgb, var(--color-accent-soft) 20%, transparent);
+    box-shadow:
+      inset 0 1px 0 color-mix(in srgb, var(--color-accent-soft) 20%, transparent),
+      inset 0 -1px 0 color-mix(in srgb, var(--color-accent-soft) 20%, transparent);
   }
 
   .df-line-actions {
@@ -527,7 +530,7 @@
   }
 
   .df-title {
-    font-size: 22px;
+    font-size: 1.25rem;
   }
 
   .df-btn {

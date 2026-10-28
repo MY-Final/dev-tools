@@ -72,7 +72,6 @@ export default function AsciiTable(): React.JSX.Element {
   const [search, setSearch] = useState('')
   const [format, setFormat] = useState<DisplayFormat>('dec')
   const [copiedKey, setCopiedKey] = useState<string | null>(null)
-  const [hoveredDec, setHoveredDec] = useState<number | null>(null)
 
   const filtered = useMemo(() => {
     if (!search.trim()) return ASCII_TABLE
@@ -115,39 +114,52 @@ export default function AsciiTable(): React.JSX.Element {
   )
 
   return (
-    <div className="at-page">
-      <div className="at-card">
-        <div className="at-header">
-          <h2 className="at-title">ASCII Table</h2>
-          <p className="at-subtitle">ASCII 码表完整对照（0–127）</p>
+    <div className="at-page tool-page">
+      <header className="tool-page-header">
+        <div className="tool-page-heading">
+          <h2 className="tool-page-title">ASCII Table</h2>
+          <p className="tool-page-desc">
+            ASCII 0–127 完整对照表，包含十进制、十六进制、八进制、二进制与字符名称。
+          </p>
         </div>
+      </header>
 
-        <div className="at-toolbar">
+      <section className="tool-panel at-toolbar">
+        <div className="at-toolbar-row">
           <div className="at-search">
-            <Search size={14} className="at-search-icon" />
+            <Search size={14} className="at-search-icon" aria-hidden="true" />
             <input
               className="at-search-input"
               type="text"
-              placeholder="$ search char, name, code..."
+              placeholder="搜索字符、名称或编码…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
+              aria-label="搜索 ASCII 字符"
+              spellCheck={false}
             />
           </div>
-
-          <div className="at-format-selector">
+          <div className="tool-segmented" role="group" aria-label="复制格式">
             {(['dec', 'hex', 'oct', 'bin'] as DisplayFormat[]).map((f) => (
               <button
                 key={f}
-                className={`at-format-btn ${format === f ? 'active' : ''}`}
+                type="button"
+                className={`tool-seg ${format === f ? 'active' : ''}`}
                 onClick={() => setFormat(f)}
+                aria-pressed={format === f}
               >
                 {f.toUpperCase()}
               </button>
             ))}
           </div>
+          <span className="at-stats">共 128 个{search && ` · 匹配 ${filtered.length} 个`}</span>
         </div>
+      </section>
 
-        <div className="at-stats">共 128 个字符{search && ` · 匹配 ${filtered.length} 个`}</div>
+      <section className="tool-panel at-table-panel">
+        <div className="tool-panel-head">
+          <h3 className="tool-panel-title">字符对照</h3>
+          <span className="at-table-note">点击行尾按钮复制当前格式的值</span>
+        </div>
 
         {filtered.length === 0 ? (
           <div className="at-empty">没有匹配的字符</div>
@@ -159,35 +171,39 @@ export default function AsciiTable(): React.JSX.Element {
                   <th className="at-th">DEC</th>
                   <th className="at-th">HEX</th>
                   <th className="at-th">OCT</th>
+                  <th className="at-th at-th-bin">BIN</th>
                   <th className="at-th">CHAR</th>
                   <th className="at-th">NAME</th>
-                  <th className="at-th at-th-action">COPY</th>
+                  <th className="at-th at-th-action" aria-label="复制" />
                 </tr>
               </thead>
               <tbody>
                 {filtered.map((entry) => (
                   <tr
                     key={entry.dec}
-                    className={`at-row ${hoveredDec === entry.dec ? 'highlighted' : ''} ${
-                      entry.dec < 32 || entry.dec === 127 ? 'control' : ''
-                    }`}
-                    onMouseEnter={() => setHoveredDec(entry.dec)}
-                    onMouseLeave={() => setHoveredDec(null)}
+                    className={entry.dec < 32 || entry.dec === 127 ? 'control' : undefined}
                   >
                     <td className="at-td at-td-mono">{entry.dec}</td>
                     <td className="at-td at-td-mono">0x{entry.hex}</td>
                     <td className="at-td at-td-mono">{entry.oct}</td>
+                    <td className="at-td at-td-mono at-td-bin">{entry.bin}</td>
                     <td className="at-td at-td-char">
                       {entry.char || <span className="at-control-glyph">{entry.name}</span>}
                     </td>
                     <td className="at-td at-td-name">{entry.name || '—'}</td>
                     <td className="at-td at-td-action">
                       <button
-                        className="at-copy-btn"
+                        type="button"
+                        className="tool-icon-btn at-copy-btn"
                         onClick={() => copyToClipboard(getDisplayValue(entry), String(entry.dec))}
                         title={`复制 ${getDisplayValue(entry)}`}
+                        aria-label={`复制字符 ${entry.dec} 的 ${format.toUpperCase()} 值`}
                       >
-                        {copiedKey === String(entry.dec) ? <Check size={12} /> : <Copy size={12} />}
+                        {copiedKey === String(entry.dec) ? (
+                          <Check size={13} aria-hidden="true" />
+                        ) : (
+                          <Copy size={13} aria-hidden="true" />
+                        )}
                       </button>
                     </td>
                   </tr>
@@ -196,7 +212,7 @@ export default function AsciiTable(): React.JSX.Element {
             </table>
           </div>
         )}
-      </div>
+      </section>
     </div>
   )
 }
