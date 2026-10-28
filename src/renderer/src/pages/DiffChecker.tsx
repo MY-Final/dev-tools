@@ -22,7 +22,7 @@ interface DiffLine {
 type MergeSource = 'left' | 'right'
 type VisibleDiffLine =
   | { type: 'line'; line: DiffLine; index: number }
-  | { type: 'gap'; key: string; count: number }
+  | { type: 'gap'; key: string; start: number; end: number }
 
 interface MergeToast {
   id: number
@@ -32,8 +32,9 @@ interface MergeToast {
 // ── Simple LCS-based line diff ─────────────────────────────────
 
 function computeDiff(oldText: string, newText: string): DiffLine[] {
-  const oldLines = oldText.split('\n')
-  const newLines = newText.split('\n')
+  // 统一为 LF，避免 CRLF 与 LF 混用时每一行都被判为差异
+  const oldLines = oldText.replace(/\r\n?/g, '\n').split('\n')
+  const newLines = newText.replace(/\r\n?/g, '\n').split('\n')
 
   // LCS table
   const m = oldLines.length
@@ -57,7 +58,7 @@ function computeDiff(oldText: string, newText: string): DiffLine[] {
 
   while (i > 0 || j > 0) {
     if (i > 0 && j > 0 && oldLines[i - 1] === newLines[j - 1]) {
-      result.unshift({
+      result.push({
         type: 'same',
         lineNumOld: i,
         lineNumNew: j,
@@ -66,7 +67,7 @@ function computeDiff(oldText: string, newText: string): DiffLine[] {
       i--
       j--
     } else if (j > 0 && (i === 0 || dp[i][j - 1] >= dp[i - 1][j])) {
-      result.unshift({
+      result.push({
         type: 'added',
         lineNumOld: null,
         lineNumNew: j,
@@ -74,7 +75,7 @@ function computeDiff(oldText: string, newText: string): DiffLine[] {
       })
       j--
     } else {
-      result.unshift({
+      result.push({
         type: 'removed',
         lineNumOld: i,
         lineNumNew: null,
@@ -84,7 +85,8 @@ function computeDiff(oldText: string, newText: string): DiffLine[] {
     }
   }
 
-  return result
+  // 回溯得到的是逆序结果，统一反转一次
+  return result.reverse()
 }
 
 // ── Component ──────────────────────────────────────────────────
@@ -117,17 +119,20 @@ function buildVisibleDiffLines(diffLines: DiffLine[] | null): VisibleDiffLine[] 
 
   if (!visible.size) return diffLines.map((line, index) => ({ type: 'line', line, index }))
 
+  // 被折叠的区间为 [start, end)，包含首尾两端未显示的相同行
   const result: VisibleDiffLine[] = []
+  const pushGap = (start: number, end: number): void => {
+    if (end > start) result.push({ type: 'gap', key: `gap-${start}-${end}`, start, end })
+  }
   let previous = -1
   Array.from(visible)
     .sort((a, b) => a - b)
     .forEach((index) => {
-      if (previous !== -1 && index - previous > 1) {
-        result.push({ type: 'gap', key: `${previous}-${index}`, count: index - previous - 1 })
-      }
+      pushGap(previous + 1, index)
       result.push({ type: 'line', line: diffLines[index], index })
       previous = index
     })
+  pushGap(previous + 1, diffLines.length)
   return result
 }
 
@@ -139,6 +144,7 @@ export default function DiffChecker(): React.JSX.Element {
   const [copied, setCopied] = useState(false)
   const [copiedMerged, setCopiedMerged] = useState(false)
   const [mergeTip, setMergeTip] = useState<MergeToast | null>(null)
+  const [expandedGaps, setExpandedGaps] = useState<Record<string, boolean>>({})
   const mergeTipTimer = useRef<number | null>(null)
   const leftEditorRef = useRef<HTMLTextAreaElement>(null)
   const mergedEditorRef = useRef<HTMLTextAreaElement>(null)
@@ -155,6 +161,7 @@ export default function DiffChecker(): React.JSX.Element {
     setRightText(SAMPLE_NEW)
     setMergedText(SAMPLE_NEW)
     setMergeChoices({})
+    setExpandedGaps({})
   }, [])
 
   const clear = useCallback(() => {
@@ -162,6 +169,7 @@ export default function DiffChecker(): React.JSX.Element {
     setRightText('')
     setMergedText('')
     setMergeChoices({})
+    setExpandedGaps({})
   }, [])
 
   const changeLeftText = useCallback(
@@ -169,6 +177,7 @@ export default function DiffChecker(): React.JSX.Element {
       setLeftText(value)
       setMergedText(rightText)
       setMergeChoices({})
+      setExpandedGaps({})
     },
     [rightText]
   )
@@ -177,6 +186,11 @@ export default function DiffChecker(): React.JSX.Element {
     setRightText(value)
     setMergedText(value)
     setMergeChoices({})
+    setExpandedGaps({})
+  }, [])
+
+  const toggleGap = useCallback((key: string) => {
+    setExpandedGaps((prev) => ({ ...prev, [key]: !prev[key] }))
   }, [])
 
   useEffect(() => {
@@ -210,6 +224,7 @@ export default function DiffChecker(): React.JSX.Element {
     setRightText(leftText)
     setMergedText(leftText)
     setMergeChoices({})
+    setExpandedGaps({})
   }, [leftText, rightText])
 
   const showMergeTip = useCallback((message: string) => {
@@ -260,9 +275,13 @@ export default function DiffChecker(): React.JSX.Element {
 
   const copyMerged = useCallback(async () => {
     if (!mergedText) return
-    await navigator.clipboard.writeText(mergedText)
-    setCopiedMerged(true)
-    setTimeout(() => setCopiedMerged(false), 1500)
+    try {
+      await navigator.clipboard.writeText(mergedText)
+      setCopiedMerged(true)
+      setTimeout(() => setCopiedMerged(false), 1500)
+    } catch {
+      // ignore
+    }
   }, [mergedText])
 
   const stats = useMemo(() => {
@@ -299,6 +318,35 @@ export default function DiffChecker(): React.JSX.Element {
       isSyncingScroll.current = false
     })
   }, [])
+
+  const renderDiffLine = (line: DiffLine, index: number): React.JSX.Element => (
+    <div key={index} className={`df-diff-line df-diff-${line.type}`}>
+      <span className="df-line-num df-line-num-old">{line.lineNumOld ?? ''}</span>
+      <span className="df-line-num df-line-num-new">{line.lineNumNew ?? ''}</span>
+      <span className="df-line-sign">
+        {line.type === 'added' ? '+' : line.type === 'removed' ? '-' : ' '}
+      </span>
+      <span className="df-line-text">{line.text}</span>
+      {line.type !== 'same' && (
+        <span className="df-line-actions">
+          <button
+            className={`df-line-merge ${mergeChoices[index] === 'left' ? 'active' : ''}`}
+            onClick={() => applyLineMerge(index, 'left')}
+            title="把左侧这行应用到合并结果"
+          >
+            <ArrowRight size={12} />
+          </button>
+          <button
+            className={`df-line-merge ${mergeChoices[index] === 'right' ? 'active' : ''}`}
+            onClick={() => applyLineMerge(index, 'right')}
+            title="把右侧这行应用到合并结果"
+          >
+            <ArrowLeft size={12} />
+          </button>
+        </span>
+      )}
+    </div>
+  )
 
   return (
     <div className="df-page">
@@ -433,48 +481,31 @@ export default function DiffChecker(): React.JSX.Element {
               </div>
 
               <div className="df-diff-output">
-                {visibleDiffLines.map((entry) =>
-                  entry.type === 'gap' ? (
-                    <div key={entry.key} className="df-diff-gap">
-                      隐藏 {entry.count} 行相同内容
-                    </div>
-                  ) : (
-                    <div key={entry.index} className={`df-diff-line df-diff-${entry.line.type}`}>
-                      <span className="df-line-num df-line-num-old">
-                        {entry.line.lineNumOld ?? ''}
-                      </span>
-                      <span className="df-line-num df-line-num-new">
-                        {entry.line.lineNumNew ?? ''}
-                      </span>
-                      <span className="df-line-sign">
-                        {entry.line.type === 'added'
-                          ? '+'
-                          : entry.line.type === 'removed'
-                            ? '-'
-                            : ' '}
-                      </span>
-                      <span className="df-line-text">{entry.line.text}</span>
-                      {entry.line.type !== 'same' && (
-                        <span className="df-line-actions">
-                          <button
-                            className={`df-line-merge ${mergeChoices[entry.index] === 'left' ? 'active' : ''}`}
-                            onClick={() => applyLineMerge(entry.index, 'left')}
-                            title="把左侧这行应用到合并结果"
-                          >
-                            <ArrowRight size={12} />
-                          </button>
-                          <button
-                            className={`df-line-merge ${mergeChoices[entry.index] === 'right' ? 'active' : ''}`}
-                            onClick={() => applyLineMerge(entry.index, 'right')}
-                            title="把右侧这行应用到合并结果"
-                          >
-                            <ArrowLeft size={12} />
-                          </button>
-                        </span>
-                      )}
-                    </div>
+                {visibleDiffLines.flatMap((entry) => {
+                  if (entry.type === 'line') return [renderDiffLine(entry.line, entry.index)]
+
+                  const count = entry.end - entry.start
+                  const expanded = !!expandedGaps[entry.key]
+                  const gapRow = (
+                    <button
+                      key={entry.key}
+                      type="button"
+                      className="df-diff-gap"
+                      aria-expanded={expanded}
+                      title={expanded ? '点击收起这些相同行' : '点击展开这些相同行'}
+                      onClick={() => toggleGap(entry.key)}
+                    >
+                      {expanded ? `已展开 ${count} 行` : `隐藏 ${count} 行相同内容`}
+                    </button>
                   )
-                )}
+                  if (!expanded) return [gapRow]
+                  return [
+                    gapRow,
+                    ...diffLines
+                      .slice(entry.start, entry.end)
+                      .map((line, offset) => renderDiffLine(line, entry.start + offset))
+                  ]
+                })}
               </div>
             </>
           ) : (

@@ -341,14 +341,23 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 28px;
+  width: 100%;
+  padding: 6px 12px;
   background: color-mix(in srgb, var(--color-surface) 82%, transparent);
+  border: none;
   border-top: 1px dashed var(--color-border);
   border-bottom: 1px dashed var(--color-border);
   color: var(--color-text-muted);
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.6875rem;
   font-weight: 700;
+  line-height: 1.4;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.df-diff-gap:hover {
+  color: var(--color-accent-soft);
 }
 
 .df-diff-same {
