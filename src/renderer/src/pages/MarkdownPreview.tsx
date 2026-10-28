@@ -21,6 +21,7 @@ import {
   Table
 } from 'lucide-react'
 import TextFileBar from '@renderer/components/TextFileBar'
+import { Popover, PopoverContent, PopoverTrigger } from '@renderer/components/ui/popover'
 import { buildHtmlDocument, renderMarkdown } from '@renderer/lib/markdown-render'
 import '../styles/markdown-preview.css'
 
@@ -241,7 +242,7 @@ export default function MarkdownPreview(): React.JSX.Element {
   const [input, setInput] = useState(DEMO_MARKDOWN)
   const [view, setView] = useState<PaneView>('edit')
   const [syncScroll, setSyncScroll] = useState(true)
-  const [outlineOpen, setOutlineOpen] = useState(true)
+  const [outlineOpen, setOutlineOpen] = useState(false)
   const [copied, setCopied] = useState<CopyKey | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
 
@@ -453,6 +454,38 @@ export default function MarkdownPreview(): React.JSX.Element {
             <div className="mp-pane-header">
               <span className="mp-pane-label">PREVIEW</span>
               <div className="mp-actions">
+                <Popover open={outlineOpen} onOpenChange={setOutlineOpen}>
+                  <PopoverTrigger asChild>
+                    <button type="button" className="mp-btn" title="文档大纲">
+                      <ListTree size={13} />
+                      大纲 · {rendered.headings.length}
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="mp-outline-pop" align="end" sideOffset={6}>
+                    {rendered.headings.length > 0 ? (
+                      <nav className="mp-outline-list" aria-label="文档大纲">
+                        {rendered.headings.map((heading) => (
+                          <button
+                            key={heading.id}
+                            type="button"
+                            className="mp-outline-item"
+                            data-level={heading.level}
+                            title={heading.text}
+                            onClick={() => {
+                              scrollPreviewTo(heading.id)
+                              setOutlineOpen(false)
+                            }}
+                          >
+                            {heading.text || '(空标题)'}
+                          </button>
+                        ))}
+                      </nav>
+                    ) : (
+                      <p className="mp-outline-empty">文档中还没有标题</p>
+                    )}
+                  </PopoverContent>
+                </Popover>
+
                 <button
                   type="button"
                   className="mp-btn"
@@ -476,36 +509,6 @@ export default function MarkdownPreview(): React.JSX.Element {
                   保存 HTML
                 </button>
               </div>
-            </div>
-
-            <div className="mp-outline">
-              <button
-                type="button"
-                className="mp-btn mp-outline-toggle"
-                aria-expanded={outlineOpen}
-                onClick={() => setOutlineOpen((open) => !open)}
-              >
-                <ListTree size={13} />
-                大纲 · {rendered.headings.length}
-              </button>
-              {outlineOpen &&
-                (rendered.headings.length > 0 ? (
-                  <nav className="mp-outline-list" aria-label="文档大纲">
-                    {rendered.headings.map((heading) => (
-                      <button
-                        key={heading.id}
-                        type="button"
-                        className="mp-outline-item"
-                        data-level={heading.level}
-                        onClick={() => scrollPreviewTo(heading.id)}
-                      >
-                        {heading.text || '(空标题)'}
-                      </button>
-                    ))}
-                  </nav>
-                ) : (
-                  <p className="mp-outline-empty">文档中还没有标题</p>
-                ))}
             </div>
 
             <div
