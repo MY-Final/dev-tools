@@ -41,11 +41,12 @@ export default function RegexTester(): React.JSX.Element {
     if (!regex || !testString) return null
     const results: MatchResult[] = []
     if (flags.includes('g')) {
+      const globalRegex = new RegExp(regex.source, regex.flags)
       let m: RegExpExecArray | null
-      while ((m = regex.exec(testString)) !== null) {
+      while ((m = globalRegex.exec(testString)) !== null) {
         results.push({ index: m.index, value: m[0], groups: m.slice(1) })
         if (m[0].length === 0) {
-          regex.lastIndex++
+          globalRegex.lastIndex++
         }
       }
     } else {
@@ -205,7 +206,15 @@ export default function RegexTester(): React.JSX.Element {
                   </span>
                   <button
                     className="rx-btn rx-btn-ghost"
-                    onClick={() => copyToClipboard(JSON.stringify(matches!.map((m) => m.value), null, 2))}
+                    onClick={() =>
+                      copyToClipboard(
+                        JSON.stringify(
+                          matches!.map((m) => m.value),
+                          null,
+                          2
+                        )
+                      )
+                    }
                   >
                     {copied ? <Check size={13} /> : <Copy size={13} />}
                     {copied ? '已复制' : '复制匹配'}

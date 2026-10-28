@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-disable @typescript-eslint/no-require-imports, @typescript-eslint/explicit-function-return-type */
 
 /**
  * 跨平台工具脚手架脚本
@@ -79,12 +80,6 @@ function toPascalCase(str) {
     .join('')
 }
 
-// kebab-case → camelCase
-function toCamelCase(str) {
-  const pascal = toPascalCase(str)
-  return pascal.charAt(0).toLowerCase() + pascal.slice(1)
-}
-
 // 获取分类图标
 function getCategoryIcon(cat) {
   const iconMap = {
@@ -110,7 +105,6 @@ const REGISTRY_TS = path.join(ROOT, 'src/renderer/src/pages/registry.ts')
 const MAIN_CSS = path.join(ROOT, 'src/renderer/src/assets/main.css')
 
 const componentName = toPascalCase(toolId)
-const hookName = toCamelCase(toolId)
 
 const PAGE_FILE = path.join(ROOT, `src/renderer/src/pages/${componentName}.tsx`)
 const CSS_FILE = path.join(ROOT, `src/renderer/src/styles/${toolId}.css`)
