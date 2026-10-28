@@ -24,20 +24,26 @@ interface CategoryDef {
 // Temperature needs special linear conversion
 const tempToBase: Record<string, (v: number) => number> = {
   '°C': (v) => v,
-  '°F': (v) => (v - 32) * 5 / 9,
-  'K': (v) => v - 273.15
+  '°F': (v) => ((v - 32) * 5) / 9,
+  K: (v) => v - 273.15
 }
 const tempFromBase: Record<string, (v: number) => number> = {
   '°C': (v) => v,
-  '°F': (v) => v * 9 / 5 + 32,
-  'K': (v) => v + 273.15
+  '°F': (v) => (v * 9) / 5 + 32,
+  K: (v) => v + 273.15
 }
 
-const linear = (factor: number) => ({ toBase: factor, fromBase: 1 / factor })
+const linear = (factor: number): { toBase: number; fromBase: number } => ({
+  toBase: factor,
+  fromBase: 1 / factor
+})
 
 const CATEGORIES: CategoryDef[] = [
   {
-    id: 'length', label: '长度', icon: '📏', base: 'm',
+    id: 'length',
+    label: '长度',
+    icon: '📏',
+    base: 'm',
     units: [
       { symbol: 'km', name: '千米', ...linear(1000) },
       { symbol: 'm', name: '米', ...linear(1) },
@@ -50,7 +56,10 @@ const CATEGORIES: CategoryDef[] = [
     ]
   },
   {
-    id: 'area', label: '面积', icon: '📐', base: 'm²',
+    id: 'area',
+    label: '面积',
+    icon: '📐',
+    base: 'm²',
     units: [
       { symbol: 'km²', name: '平方千米', ...linear(1_000_000) },
       { symbol: 'ha', name: '公顷', ...linear(10_000) },
@@ -62,7 +71,10 @@ const CATEGORIES: CategoryDef[] = [
     ]
   },
   {
-    id: 'volume', label: '体积', icon: '🧊', base: 'L',
+    id: 'volume',
+    label: '体积',
+    icon: '🧊',
+    base: 'L',
     units: [
       { symbol: 'm³', name: '立方米', ...linear(1000) },
       { symbol: 'L', name: '升', ...linear(1) },
@@ -75,7 +87,10 @@ const CATEGORIES: CategoryDef[] = [
     ]
   },
   {
-    id: 'time', label: '时间', icon: '⏱️', base: 's',
+    id: 'time',
+    label: '时间',
+    icon: '⏱️',
+    base: 's',
     units: [
       { symbol: 'yr', name: '年', ...linear(31536000) },
       { symbol: 'mon', name: '月(30d)', ...linear(2592000) },
@@ -89,7 +104,10 @@ const CATEGORIES: CategoryDef[] = [
     ]
   },
   {
-    id: 'angle', label: '角度', icon: '📐', base: '°',
+    id: 'angle',
+    label: '角度',
+    icon: '📐',
+    base: '°',
     units: [
       { symbol: 'deg', name: '度', ...linear(1) },
       { symbol: 'rad', name: '弧度', ...linear(180 / Math.PI) },
@@ -99,7 +117,10 @@ const CATEGORIES: CategoryDef[] = [
     ]
   },
   {
-    id: 'speed', label: '速度', icon: '🏃', base: 'm/s',
+    id: 'speed',
+    label: '速度',
+    icon: '🏃',
+    base: 'm/s',
     units: [
       { symbol: 'km/h', name: '千米/时', ...linear(1 / 3.6) },
       { symbol: 'm/s', name: '米/秒', ...linear(1) },
@@ -109,27 +130,36 @@ const CATEGORIES: CategoryDef[] = [
     ]
   },
   {
-    id: 'temperature', label: '温度', icon: '🌡️', base: '°C',
+    id: 'temperature',
+    label: '温度',
+    icon: '🌡️',
+    base: '°C',
     units: [
       {
-        symbol: '°C', name: '摄氏度',
+        symbol: '°C',
+        name: '摄氏度',
         toBase: tempToBase['°C'],
         fromBase: tempFromBase['°C']
       },
       {
-        symbol: '°F', name: '华氏度',
+        symbol: '°F',
+        name: '华氏度',
         toBase: tempToBase['°F'],
         fromBase: tempFromBase['°F']
       },
       {
-        symbol: 'K', name: '开尔文',
+        symbol: 'K',
+        name: '开尔文',
         toBase: tempToBase['K'],
         fromBase: tempFromBase['K']
       }
     ]
   },
   {
-    id: 'pressure', label: '压力', icon: '💨', base: 'Pa',
+    id: 'pressure',
+    label: '压力',
+    icon: '💨',
+    base: 'Pa',
     units: [
       { symbol: 'MPa', name: '兆帕', ...linear(1_000_000) },
       { symbol: 'kPa', name: '千帕', ...linear(1000) },
@@ -141,7 +171,10 @@ const CATEGORIES: CategoryDef[] = [
     ]
   },
   {
-    id: 'energy', label: '热量/能量', icon: '🔥', base: 'J',
+    id: 'energy',
+    label: '热量/能量',
+    icon: '🔥',
+    base: 'J',
     units: [
       { symbol: 'MJ', name: '兆焦', ...linear(1_000_000) },
       { symbol: 'kJ', name: '千焦', ...linear(1000) },
@@ -154,7 +187,10 @@ const CATEGORIES: CategoryDef[] = [
     ]
   },
   {
-    id: 'power', label: '功率', icon: '⚡', base: 'W',
+    id: 'power',
+    label: '功率',
+    icon: '⚡',
+    base: 'W',
     units: [
       { symbol: 'MW', name: '兆瓦', ...linear(1_000_000) },
       { symbol: 'kW', name: '千瓦', ...linear(1000) },
@@ -224,18 +260,24 @@ export default function UnitConverter(): React.JSX.Element {
   const clear = useCallback(() => setInput(''), [])
 
   return (
-    <div className="uc-page">
-      <div className="uc-card">
-        <div className="uc-header">
-          <h2 className="uc-title">Unit Converter</h2>
-          <p className="uc-subtitle">单位换算 — 长度 · 面积 · 体积 · 时间 · 角度 · 速度 · 温度 · 压力 · 热量 · 功率</p>
+    <div className="uc-page tool-page">
+      <header className="tool-page-header">
+        <div className="tool-page-heading">
+          <h2 className="tool-page-title">Unit Converter</h2>
+          <p className="tool-page-desc">
+            长度、面积、体积、时间、角度、速度、温度、压力、热量与功率的常用单位换算。
+          </p>
         </div>
+      </header>
 
-        {/* Category tabs */}
-        <div className="uc-tabs">
+      <section className="tool-panel uc-input-panel">
+        <div className="uc-tabs" role="tablist" aria-label="单位类别">
           {CATEGORIES.map((cat) => (
             <button
               key={cat.id}
+              type="button"
+              role="tab"
+              aria-selected={activeCat === cat.id}
               className={`uc-tab ${activeCat === cat.id ? 'active' : ''}`}
               onClick={() => setActiveCat(cat.id)}
             >
@@ -244,54 +286,70 @@ export default function UnitConverter(): React.JSX.Element {
           ))}
         </div>
 
-        {/* Input */}
-        <div className="uc-input-area">
-          <div className="uc-input-row">
-            <input
-              className="uc-input"
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="输入数值..."
-              autoFocus
-            />
-            <span className="uc-input-unit">{category.units[0].symbol}</span>
-          </div>
-          <button className="uc-btn uc-btn-ghost" onClick={clear}>
-            <RotateCcw size={13} />
+        <div className="uc-input-row">
+          <label className="uc-input-label" htmlFor="uc-value">
+            数值
+          </label>
+          <input
+            id="uc-value"
+            className="tool-input tool-input--lg tool-input--mono uc-input"
+            type="text"
+            inputMode="decimal"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="输入数值"
+            autoFocus
+          />
+          <span className="uc-input-unit">{category.units[0].symbol}</span>
+          <button type="button" className="tool-btn" onClick={clear} disabled={!input}>
+            <RotateCcw size={14} aria-hidden="true" />
             清空
           </button>
         </div>
+      </section>
 
-        {/* Results */}
-        {results && (
-          <div className="uc-results">
-            <span className="uc-result-label">
-              基准单位：<strong>{category.units[0].symbol}</strong> ({category.units[0].name})
+      {results && (
+        <section className="tool-panel uc-results">
+          <div className="tool-panel-head">
+            <h3 className="tool-panel-title">换算结果</h3>
+            <span className="uc-result-base">
+              基准 {category.units[0].symbol} · {category.units[0].name}
             </span>
-            <div className="uc-result-grid">
-              {results.map((u) => (
-                <div key={u.symbol} className="uc-result-item">
-                  <div className="uc-result-info">
-                    <span className="uc-result-symbol">{u.symbol}</span>
-                    <span className="uc-result-name">{u.name}</span>
-                  </div>
-                  <div className="uc-result-right">
-                    <code className="uc-result-value">{u.value}</code>
-                    <button
-                      className={`uc-copy-btn ${copiedKey === u.symbol ? 'copied' : ''}`}
-                      title="复制"
-                      onClick={() => copyToClipboard(u.symbol, u.value)}
-                    >
-                      {copiedKey === u.symbol ? <Check size={13} /> : <Copy size={13} />}
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
           </div>
-        )}
-      </div>
+          <div className="uc-result-grid">
+            {results.map((u) => (
+              <div key={u.symbol} className="uc-result-item">
+                <div className="uc-result-info">
+                  <span className="uc-result-symbol">{u.symbol}</span>
+                  <span className="uc-result-name">{u.name}</span>
+                </div>
+                <div className="uc-result-right">
+                  <code className="uc-result-value">{u.value}</code>
+                  <button
+                    type="button"
+                    className="tool-icon-btn"
+                    title={`复制 ${u.name}`}
+                    aria-label={`复制 ${u.name} 数值`}
+                    onClick={() => copyToClipboard(u.symbol, u.value)}
+                  >
+                    {copiedKey === u.symbol ? (
+                      <Check size={14} aria-hidden="true" />
+                    ) : (
+                      <Copy size={14} aria-hidden="true" />
+                    )}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {!results && input && (
+        <p className="uc-hint" role="status">
+          请输入有效数值
+        </p>
+      )}
     </div>
   )
 }

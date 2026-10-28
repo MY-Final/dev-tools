@@ -178,32 +178,45 @@ export default function DateFormatConverter(): React.JSX.Element {
   const displayDate = parsed || now
 
   return (
-    <div className="dfc-page">
-      <div className="dfc-card">
-        <div className="dfc-header">
-          <h2 className="dfc-title">Date Format Converter</h2>
-          <p className="dfc-subtitle">日期格式互转（ISO/Unix/RFC/自定义）</p>
+    <div className="dfc-page tool-page">
+      <header className="tool-page-header">
+        <div className="tool-page-heading">
+          <h2 className="tool-page-title">Date Format Converter</h2>
+          <p className="tool-page-desc">
+            在 ISO、Unix、RFC 与自定义格式之间转换；不输入时按当前时间预览。
+          </p>
         </div>
+      </header>
 
-        <div className="dfc-input-area">
-          <div className="dfc-input-header">
-            <span className="dfc-input-label">输入日期</span>
-            <button className="dfc-now-btn" onClick={useNow}>
-              <Clock size={13} /> 当前时间
-            </button>
-          </div>
+      <section className="tool-panel dfc-input-panel">
+        <div className="dfc-input-row">
+          <label className="dfc-input-label" htmlFor="dfc-date">
+            输入日期
+          </label>
           <input
-            className="dfc-input"
-            aria-label="输入日期"
+            id="dfc-date"
+            className="tool-input tool-input--lg tool-input--mono dfc-input"
             value={input}
             onChange={(e) => handleInput(e.target.value)}
-            placeholder={`不输入则显示当前时间: ${now.toLocaleString('zh-CN')}`}
+            placeholder={now.toLocaleString('zh-CN')}
+            autoComplete="off"
           />
-          {input && !parsed && (
-            <div className="dfc-error" role="alert">
-              无法解析该日期格式
-            </div>
-          )}
+          <button type="button" className="tool-btn tool-btn--outline" onClick={useNow}>
+            <Clock size={14} aria-hidden="true" />
+            当前时间
+          </button>
+        </div>
+        {input && !parsed && (
+          <div className="dfc-error" role="alert">
+            无法解析该日期格式
+          </div>
+        )}
+      </section>
+
+      <section className="tool-panel dfc-output-panel">
+        <div className="tool-panel-head">
+          <h3 className="tool-panel-title">输出格式</h3>
+          <span className="dfc-output-note">{parsed ? '按输入日期转换' : '当前时间预览'}</span>
         </div>
 
         <div className="dfc-formats">
@@ -212,43 +225,57 @@ export default function DateFormatConverter(): React.JSX.Element {
               <div className="dfc-format-label">{f.label}</div>
               <div className="dfc-format-value">{f.format(displayDate)}</div>
               <button
-                className="dfc-format-copy"
+                type="button"
+                className="tool-icon-btn"
                 onClick={() => copy(f.format(displayDate), f.id)}
                 aria-label={`复制 ${f.label}`}
                 title={`复制 ${f.label}`}
               >
-                {copied === f.id ? <Check size={12} /> : <Copy size={12} />}
+                {copied === f.id ? (
+                  <Check size={14} aria-hidden="true" />
+                ) : (
+                  <Copy size={14} aria-hidden="true" />
+                )}
               </button>
             </div>
           ))}
+        </div>
 
-          <div className="dfc-format-item dfc-custom">
-            <div className="dfc-format-label">自定义格式</div>
+        <div className="dfc-custom">
+          <div className="dfc-custom-head">
+            <label className="dfc-format-label" htmlFor="dfc-custom-fmt">
+              自定义格式
+            </label>
             <input
-              className="dfc-custom-fmt"
-              aria-label="自定义日期格式"
+              id="dfc-custom-fmt"
+              className="tool-input tool-input--mono dfc-custom-fmt"
               value={customFmt}
               onChange={(e) => setCustomFmt(e.target.value)}
               placeholder="yyyy-MM-dd HH:mm:ss"
             />
-            <div className="dfc-format-value">{customFormat(displayDate)}</div>
             <button
-              className="dfc-format-copy"
+              type="button"
+              className="tool-icon-btn"
               onClick={() => copy(customFormat(displayDate), 'custom')}
               aria-label="复制自定义日期格式"
               title="复制自定义日期格式"
             >
-              {copied === 'custom' ? <Check size={12} /> : <Copy size={12} />}
+              {copied === 'custom' ? (
+                <Check size={14} aria-hidden="true" />
+              ) : (
+                <Copy size={14} aria-hidden="true" />
+              )}
             </button>
           </div>
+          <div className="dfc-custom-value">{customFormat(displayDate)}</div>
         </div>
 
         <div className="dfc-help">
-          <span>格式参考: </span>
+          <span>格式参考</span>
           <code>yyyy</code> 年 <code>MM</code> 月 <code>dd</code> 日 <code>HH</code> 时{' '}
           <code>mm</code> 分 <code>ss</code> 秒 <code>SSS</code> 毫秒
         </div>
-      </div>
+      </section>
     </div>
   )
 }

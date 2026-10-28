@@ -29,7 +29,13 @@ function parseHex(input: string): ParsedColor | null {
   const hex = input.replace(/^#/, '').trim()
   if (!/^[0-9a-fA-F]{3}$|^[0-9a-fA-F]{6}$/.test(hex)) return null
 
-  const full = hex.length === 3 ? hex.split('').map((c) => c + c).join('') : hex
+  const full =
+    hex.length === 3
+      ? hex
+          .split('')
+          .map((c) => c + c)
+          .join('')
+      : hex
   const r = parseInt(full.substring(0, 2), 16)
   const g = parseInt(full.substring(2, 4), 16)
   const b = parseInt(full.substring(4, 6), 16)
@@ -76,7 +82,7 @@ function parseHsl(input: string): ParsedColor | null {
 // ── Converters ─────────────────────────────────────────────────
 
 function rgbToHex({ r, g, b }: RGB): string {
-  const toHex = (n: number) => n.toString(16).padStart(2, '0').toUpperCase()
+  const toHex = (n: number): string => n.toString(16).padStart(2, '0').toUpperCase()
   return `#${toHex(r)}${toHex(g)}${toHex(b)}`
 }
 

@@ -121,49 +121,69 @@ export default function TimezoneConverter(): React.JSX.Element {
   )
 
   return (
-    <div className="tzc-page">
-      <div className="tzc-card">
-        <div className="tzc-header">
-          <h2 className="tzc-title">Timezone Converter</h2>
-          <p className="tzc-subtitle">多时区时间对照</p>
+    <div className="tzc-page tool-page">
+      <header className="tool-page-header">
+        <div className="tool-page-heading">
+          <h2 className="tool-page-title">Timezone Converter</h2>
+          <p className="tool-page-desc">并排对照多个城市的当前时间，添加或移除常用时区。</p>
         </div>
-
-        <div className="tzc-toolbar">
-          <button className="tzc-add-btn" onClick={() => setShowAdd(!showAdd)}>
-            <Plus size={14} />
-            添加时区
+        <div className="tool-page-actions">
+          <button
+            type="button"
+            className={`tool-btn ${showAdd ? 'tool-btn--outline' : ''}`}
+            aria-expanded={showAdd}
+            onClick={() => setShowAdd(!showAdd)}
+          >
+            <Plus size={14} aria-hidden="true" />
+            {showAdd ? '收起' : '添加时区'}
           </button>
-          <button className="tzc-copy-btn" onClick={copyAll}>
-            {copied === 'all' ? <Check size={14} /> : <Copy size={14} />}
+          <button type="button" className="tool-btn tool-btn--outline" onClick={copyAll}>
+            {copied === 'all' ? (
+              <Check size={14} aria-hidden="true" />
+            ) : (
+              <Copy size={14} aria-hidden="true" />
+            )}
             {copied === 'all' ? '已复制' : '复制全部'}
           </button>
         </div>
+      </header>
 
-        {showAdd && (
-          <div className="tzc-add-panel">
+      {showAdd && (
+        <section className="tool-panel tzc-add-panel">
+          <div className="tzc-add-head">
             <input
-              className="tzc-search"
+              className="tool-input tzc-search"
               value={searchTz}
               onChange={(e) => setSearchTz(e.target.value)}
-              placeholder="搜索时区..."
+              placeholder="搜索城市或时区"
+              aria-label="搜索时区"
               autoFocus
             />
-            <div className="tzc-add-list">
-              {filtered.map((t) => (
-                <button
-                  key={t.tz}
-                  className="tzc-add-item"
-                  onClick={() => add(t.tz, t.label.split(' ')[0])}
-                >
-                  <span>{t.label}</span>
-                  <span className="tzc-tz-name">{t.tz}</span>
-                </button>
-              ))}
-            </div>
+            <span className="tzc-add-count">{filtered.length} 个可选</span>
           </div>
-        )}
+          <div className="tzc-add-list">
+            {filtered.map((t) => (
+              <button
+                key={t.tz}
+                type="button"
+                className="tzc-add-item"
+                onClick={() => add(t.tz, t.label.split(' ')[0])}
+              >
+                <span className="tzc-add-name">{t.label}</span>
+                <span className="tzc-tz-name">{t.tz}</span>
+              </button>
+            ))}
+            {!filtered.length && <span className="tzc-add-empty">没有可添加的时区</span>}
+          </div>
+        </section>
+      )}
 
-        {zones.length > 0 && (
+      {zones.length > 0 && (
+        <section className="tool-panel tzc-list-panel">
+          <div className="tool-panel-head">
+            <h3 className="tool-panel-title">时区对照</h3>
+            <span className="tzc-list-count">{zones.length} 个时区</span>
+          </div>
           <div className="tzc-list">
             {zones.map((z) => {
               const { time, date, weekday, hours, offset } = formatTime(now, z.timezone)
@@ -171,22 +191,28 @@ export default function TimezoneConverter(): React.JSX.Element {
               return (
                 <div key={z.id} className={`tzc-item ${isNight ? 'night' : ''}`}>
                   <div className="tzc-item-info">
-                    <div className="tzc-item-label">{z.label}</div>
-                    <div className="tzc-item-offset">{offset}</div>
+                    <span className="tzc-item-label">{z.label}</span>
+                    <span className="tzc-item-offset">{offset}</span>
                   </div>
-                  <div className="tzc-item-time">{time}</div>
-                  <div className="tzc-item-date">
+                  <span className="tzc-item-time">{time}</span>
+                  <span className="tzc-item-date">
                     {weekday} {date}
-                  </div>
-                  <button className="tzc-item-remove" onClick={() => remove(z.id)}>
-                    <Trash2 size={12} />
+                  </span>
+                  <button
+                    type="button"
+                    className="tool-icon-btn tzc-item-remove"
+                    onClick={() => remove(z.id)}
+                    title={`移除 ${z.label}`}
+                    aria-label={`移除 ${z.label}`}
+                  >
+                    <Trash2 size={14} aria-hidden="true" />
                   </button>
                 </div>
               )
             })}
           </div>
-        )}
-      </div>
+        </section>
+      )}
     </div>
   )
 }

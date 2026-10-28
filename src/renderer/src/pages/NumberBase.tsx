@@ -24,7 +24,14 @@ function toDecimal(n: bigint): string {
 function toHex(n: bigint, width?: number): string {
   if (n < 0n) {
     const mask = width ? (1n << BigInt(width)) - 1n : undefined
-    if (mask !== undefined) return '0x' + (n & mask).toString(16).toUpperCase().padStart(width! / 4, '0')
+    if (mask !== undefined)
+      return (
+        '0x' +
+        (n & mask)
+          .toString(16)
+          .toUpperCase()
+          .padStart(width! / 4, '0')
+      )
     return '-0x' + (-n).toString(16).toUpperCase()
   }
   return '0x' + n.toString(16).toUpperCase()
@@ -46,21 +53,21 @@ function onesComplement(n: bigint, width: BitWidth): bigint {
   // Bitwise NOT
   if (n < 0n) {
     const mask = (1n << BigInt(width)) - 1n
-    return (~(n & mask)) & mask
+    return ~(n & mask) & mask
   }
   const mask = (1n << BigInt(width)) - 1n
-  return (~n) & mask
+  return ~n & mask
 }
 
 function twosComplement(n: bigint, width: BitWidth): bigint {
   if (n < 0n) {
     // The two's complement of a negative is its positive counterpart
     const mask = (1n << BigInt(width)) - 1n
-    return (n & mask)
+    return n & mask
   }
   // Positive number → its two's complement (negation)
   const mask = (1n << BigInt(width)) - 1n
-  return ((-n) & mask)
+  return -n & mask
 }
 
 // ── Parse input ────────────────────────────────────────────────
@@ -153,132 +160,155 @@ export default function NumberBase(): React.JSX.Element {
   }, [])
 
   return (
-    <div className="nb-page">
-      <div className="nb-card">
-        <div className="nb-header">
-          <h2 className="nb-title">Number Base Converter</h2>
-          <p className="nb-subtitle">进制转换 · 反码 · 补码</p>
+    <div className="nb-page tool-page">
+      <header className="tool-page-header">
+        <div className="tool-page-heading">
+          <h2 className="tool-page-title">Number Base Converter</h2>
+          <p className="tool-page-desc">
+            同一数值的十六、十、八、二进制对照，并给出指定位宽下的反码与补码。
+          </p>
         </div>
+      </header>
 
-        {/* Input */}
-        <div className="nb-input-area">
-          <div className="nb-input-header">
-            <span className="nb-input-label">输入数字</span>
+      <div className="tool-split nb-layout">
+        <section className="tool-panel nb-input-panel">
+          <div className="tool-panel-head">
+            <h3 className="tool-panel-title">输入</h3>
+          </div>
+          <div className="nb-input-body">
+            <input
+              className="tool-input tool-input--lg tool-input--mono"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="输入数字，支持 0x / 0b / 0o 前缀"
+              aria-label="输入数字"
+              autoFocus
+              spellCheck={false}
+            />
+            {error && <div className="nb-error">{error}</div>}
+
             <div className="nb-samples">
+              <span className="nb-samples-label">示例</span>
               {SAMPLES.map((s) => (
                 <button key={s} className="nb-sample-btn" onClick={() => loadSample(s)}>
                   {s}
                 </button>
               ))}
             </div>
-          </div>
-          <input
-            className="nb-input"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="输入数字，支持 0x / 0b / 0o 前缀..."
-            autoFocus
-          />
-          {error && <div className="nb-error">{error}</div>}
-        </div>
 
-        {/* Bit width selector */}
-        <div className="nb-bit-width">
-          <span className="nb-bit-label">位宽</span>
-          <div className="nb-segmented">
-            {BIT_WIDTHS.map((w) => (
-              <button
-                key={w}
-                className={`nb-seg-option ${bitWidth === w ? 'active' : ''}`}
-                onClick={() => setBitWidth(w)}
-              >
-                {w}-bit
+            <div className="nb-options">
+              <span className="nb-option-label">位宽</span>
+              <div className="tool-segmented">
+                {BIT_WIDTHS.map((w) => (
+                  <button
+                    key={w}
+                    className={`tool-seg ${bitWidth === w ? 'active' : ''}`}
+                    aria-pressed={bitWidth === w}
+                    onClick={() => setBitWidth(w)}
+                  >
+                    {w}-bit
+                  </button>
+                ))}
+              </div>
+              <button type="button" className="tool-btn nb-clear" onClick={clear} disabled={!input}>
+                <RotateCcw size={14} aria-hidden="true" />
+                清空
               </button>
-            ))}
+            </div>
           </div>
-        </div>
+        </section>
 
-        {/* Actions */}
-        <div className="nb-actions">
-          <button className="nb-btn nb-btn-ghost" onClick={clear}>
-            <RotateCcw size={14} />
-            清空
-          </button>
-        </div>
+        <section className="tool-panel nb-results">
+          <div className="tool-panel-head">
+            <h3 className="tool-panel-title">转换结果</h3>
+          </div>
 
-        {/* Results — base conversions */}
-        {results.length > 0 && (
-          <div className="nb-results">
-            <h4 className="nb-section-label">进制转换</h4>
+          <div className="tool-rows">
             {results.map((r) => (
-              <div key={r.label} className="nb-result-row">
-                <div className="nb-result-header">
-                  <span className="nb-result-badge">{r.label}</span>
-                  <span className="nb-result-prefix">{r.prefix}</span>
+              <div key={r.label} className="tool-row">
+                <div className="tool-row-meta nb-result-meta">
+                  <span className="tool-row-label">{r.label}</span>
+                  <span className="tool-row-hint">{r.prefix}</span>
                 </div>
-                <code className="nb-result-value">{r.value}</code>
+                <code className="tool-row-value nb-result-value">{r.value}</code>
                 <button
-                  className="nb-icon-btn"
-                  title="复制"
+                  type="button"
+                  className="tool-icon-btn"
+                  title={`复制 ${r.label}`}
+                  aria-label={`复制 ${r.label}`}
                   onClick={() => copyToClipboard(r.label, r.value.replace(/\s/g, ''))}
                 >
-                  {copiedKey === r.label ? <Check size={14} /> : <Copy size={14} />}
+                  {copiedKey === r.label ? (
+                    <Check size={14} aria-hidden="true" />
+                  ) : (
+                    <Copy size={14} aria-hidden="true" />
+                  )}
                 </button>
               </div>
             ))}
+            {!results.length && <div className="nb-empty">输入数字后显示各进制结果</div>}
           </div>
-        )}
 
-        {/* Complement */}
-        {onesComp && twosComp && (
-          <div className="nb-complements">
-            <h4 className="nb-section-label">反码与补码</h4>
+          {onesComp && twosComp && (
+            <>
+              <div className="nb-section-head">
+                <span>反码与补码</span>
+                <span className="nb-section-hint">{bitWidth}-bit</span>
+              </div>
+              <div className="nb-comp-list">
+                <div className="nb-comp">
+                  <div className="nb-comp-head">
+                    <span className="nb-comp-name">反码</span>
+                    <span className="nb-comp-desc">按位取反（Bitwise NOT）</span>
+                    <button
+                      type="button"
+                      className="tool-icon-btn"
+                      title="复制反码"
+                      aria-label="复制反码"
+                      onClick={() => copyToClipboard('ones', onesComp.bin.replace(/\s/g, ''))}
+                    >
+                      {copiedKey === 'ones' ? (
+                        <Check size={14} aria-hidden="true" />
+                      ) : (
+                        <Copy size={14} aria-hidden="true" />
+                      )}
+                    </button>
+                  </div>
+                  <code className="nb-comp-bin">{onesComp.bin}</code>
+                  <div className="nb-comp-extra">
+                    <span>{onesComp.hex}</span>
+                    <span>{onesComp.dec}</span>
+                  </div>
+                </div>
 
-            <div className="nb-comp-card">
-              <div className="nb-comp-header">
-                <span className="nb-comp-badge nb-comp-badge-ones">反码</span>
-                <span className="nb-comp-desc">按位取反（Bitwise NOT）</span>
+                <div className="nb-comp">
+                  <div className="nb-comp-head">
+                    <span className="nb-comp-name">补码</span>
+                    <span className="nb-comp-desc">反码 + 1（Two&apos;s Complement）</span>
+                    <button
+                      type="button"
+                      className="tool-icon-btn"
+                      title="复制补码"
+                      aria-label="复制补码"
+                      onClick={() => copyToClipboard('twos', twosComp.bin.replace(/\s/g, ''))}
+                    >
+                      {copiedKey === 'twos' ? (
+                        <Check size={14} aria-hidden="true" />
+                      ) : (
+                        <Copy size={14} aria-hidden="true" />
+                      )}
+                    </button>
+                  </div>
+                  <code className="nb-comp-bin">{twosComp.bin}</code>
+                  <div className="nb-comp-extra">
+                    <span>{twosComp.hex}</span>
+                    <span>{twosComp.dec}</span>
+                  </div>
+                </div>
               </div>
-              <div className="nb-comp-row">
-                <code className="nb-comp-value">{onesComp.bin}</code>
-                <button
-                  className="nb-icon-btn"
-                  title="复制"
-                  onClick={() => copyToClipboard('ones', onesComp.bin.replace(/\s/g, ''))}
-                >
-                  {copiedKey === 'ones' ? <Check size={14} /> : <Copy size={14} />}
-                </button>
-              </div>
-              <div className="nb-comp-extra">
-                <span>{onesComp.hex}</span>
-                <span className="nb-comp-sep">·</span>
-                <span>{onesComp.dec}</span>
-              </div>
-            </div>
-
-            <div className="nb-comp-card">
-              <div className="nb-comp-header">
-                <span className="nb-comp-badge nb-comp-badge-twos">补码</span>
-                <span className="nb-comp-desc">反码 + 1（Two&apos;s Complement）</span>
-              </div>
-              <div className="nb-comp-row">
-                <code className="nb-comp-value">{twosComp.bin}</code>
-                <button
-                  className="nb-icon-btn"
-                  title="复制"
-                  onClick={() => copyToClipboard('twos', twosComp.bin.replace(/\s/g, ''))}
-                >
-                  {copiedKey === 'twos' ? <Check size={14} /> : <Copy size={14} />}
-                </button>
-              </div>
-              <div className="nb-comp-extra">
-                <span>{twosComp.hex}</span>
-                <span className="nb-comp-sep">·</span>
-                <span>{twosComp.dec}</span>
-              </div>
-            </div>
-          </div>
-        )}
+            </>
+          )}
+        </section>
       </div>
     </div>
   )

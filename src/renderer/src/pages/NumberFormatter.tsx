@@ -147,29 +147,33 @@ export default function NumberFormatter(): React.JSX.Element {
   }, [])
 
   return (
-    <div className="nfm-page">
-      <div className="nfm-card">
-        <div className="nfm-header">
-          <h2 className="nfm-title">Number Formatter</h2>
-          <p className="nfm-subtitle">数字格式化（千分位/货币/百分比/科学计数）</p>
+    <div className="nfm-page tool-page">
+      <header className="tool-page-header">
+        <div className="tool-page-heading">
+          <h2 className="tool-page-title">Number Formatter</h2>
+          <p className="tool-page-desc">
+            按地区与精度输出千分位、货币、百分比、科学计数等常见格式。
+          </p>
         </div>
+      </header>
 
-        <div className="nfm-input-area">
+      <section className="tool-panel nfm-input-panel">
+        <div className="nfm-input-row">
           <input
-            className="nfm-input"
+            className="tool-input tool-input--lg tool-input--mono nfm-input"
             aria-label="输入数字"
+            inputMode="decimal"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="输入数字..."
+            placeholder="输入数字"
           />
         </div>
 
         <div className="nfm-options">
-          <div className="nfm-option">
+          <label className="nfm-option">
             <span className="nfm-option-label">地区</span>
             <select
-              className="nfm-select"
-              aria-label="地区"
+              className="tool-select"
               value={locale}
               onChange={(e) => setLocale(e.target.value)}
             >
@@ -179,12 +183,11 @@ export default function NumberFormatter(): React.JSX.Element {
                 </option>
               ))}
             </select>
-          </div>
-          <div className="nfm-option">
+          </label>
+          <label className="nfm-option">
             <span className="nfm-option-label">货币</span>
             <select
-              className="nfm-select"
-              aria-label="货币"
+              className="tool-select"
               value={currency}
               onChange={(e) => setCurrency(e.target.value)}
             >
@@ -194,44 +197,57 @@ export default function NumberFormatter(): React.JSX.Element {
                 </option>
               ))}
             </select>
-          </div>
-          <div className="nfm-option">
+          </label>
+          <label className="nfm-option">
             <span className="nfm-option-label">小数位</span>
             <input
-              className="nfm-digits"
+              className="tool-input nfm-digits"
               type="number"
               min={0}
               max={20}
-              aria-label="小数位数"
               value={fractionDigits}
               onChange={(e) => setFractionDigits(parseInt(e.target.value) || 0)}
             />
-          </div>
+          </label>
         </div>
-
-        {hasInput && (
-          <div className="nfm-results">
-            {results.map((r) => (
-              <div key={r.id} className="nfm-result-item">
-                <div className="nfm-result-header">
-                  <span className="nfm-result-label">{r.label}</span>
-                  <button className="nfm-copy-btn" onClick={() => copyResult(r.id, r.value)}>
-                    {copiedId === r.id ? <Check size={13} /> : <Copy size={13} />}
-                    {copiedId === r.id ? '已复制' : '复制'}
-                  </button>
-                </div>
-                <div className="nfm-result-value">{r.value}</div>
-              </div>
-            ))}
-          </div>
-        )}
 
         {input && !hasInput && (
           <div className="nfm-error" role="alert">
             请输入有效数字
           </div>
         )}
-      </div>
+      </section>
+
+      {hasInput && (
+        <section className="tool-panel nfm-results">
+          <div className="tool-panel-head">
+            <h3 className="tool-panel-title">格式化结果</h3>
+          </div>
+          <div className="nfm-result-grid">
+            {results.map((r) => (
+              <div key={r.id} className="nfm-result-item">
+                <div className="nfm-result-header">
+                  <span className="nfm-result-label">{r.label}</span>
+                  <button
+                    type="button"
+                    className="tool-icon-btn"
+                    onClick={() => copyResult(r.id, r.value)}
+                    title={`复制 ${r.label}`}
+                    aria-label={`复制 ${r.label}`}
+                  >
+                    {copiedId === r.id ? (
+                      <Check size={14} aria-hidden="true" />
+                    ) : (
+                      <Copy size={14} aria-hidden="true" />
+                    )}
+                  </button>
+                </div>
+                <div className="nfm-result-value">{r.value}</div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   )
 }

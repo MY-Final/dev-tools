@@ -1,418 +1,287 @@
 /* ========================================
-   Timestamp Converter 页面
+   Timestamp Converter
+   左侧：当前时间 + 双向输入 + 快捷偏移
+   右侧：格式化结果 + 多时区对照
    ======================================== */
 
-.tc-page {
-  width: 100%;
-  height: 100%;
+.tc-layout {
+  align-items: start;
+}
+
+@container tool (min-width: 980px) {
+  .tc-layout {
+    grid-template-columns: minmax(0, 1fr) minmax(360px, 0.82fr);
+  }
+}
+
+.tc-tz {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  white-space: nowrap;
+}
+
+.tc-tz .tool-select {
+  max-width: 140px;
+}
+
+/* ── 当前时间 ───────────────────────────────── */
+
+.tc-input-panel {
+  overflow: hidden;
+}
+
+.tc-now {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px 20px;
+  padding: 16px;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-editor-bg);
+}
+
+.tc-now-main {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  padding: 40px 24px;
-  overflow-y: auto;
+  gap: 3px;
+  min-width: 0;
 }
 
-.tc-card {
-  width: 100%;
-  max-width: 560px;
-  background: var(--glass-bg);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--glass-border);
-  border-radius: 20px;
-  padding: 32px;
-  box-shadow: var(--shadow-xl);
-}
-
-.tc-header {
-  text-align: center;
-  margin-bottom: 28px;
-}
-
-.tc-title {
-  font-size: 24px;
-  font-weight: 700;
-  color: var(--color-text);
-  font-family: 'JetBrains Mono', monospace;
-  letter-spacing: -0.5px;
-  margin-bottom: 6px;
-}
-
-.tc-subtitle {
-  font-size: 14px;
+.tc-now-label {
   color: var(--color-text-muted);
-}
-
-/* 当前时间 */
-.tc-now {
-  padding: 16px;
-  background: var(--color-editor-bg);
-  border: 1px solid var(--color-border);
-  border-radius: 14px;
-  margin-bottom: 16px;
-}
-
-.tc-now-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--color-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 8px;
+  font-size: var(--text-xs);
+  letter-spacing: 0.02em;
 }
 
 .tc-now-time {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 18px;
-  font-weight: 600;
   color: var(--color-text);
-  margin-bottom: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: var(--text-xl);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
 }
 
-.tc-now-timestamps {
+.tc-now-copies {
   display: flex;
-  gap: 8px;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
 }
 
 .tc-now-ts {
-  flex: 1;
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  padding: 8px 12px;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+  padding: 3px 6px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-muted);
+  font-family: 'JetBrains Mono', monospace;
+  text-align: left;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition:
+    background-color 0.12s ease,
+    color 0.12s ease;
 }
 
 .tc-now-ts:hover {
-  border-color: var(--color-accent-soft);
+  background: var(--color-surface-hover);
+  color: var(--color-text);
+}
+
+.tc-now-ts:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
 }
 
 .tc-now-ts-label {
-  font-size: 10px;
-  color: var(--color-text-muted);
-  text-transform: uppercase;
+  flex-shrink: 0;
+  font-size: var(--text-2xs);
+  font-family: inherit;
+  opacity: 0.75;
 }
 
 .tc-now-ts-value {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--color-accent-soft);
-}
-
-/* 时区选择 */
-.tc-tz-selector {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 14px;
-  background: var(--color-editor-bg);
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  margin-bottom: 20px;
-  color: var(--color-text-muted);
-}
-
-.tc-tz-label {
-  font-size: 12px;
-  color: var(--color-text-muted);
-}
-
-.tc-tz-select {
-  flex: 1;
-  background: transparent;
-  border: none;
-  color: var(--color-text);
-  font-size: 13px;
-  font-family: 'JetBrains Mono', monospace;
-  outline: none;
-  cursor: pointer;
-}
-
-.tc-tz-select option {
-  background: var(--color-surface);
-  color: var(--color-text);
-}
-
-/* 转换区域 */
-.tc-converter {
-  display: flex;
-  align-items: flex-end;
-  gap: 12px;
-  margin-bottom: 16px;
-}
-
-.tc-input-group {
-  flex: 1;
-}
-
-.tc-input-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 8px;
-}
-
-.tc-input-label {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--color-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.tc-input-hint {
-  font-size: 10px;
-  color: var(--color-text-muted);
-}
-
-.tc-input {
-  width: 100%;
-  padding: 10px 14px;
-  background: var(--color-editor-bg);
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  color: var(--color-text);
-  font-size: 13px;
-  font-family: 'JetBrains Mono', monospace;
-  outline: none;
-  transition: all 0.2s ease;
-}
-
-.tc-input:focus {
-  border-color: var(--color-accent-soft);
-}
-
-.tc-input::placeholder {
-  color: var(--color-text-muted);
-}
-
-.tc-swap {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  color: var(--color-text-muted);
-  flex-shrink: 0;
-}
-
-/* 操作按钮 */
-.tc-actions {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 24px;
-}
-
-.tc-action-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
+  min-width: 0;
+  overflow: hidden;
+  font-size: var(--text-xs);
   color: var(--color-text-secondary);
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.15s ease;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.tc-action-btn:hover {
-  border-color: var(--color-accent-soft);
-  color: var(--color-accent-soft);
+.tc-now-ts svg {
+  flex-shrink: 0;
+  align-self: center;
+  opacity: 0.6;
 }
 
-/* 结果 */
-.tc-results {
-  margin-bottom: 24px;
-}
+/* ── 双向输入 ───────────────────────────────── */
 
-.tc-result-section {
-  margin-bottom: 20px;
-}
-
-.tc-result-section:last-child {
-  margin-bottom: 0;
-}
-
-.tc-result-label {
-  display: block;
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--color-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 10px;
-}
-
-.tc-result-grid {
+.tc-fields {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-}
-
-.tc-result-item {
-  padding: 12px 14px;
-  background: var(--color-editor-bg);
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-}
-
-.tc-result-name {
-  display: block;
-  font-size: 11px;
-  color: var(--color-text-muted);
-  margin-bottom: 6px;
-}
-
-.tc-result-value-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.tc-result-value {
-  flex: 1;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 13px;
-  color: var(--color-text);
-  word-break: break-all;
-}
-
-.tc-copy-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-  color: var(--color-text-muted);
-  cursor: pointer;
-  transition: all 0.15s ease;
-  flex-shrink: 0;
-}
-
-.tc-copy-btn:hover {
-  border-color: var(--color-accent-soft);
-  color: var(--color-accent-soft);
-}
-
-/* 多时区 */
-.tc-tz-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-}
-
-.tc-tz-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 12px;
-  background: var(--color-editor-bg);
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-}
-
-.tc-tz-name {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--color-text-muted);
-}
-
-.tc-tz-time {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 11px;
-  color: var(--color-text);
-}
-
-/* 快捷计算 */
-.tc-quick-offsets {
+  gap: 16px;
   padding: 16px;
-  background: var(--color-editor-bg);
-  border: 1px solid var(--color-border);
-  border-radius: 14px;
 }
 
-.tc-quick-header {
+.tc-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.tc-field-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+}
+
+.tc-field-head label {
+  color: var(--color-text);
+  font-weight: 500;
+}
+
+.tc-field-head span {
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+}
+
+.tc-field .tool-input {
+  width: 100%;
+}
+
+/* ── 快捷偏移 ───────────────────────────────── */
+
+.tc-quick {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--color-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  padding: 10px 16px;
+  border-top: 1px solid var(--color-border);
+  background: color-mix(in srgb, var(--color-surface-hover) 35%, transparent);
 }
 
-.tc-quick-header svg {
-  color: var(--color-accent-soft);
+.tc-quick-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  white-space: nowrap;
 }
 
 .tc-quick-buttons {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
 }
 
 .tc-quick-btn {
-  padding: 8px 14px;
-  background: var(--color-surface);
+  height: 26px;
+  padding: 0 9px;
   border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
+  background: transparent;
   color: var(--color-text-secondary);
-  font-size: 12px;
-  font-weight: 500;
+  font-family: inherit;
+  font-size: var(--text-xs);
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition:
+    background-color 0.12s ease,
+    border-color 0.12s ease,
+    color 0.12s ease;
 }
 
 .tc-quick-btn:hover {
-  border-color: var(--color-accent-soft);
-  color: var(--color-accent-soft);
-  background: var(--color-accent-soft-subtle);
+  border-color: var(--color-border-hover);
+  background: var(--color-surface-hover);
+  color: var(--color-text);
 }
 
-/* 响应式 */
+.tc-quick-btn:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+/* ── 结果 ───────────────────────────────────── */
+
+.tc-results {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.tc-result-meta {
+  flex: 0 0 auto;
+  width: 124px;
+}
+
+.tc-result-value {
+  color: var(--color-text);
+  font-size: var(--text-sm);
+  text-align: left;
+}
+
+.tc-preview-note {
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+}
+
+.tc-zones-count {
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.tc-zone-row {
+  min-height: 34px;
+  padding-top: 5px;
+  padding-bottom: 5px;
+}
+
+.tc-zone-name {
+  flex: 0 0 auto;
+  min-width: 72px;
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+  font-weight: 400;
+}
+
+.tc-zone-time {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--color-text);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 @media (max-width: 600px) {
-  .tc-page {
-    padding: 24px 16px;
-  }
-
-  .tc-card {
-    padding: 24px 20px;
-    border-radius: 16px;
-  }
-
-  .tc-title {
-    font-size: 20px;
-  }
-
-  .tc-converter {
+  .tc-now {
     flex-direction: column;
-    align-items: stretch;
+    align-items: flex-start;
   }
 
-  .tc-swap {
-    transform: rotate(90deg);
-    align-self: center;
-  }
-
-  .tc-tz-grid {
-    grid-template-columns: 1fr;
+  .tc-now-copies {
+    width: 100%;
   }
 }
