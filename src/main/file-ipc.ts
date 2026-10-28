@@ -2,26 +2,12 @@ import { dialog, shell } from 'electron'
 import { promises as fs } from 'fs'
 import { basename, extname } from 'path'
 import { registerGuardedHandler } from './ipc-security'
+import type { FileEncoding, OpenedFile, SaveFileResult } from '../shared/contracts'
 
 // Text tools only ever need plain text, and a hard ceiling keeps a stray
 // multi-gigabyte selection from freezing the main process.
 const MAX_TEXT_BYTES = 32 * 1024 * 1024
 const MAX_RECENT_FILES = 10
-
-export interface OpenedFile {
-  path: string
-  name: string
-  content: string
-  bytes: number
-  truncated: boolean
-}
-
-export interface SaveFileResult {
-  path: string
-  name: string
-  bytes: number
-  canceled: boolean
-}
 
 const TEXT_EXTENSIONS = [
   'txt',
@@ -73,7 +59,10 @@ function rememberFile(filePath: string): void {
   if (recentFiles.length > MAX_RECENT_FILES) recentFiles.length = MAX_RECENT_FILES
 }
 
-async function readTextFile(filePath: string): Promise<OpenedFile> {
+async function readTextFile(
+  filePath: string,
+  requested: FileEncoding = 'auto'
+): Promise<OpenedFile> {
   const stat = await fs.stat(filePath)
   if (!stat.isFile()) throw new Error('所选路径不是文件')
 
@@ -82,21 +71,54 @@ async function readTextFile(filePath: string): Promise<OpenedFile> {
     const bytesToRead = Math.min(stat.size, MAX_TEXT_BYTES)
     const buffer = Buffer.alloc(bytesToRead)
     await handle.read(buffer, 0, bytesToRead, 0)
+    const { content, encoding } = decodeText(buffer, requested)
     return {
       path: filePath,
       name: basename(filePath),
-      // Decoding a partial trailing multibyte sequence is preferable to failing.
-      content: new TextDecoder('utf-8', { fatal: false }).decode(buffer),
+      content,
       bytes: stat.size,
-      truncated: stat.size > MAX_TEXT_BYTES
+      truncated: stat.size > MAX_TEXT_BYTES,
+      encoding
     }
   } finally {
     await handle.close()
   }
 }
 
+/**
+ * Decodes as UTF-8 unless the bytes are clearly not valid UTF-8, in which case
+ * GBK is tried — that is what most Chinese CSV exports use. Explicit requests
+ * win over detection.
+ */
+function decodeText(
+  buffer: Buffer,
+  requested: FileEncoding
+): { content: string; encoding: 'utf-8' | 'gbk' } {
+  if (requested === 'gbk') {
+    return { content: new TextDecoder('gbk').decode(buffer), encoding: 'gbk' }
+  }
+
+  // Decoding a partial trailing multibyte sequence is preferable to failing.
+  const utf8 = new TextDecoder('utf-8', { fatal: false }).decode(buffer)
+  if (requested === 'utf-8' || !utf8.includes('�')) {
+    return { content: utf8, encoding: 'utf-8' }
+  }
+
+  try {
+    const gbk = new TextDecoder('gbk').decode(buffer)
+    // Only accept the fallback when it actually removes the replacement chars.
+    if ((gbk.match(/�/g) ?? []).length < (utf8.match(/�/g) ?? []).length) {
+      return { content: gbk, encoding: 'gbk' }
+    }
+  } catch {
+    // Encoding unsupported in this build; keep the UTF-8 reading.
+  }
+
+  return { content: utf8, encoding: 'utf-8' }
+}
+
 export function registerFileHandlers(): void {
-  registerGuardedHandler('file:open', async () => {
+  registerGuardedHandler('file:open', async (_event, encoding?: FileEncoding) => {
     const result = await dialog.showOpenDialog({
       title: '打开文件',
       properties: ['openFile'],
@@ -107,18 +129,18 @@ export function registerFileHandlers(): void {
     })
     if (result.canceled || result.filePaths.length === 0) return null
 
-    const opened = await readTextFile(result.filePaths[0])
+    const opened = await readTextFile(result.filePaths[0], encoding ?? 'auto')
     rememberFile(opened.path)
     return opened
   })
 
   // Only files the user picked through the dialog (or that stayed in the recent
   // list) are readable without a second confirmation.
-  registerGuardedHandler('file:read', async (_event, filePath: string) => {
+  registerGuardedHandler('file:read', async (_event, filePath: string, encoding?: FileEncoding) => {
     if (!recentFiles.includes(filePath)) {
       throw new Error('该文件尚未通过打开对话框选择')
     }
-    return readTextFile(filePath)
+    return readTextFile(filePath, encoding ?? 'auto')
   })
 
   registerGuardedHandler(

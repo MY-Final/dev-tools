@@ -102,7 +102,11 @@ export interface OpenedFile {
   content: string
   bytes: number
   truncated: boolean
+  /** Encoding actually used to decode the bytes. */
+  encoding: 'utf-8' | 'gbk'
 }
+
+export type FileEncoding = 'auto' | 'utf-8' | 'gbk'
 
 export interface SaveFileOptions {
   content: string
@@ -118,8 +122,8 @@ export interface SaveFileResult {
 }
 
 export interface FileAPI {
-  open: () => Promise<OpenedFile | null>
-  read: (filePath: string) => Promise<OpenedFile>
+  open: (encoding?: FileEncoding) => Promise<OpenedFile | null>
+  read: (filePath: string, encoding?: FileEncoding) => Promise<OpenedFile>
   save: (options: SaveFileOptions) => Promise<SaveFileResult>
   recent: () => Promise<string[]>
   reveal: (filePath: string) => Promise<boolean>
@@ -331,4 +335,3 @@ export function normalizeSettings(value: unknown): AppSettings {
       : []
   }
 }
-

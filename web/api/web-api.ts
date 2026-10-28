@@ -209,9 +209,10 @@ const webSettingsAPI = {
   async updateFavorites(toolId: string): Promise<AppSettings> {
     const settings = loadSettings()
     const index = settings.favorites.indexOf(toolId)
-    settings.favorites = index >= 0
-      ? settings.favorites.filter((id) => id !== toolId)
-      : [...settings.favorites, toolId]
+    settings.favorites =
+      index >= 0
+        ? settings.favorites.filter((id) => id !== toolId)
+        : [...settings.favorites, toolId]
     saveSettings(settings)
     return settings
   },
@@ -238,9 +239,11 @@ const webUpdaterAPI = {
   downloadUpdate: (): Promise<void> => Promise.resolve(),
   quitAndInstall: (): Promise<void> => Promise.resolve(),
   getVersion: (): Promise<string> => Promise.resolve(pkg.version ?? '0.0.0'),
-  onUpdateStatus: (_callback: (status: UpdateStatus) => void): (() => void) => () => {
-    /* no updates in web mode */
-  }
+  onUpdateStatus:
+    (_callback: (status: UpdateStatus) => void): (() => void) =>
+    () => {
+      /* no updates in web mode */
+    }
 } satisfies UpdaterAPI
 
 // ── 3. Maven API (direct fetch) ──────────────────────────────────
@@ -448,10 +451,19 @@ function pickBrowserFile(accept: string): Promise<File | null> {
 
 const webFileAPI = {
   async open(): Promise<OpenedFile | null> {
-    const file = await pickBrowserFile('.txt,.md,.markdown,.json,.yaml,.yml,.toml,.xml,.csv,.tsv,.log,.html,.css,.js,.ts,.jsx,.tsx')
+    const file = await pickBrowserFile(
+      '.txt,.md,.markdown,.json,.yaml,.yml,.toml,.xml,.csv,.tsv,.log,.html,.css,.js,.ts,.jsx,.tsx'
+    )
     if (!file) return null
     const content = await file.text()
-    return { path: '', name: file.name, content, bytes: file.size, truncated: false }
+    return {
+      path: '',
+      name: file.name,
+      content,
+      bytes: file.size,
+      truncated: false,
+      encoding: 'utf-8'
+    }
   },
 
   async read(): Promise<OpenedFile> {
@@ -637,9 +649,7 @@ const webDockerAPI = {
   async getTags(imageName: string): Promise<DockerTagResult[]> {
     try {
       const path = imageName.includes('/') ? imageName : 'library/' + imageName
-      const res = await fetch(
-        `https://hub.docker.com/v2/repositories/${path}/tags?page_size=50`
-      )
+      const res = await fetch(`https://hub.docker.com/v2/repositories/${path}/tags?page_size=50`)
       if (!res.ok) return []
       const data = await res.json()
       return (
@@ -670,10 +680,7 @@ const webDockerAPI = {
 
 let wsProxyIdCounter = 0
 const wsProxyConnections = new Map<number, WebSocket>()
-const wsProxyListeners = new Map<
-  string,
-  Set<(...args: unknown[]) => void>
->()
+const wsProxyListeners = new Map<string, Set<(...args: unknown[]) => void>>()
 
 function emitWsEvent(event: string, data: unknown): void {
   const handlers = wsProxyListeners.get(event)
@@ -750,7 +757,8 @@ const webWsProxyAPI = {
   },
 
   onMessage(callback: (data: { id: number; data: string }) => void): () => void {
-    if (!wsProxyListeners.has('ws-proxy:message')) wsProxyListeners.set('ws-proxy:message', new Set())
+    if (!wsProxyListeners.has('ws-proxy:message'))
+      wsProxyListeners.set('ws-proxy:message', new Set())
     wsProxyListeners.get('ws-proxy:message')!.add(callback as (...args: unknown[]) => void)
     return () => {
       wsProxyListeners.get('ws-proxy:message')?.delete(callback as (...args: unknown[]) => void)

@@ -1,19 +1,21 @@
 import { useCallback, useRef, useState } from 'react'
+import type { FileEncoding } from '../../../shared/contracts'
 
-interface FileSource {
+export interface FileSource {
   content: string
   path: string
   name: string
   bytes: number
   truncated: boolean
+  encoding: 'utf-8' | 'gbk'
 }
 
-interface UseTextFileResult {
+export interface UseTextFileResult {
   /** Currently opened file, or null for an unsaved scratch buffer. */
   file: FileSource | null
   error: string
   busy: boolean
-  open: () => Promise<FileSource | null>
+  open: (encoding?: FileEncoding) => Promise<FileSource | null>
   save: (content: string, suggestedName?: string) => Promise<boolean>
   saveAs: (content: string, suggestedName?: string) => Promise<boolean>
   reset: () => void
@@ -35,20 +37,21 @@ export function useTextFile(): UseTextFileResult {
   const [busy, setBusy] = useState(false)
   const inFlight = useRef(false)
 
-  const open = useCallback(async (): Promise<FileSource | null> => {
+  const open = useCallback(async (encoding: FileEncoding = 'auto'): Promise<FileSource | null> => {
     if (inFlight.current || !window.file) return null
     inFlight.current = true
     setBusy(true)
     setError('')
     try {
-      const opened = await window.file.open()
+      const opened = await window.file.open(encoding)
       if (!opened) return null
       const next: FileSource = {
         content: opened.content,
         path: opened.path,
         name: opened.name,
         bytes: opened.bytes,
-        truncated: opened.truncated
+        truncated: opened.truncated,
+        encoding: opened.encoding
       }
       setFile(next)
       return next
@@ -62,7 +65,11 @@ export function useTextFile(): UseTextFileResult {
   }, [])
 
   const saveTo = useCallback(
-    async (content: string, suggestedName: string | undefined, targetPath?: string): Promise<boolean> => {
+    async (
+      content: string,
+      suggestedName: string | undefined,
+      targetPath?: string
+    ): Promise<boolean> => {
       if (inFlight.current || !window.file) return false
       inFlight.current = true
       setBusy(true)
@@ -75,7 +82,8 @@ export function useTextFile(): UseTextFileResult {
           path: result.path,
           name: result.name,
           bytes: result.bytes,
-          truncated: false
+          truncated: false,
+          encoding: 'utf-8'
         })
         return true
       } catch (err) {

@@ -138,7 +138,13 @@ export interface EnvAPI {
   getEnvVars: () => Promise<Record<string, string>>
 }
 
-export type { OpenedFile, SaveFileOptions, SaveFileResult, FileAPI } from '../shared/contracts'
+export type {
+  OpenedFile,
+  FileEncoding,
+  SaveFileOptions,
+  SaveFileResult,
+  FileAPI
+} from '../shared/contracts'
 import type { FileAPI } from '../shared/contracts'
 
 export interface TranslatorAPI {

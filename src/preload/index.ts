@@ -11,6 +11,7 @@ import type {
   TodoItem,
   RuntimeVersions,
   OpenedFile,
+  FileEncoding,
   SaveFileOptions,
   SaveFileResult
 } from './index.d'
@@ -132,8 +133,10 @@ const translatorAPI = {
 // File access for text tools. Reads and writes are only allowed for paths the
 // user picked through a native dialog; the main process enforces that rule.
 const fileAPI = {
-  open: (): Promise<OpenedFile | null> => ipcRenderer.invoke('file:open'),
-  read: (filePath: string): Promise<OpenedFile> => ipcRenderer.invoke('file:read', filePath),
+  open: (encoding?: FileEncoding): Promise<OpenedFile | null> =>
+    ipcRenderer.invoke('file:open', encoding),
+  read: (filePath: string, encoding?: FileEncoding): Promise<OpenedFile> =>
+    ipcRenderer.invoke('file:read', filePath, encoding),
   save: (options: SaveFileOptions): Promise<SaveFileResult> =>
     ipcRenderer.invoke('file:save', options),
   recent: (): Promise<string[]> => ipcRenderer.invoke('file:recent'),

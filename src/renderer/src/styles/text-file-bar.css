@@ -1,0 +1,122 @@
+/* ========================================
+   Text File Bar
+   文本类工具共用的文件操作行：打开 / 保存 / 另存为 / 新建
+   与当前文件信息。只在有文件能力时出现，不抢页面主操作。
+   ======================================== */
+
+.tfb {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  min-width: 0;
+  padding: 6px 0 10px;
+  border-bottom: 1px solid var(--color-border);
+  margin-bottom: 12px;
+}
+
+.tfb-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 0 0 auto;
+}
+
+.tfb-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+  line-height: 1.2;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.tfb-btn:hover:not(:disabled) {
+  background: var(--color-surface-hover);
+  border-color: var(--color-border-hover);
+  color: var(--color-text);
+}
+
+.tfb-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.tfb-btn-quiet {
+  background: transparent;
+  border-color: transparent;
+  color: var(--color-text-muted);
+}
+
+.tfb-btn-quiet:hover:not(:disabled) {
+  background: var(--color-surface-hover);
+  border-color: transparent;
+}
+
+.tfb-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+.tfb-name {
+  max-width: 34ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--color-text-secondary);
+}
+
+.tfb-name-empty {
+  color: var(--color-text-muted);
+  font-style: italic;
+  font-family: inherit;
+}
+
+.tfb-size {
+  color: var(--color-text-muted);
+}
+
+.tfb-dirty {
+  padding: 1px 6px;
+  border-radius: var(--radius-pill);
+  background: var(--color-warning-subtle);
+  color: var(--color-warning);
+}
+
+.tfb-encoding {
+  padding: 1px 6px;
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-active);
+  color: var(--color-text-muted);
+}
+
+.tfb-warn {
+  color: var(--color-warning);
+}
+
+.tfb-error {
+  color: var(--color-danger);
+  font-size: var(--text-sm);
+}
+
+@container tool (max-width: 560px) {
+  .tfb-btn span,
+  .tfb-btn {
+    font-size: var(--text-xs);
+  }
+}
