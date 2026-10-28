@@ -30,6 +30,7 @@ import { EditorView } from '@codemirror/view'
 import { search } from '@codemirror/search'
 import { useJsonFormatter, type Indent } from '@renderer/tools/json-formatter/useJsonFormatter'
 import { jsonToTypeScript, repairJsonText, type JsonRepairResult } from '@renderer/lib/data-format-utils'
+import TextFileBar from '@renderer/components/TextFileBar'
 
 const INDENTS: Indent[] = [2, 4, 6, 8]
 
@@ -811,6 +812,13 @@ export default function JsonFormatter(): React.JSX.Element {
             </div>
           </div>
         </div>
+
+        <TextFileBar
+          value={input}
+          onOpened={(file) => setInput(file.content)}
+          onNew={handleClear}
+          suggestedName="formatted.json"
+        />
 
         <div className="jf-topbar">
           <div className="jf-topbar-left">

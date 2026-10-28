@@ -11,6 +11,34 @@
   box-sizing: border-box;
 }
 
+.jc-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 0;
+  flex: 1;
+}
+
+.jc-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  color: var(--color-text);
+}
+
+.jc-title {
+  margin: 0;
+  font-size: var(--text-xl);
+  font-weight: 700;
+}
+
+.jc-subtitle {
+  margin: 0 0 0 auto;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
 /* ── Tabs ─────────────────────────────── */
 
 .jc-tabs {
@@ -85,6 +113,14 @@
   width: 7px;
   height: 7px;
   border-radius: 50%;
+}
+
+.jc-dot-input {
+  background: var(--color-text-muted);
+}
+
+.jc-dot-output {
+  background: var(--color-success);
 }
 
 .jc-pane-actions {
@@ -180,8 +216,9 @@
 
 .jc-error {
   padding: 10px 14px;
-  background: rgba(239, 68, 68, 0.08);
-  border: 1px solid rgba(239, 68, 68, 0.2);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-left: 2px solid var(--color-danger);
   border-radius: 8px;
   color: var(--color-danger);
   font-size: 0.75rem;
@@ -189,9 +226,20 @@
   line-height: 1.5;
 }
 
+.jc-warnings {
+  margin: 0;
+  padding: 10px 14px 10px 30px;
+  border: 1px solid var(--color-border);
+  border-left: 2px solid var(--color-warning);
+  border-radius: 8px;
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+}
+
 /* ── Responsive ───────────────────────── */
 
-@media (max-width: 640px) {
+@container tool (max-width: 720px) {
   .jc-panes {
     grid-template-columns: 1fr;
   }
