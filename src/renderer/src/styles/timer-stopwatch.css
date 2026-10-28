@@ -17,10 +17,8 @@
   width: 100%;
   max-width: 480px;
   background: var(--glass-bg);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--glass-border);
-  border-radius: 24px;
+  border-radius: 16px;
   padding: 32px;
   box-shadow: var(--shadow-xl);
   text-align: center;
@@ -31,7 +29,7 @@
 }
 
 .ts-title {
-  font-size: 22px;
+  font-size: 1.25rem;
   font-weight: 700;
   font-family: 'JetBrains Mono', monospace;
   color: var(--color-text);
@@ -39,7 +37,7 @@
 }
 
 .ts-subtitle {
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--color-text-muted);
   margin: 0;
 }
@@ -64,9 +62,9 @@
   gap: 5px;
   padding: 8px 4px;
   border: none;
-  border-radius: 9px;
+  border-radius: 8px;
   background: transparent;
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 500;
   color: var(--color-text-secondary);
   cursor: pointer;
@@ -79,7 +77,7 @@
 
 .ts-tab.active {
   background: var(--color-accent-soft);
-  color: #fff;
+  color: var(--color-text-inverse);
   font-weight: 600;
 }
 
@@ -98,7 +96,7 @@
 }
 
 .ts-time {
-  font-size: 56px;
+  font-size: 3.5rem;
   font-weight: 800;
   font-family: 'JetBrains Mono', monospace;
   color: var(--color-text);
@@ -112,8 +110,8 @@
   padding: 4px 14px;
   background: var(--color-accent-soft-subtle);
   border: 1px solid var(--color-accent-soft);
-  border-radius: 20px;
-  font-size: 12px;
+  border-radius: 16px;
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--color-accent-soft);
   margin-bottom: 8px;
@@ -135,8 +133,8 @@
   transition: width 0.1s linear;
 }
 
-.ts-prog-work { background: #f97316; }
-.ts-prog-rest { background: #22c55e; }
+.ts-prog-work { background: var(--color-warning); }
+.ts-prog-rest { background: var(--color-success); }
 
 /* ── Controls ─────────────────────────── */
 
@@ -157,7 +155,7 @@
   border-radius: 12px;
   background: var(--color-surface);
   color: var(--color-text);
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -170,14 +168,14 @@
 
 .ts-ctrl-primary {
   background: var(--color-accent-soft);
-  color: #fff;
+  color: var(--color-text-inverse);
   border-color: var(--color-accent-soft);
   min-width: 120px;
 }
 
 .ts-ctrl-primary:hover {
   background: var(--color-accent-soft-hover, var(--color-accent-soft));
-  color: #fff;
+  color: var(--color-text-inverse);
 }
 
 /* ── Settings ─────────────────────────── */
@@ -199,7 +197,7 @@
   border: 1px solid var(--color-border);
   border-radius: 8px;
   background: var(--color-surface);
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 500;
   color: var(--color-text-secondary);
   cursor: pointer;
@@ -216,7 +214,7 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  font-size: 20px;
+  font-size: 1.25rem;
   font-weight: 700;
   font-family: 'JetBrains Mono', monospace;
   color: var(--color-text-muted);
@@ -229,7 +227,7 @@
   background: var(--color-editor-bg);
   border: 1px solid var(--color-border);
   border-radius: 8px;
-  font-size: 18px;
+  font-size: 1rem;
   font-weight: 700;
   font-family: 'JetBrains Mono', monospace;
   color: var(--color-text);
@@ -247,9 +245,9 @@
   padding: 10px 14px;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: 10px;
+  border-radius: 8px;
   margin-bottom: 8px;
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--color-text);
 }
 
@@ -260,7 +258,7 @@
   background: var(--color-editor-bg);
   border: 1px solid var(--color-border);
   border-radius: 6px;
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 600;
   font-family: 'JetBrains Mono', monospace;
   color: var(--color-text);
@@ -283,10 +281,9 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 8px;
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 600;
   color: var(--color-text-muted);
-  text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
@@ -294,7 +291,7 @@
   background: none;
   border: none;
   color: var(--color-text-muted);
-  font-size: 11px;
+  font-size: 0.6875rem;
   cursor: pointer;
 }
 
@@ -312,7 +309,7 @@
   border-radius: 8px;
   margin-bottom: 4px;
   font-family: 'JetBrains Mono', monospace;
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
 .ts-lap-id {
@@ -334,7 +331,7 @@
 /* ── Hint ─────────────────────────────── */
 
 .ts-hint {
-  font-size: 11px;
+  font-size: 0.6875rem;
   color: var(--color-text-muted);
 }
 
@@ -345,7 +342,7 @@
   border: 1px solid var(--color-border);
   border-radius: 4px;
   font-family: 'JetBrains Mono', monospace;
-  font-size: 10px;
+  font-size: 0.625rem;
 }
 
 /* ── Responsive ───────────────────────── */
@@ -357,15 +354,15 @@
 
   .ts-card {
     padding: 24px 18px;
-    border-radius: 18px;
+    border-radius: 16px;
   }
 
   .ts-time {
-    font-size: 40px;
+    font-size: 2.5rem;
   }
 
   .ts-tab {
-    font-size: 10px;
+    font-size: 0.625rem;
   }
 
   .ts-controls {

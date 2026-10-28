@@ -18,10 +18,8 @@
   width: 100%;
   max-width: 900px;
   background: var(--glass-bg);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--glass-border);
-  border-radius: 20px;
+  border-radius: 16px;
   padding: 28px;
   box-shadow: var(--shadow-xl);
 }
@@ -35,14 +33,14 @@
 }
 
 .csv-title {
-  font-size: 20px;
+  font-size: 1.25rem;
   font-weight: 700;
   font-family: 'JetBrains Mono', monospace;
   margin: 0;
 }
 
 .csv-subtitle {
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--color-text-muted);
   margin: 0 0 0 auto;
 }
@@ -61,10 +59,9 @@
 }
 
 .csv-section-label {
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 600;
   color: var(--color-text-muted);
-  text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
@@ -75,7 +72,7 @@
 }
 
 .csv-file-name {
-  font-size: 10px;
+  font-size: 0.625rem;
   color: var(--color-accent-soft);
   max-width: 150px;
   overflow: hidden;
@@ -88,9 +85,9 @@
   padding: 12px 14px;
   background: var(--color-editor-bg);
   border: 1px solid var(--color-border);
-  border-radius: 10px;
+  border-radius: 8px;
   color: var(--color-text);
-  font-size: 12px;
+  font-size: 0.75rem;
   font-family: 'JetBrains Mono', monospace;
   resize: vertical;
   outline: none;
@@ -101,7 +98,7 @@
 
 .csv-textarea:focus {
   border-color: var(--color-accent-soft);
-  box-shadow: 0 0 0 3px var(--color-accent-soft-subtle);
+  box-shadow: 0 0 0 2px var(--color-accent-soft-subtle);
 }
 
 .csv-textarea::placeholder {
@@ -126,7 +123,7 @@
   border-radius: 8px;
   background: var(--color-surface);
   color: var(--color-text-secondary);
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -170,13 +167,13 @@
 .csv-table-wrapper {
   overflow-x: auto;
   border: 1px solid var(--color-border);
-  border-radius: 10px;
+  border-radius: 8px;
 }
 
 .csv-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 12px;
+  font-size: 0.75rem;
   font-family: 'JetBrains Mono', monospace;
 }
 
@@ -212,7 +209,7 @@
   min-width: 36px;
   text-align: center;
   color: var(--color-text-muted) !important;
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 500;
 }
 
@@ -246,7 +243,7 @@
   border-radius: 4px;
   background: var(--color-editor-bg);
   color: var(--color-text);
-  font-size: 12px;
+  font-size: 0.75rem;
   font-family: 'JetBrains Mono', monospace;
   outline: none;
   box-sizing: border-box;
@@ -277,7 +274,7 @@
   text-align: center;
   padding: 40px 20px;
   color: var(--color-text-muted);
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
 .csv-empty-icon {
@@ -289,6 +286,6 @@
 @media (max-width: 600px) {
   .csv-page { padding: 16px; }
   .csv-card { padding: 20px; border-radius: 16px; }
-  .csv-table { font-size: 11px; }
+  .csv-table { font-size: 0.6875rem; }
   .csv-table th, .csv-table td { padding: 5px 8px; }
 }

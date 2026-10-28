@@ -17,10 +17,8 @@
   width: 100%;
   max-width: 700px;
   background: var(--glass-bg);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--glass-border);
-  border-radius: 20px;
+  border-radius: 16px;
   padding: 32px;
   box-shadow: var(--shadow-xl);
 }
@@ -31,7 +29,7 @@
 }
 
 .dc-title {
-  font-size: 22px;
+  font-size: 1.25rem;
   font-weight: 700;
   font-family: 'JetBrains Mono', monospace;
   color: var(--color-text);
@@ -39,7 +37,7 @@
 }
 
 .dc-subtitle {
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--color-text-muted);
 }
 
@@ -60,19 +58,23 @@
   padding: 8px 6px;
   background: transparent;
   border: none;
-  border-radius: 9px;
-  font-size: 12px;
+  border-radius: 8px;
+  font-size: 0.75rem;
   font-weight: 500;
   color: var(--color-text-secondary);
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition:
+    background-color 0.12s ease,
+    color 0.12s ease,
+    box-shadow 0.12s ease;
   white-space: nowrap;
 }
 
 .dc-tab.active {
-  background: var(--color-accent-soft);
-  color: #fff;
+  background: var(--color-surface-active);
+  color: var(--color-text);
   font-weight: 600;
+  box-shadow: inset 0 0 0 1px var(--color-border-active);
 }
 
 .dc-tab:hover:not(.active) {
@@ -93,10 +95,9 @@
 }
 
 .dc-pane-label {
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 600;
   color: var(--color-text-muted);
-  text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
@@ -105,7 +106,7 @@
   border: 1px solid var(--color-border);
   padding: 3px 10px;
   border-radius: 6px;
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 500;
   color: var(--color-text-secondary);
   cursor: pointer;
@@ -121,9 +122,9 @@
   padding: 12px 14px;
   background: var(--color-editor-bg);
   border: 1px solid var(--color-border);
-  border-radius: 10px;
+  border-radius: 8px;
   color: var(--color-text);
-  font-size: 12px;
+  font-size: 0.75rem;
   font-family: 'JetBrains Mono', monospace;
   resize: vertical;
   outline: none;
@@ -133,7 +134,7 @@
 
 .dc-textarea:focus {
   border-color: var(--color-accent-soft);
-  box-shadow: 0 0 0 3px var(--color-accent-soft-subtle);
+  box-shadow: 0 0 0 2px var(--color-accent-soft-subtle);
 }
 
 /* ── Actions ───────────────────────────── */
@@ -158,7 +159,7 @@
   border: 1px solid rgba(229, 62, 62, 0.2);
   border-radius: 8px;
   color: var(--color-danger, #e53e3e);
-  font-size: 12px;
+  font-size: 0.75rem;
   font-family: 'JetBrains Mono', monospace;
   margin-bottom: 14px;
 }
@@ -169,8 +170,8 @@
   padding: 16px;
   background: var(--color-editor-bg);
   border: 1px solid var(--color-border);
-  border-radius: 10px;
-  font-size: 12px;
+  border-radius: 8px;
+  font-size: 0.75rem;
   font-family: 'JetBrains Mono', monospace;
   color: var(--color-text);
   white-space: pre-wrap;
@@ -184,5 +185,5 @@
 @media (max-width: 500px) {
   .dc-page { padding: 24px 16px; }
   .dc-card { padding: 24px 18px; border-radius: 16px; }
-  .dc-tab { font-size: 10px; }
+  .dc-tab { font-size: 0.625rem; }
 }

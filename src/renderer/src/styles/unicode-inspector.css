@@ -17,10 +17,8 @@
   width: 100%;
   max-width: 600px;
   background: var(--glass-bg);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--glass-border);
-  border-radius: 20px;
+  border-radius: 16px;
   padding: 32px;
   box-shadow: var(--shadow-xl);
 }
@@ -31,7 +29,7 @@
 }
 
 .ui-title {
-  font-size: 24px;
+  font-size: 1.5rem;
   font-weight: 700;
   color: var(--color-text);
   font-family: 'JetBrains Mono', monospace;
@@ -40,7 +38,7 @@
 }
 
 .ui-subtitle {
-  font-size: 14px;
+  font-size: 0.875rem;
   color: var(--color-text-muted);
 }
 
@@ -57,10 +55,9 @@
 }
 
 .ui-input-label {
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 600;
   color: var(--color-text-muted);
-  text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
@@ -79,7 +76,7 @@
   border: 1px solid var(--color-border);
   border-radius: 6px;
   color: var(--color-text);
-  font-size: 14px;
+  font-size: 0.875rem;
   cursor: pointer;
   transition: all 0.15s ease;
 }
@@ -94,9 +91,9 @@
   padding: 12px 14px;
   background: var(--color-editor-bg);
   border: 1px solid var(--color-border);
-  border-radius: 10px;
+  border-radius: 8px;
   color: var(--color-text);
-  font-size: 16px;
+  font-size: 1rem;
   font-family: 'JetBrains Mono', monospace;
   line-height: 1.5;
   outline: none;
@@ -117,14 +114,14 @@
   padding: 12px;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: 10px;
+  border-radius: 8px;
 }
 
 .ui-char-list-label {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 11px;
+  font-size: 0.6875rem;
   color: var(--color-text-muted);
   margin-bottom: 8px;
 }
@@ -144,7 +141,7 @@
   background: var(--color-editor-bg);
   border: 1px solid var(--color-border);
   border-radius: 6px;
-  font-size: 16px;
+  font-size: 1rem;
   cursor: pointer;
   transition: all 0.15s ease;
 }
@@ -166,7 +163,7 @@
   padding: 20px;
   background: var(--color-editor-bg);
   border: 1px solid var(--color-border);
-  border-radius: 14px;
+  border-radius: 12px;
   margin-bottom: 20px;
 }
 
@@ -178,8 +175,8 @@
   justify-content: center;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: 14px;
-  font-size: 36px;
+  border-radius: 12px;
+  font-size: 2.25rem;
   line-height: 1;
   flex-shrink: 0;
 }
@@ -192,13 +189,13 @@
 
 .ui-preview-hex {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 20px;
+  font-size: 1.25rem;
   font-weight: 700;
   color: var(--color-accent-soft);
 }
 
 .ui-preview-cat {
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--color-text-muted);
 }
 
@@ -208,10 +205,9 @@
 }
 
 .ui-section-title {
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 600;
   color: var(--color-text-muted);
-  text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-bottom: 8px;
   padding: 0 2px;
@@ -234,7 +230,7 @@
 }
 
 .ui-info-label {
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--color-text-muted);
   min-width: 100px;
   flex-shrink: 0;
@@ -243,7 +239,7 @@
 .ui-info-value {
   flex: 1;
   font-family: 'JetBrains Mono', monospace;
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--color-text);
   user-select: all;
   overflow: hidden;
@@ -277,7 +273,7 @@
   text-align: center;
   padding: 48px 24px;
   color: var(--color-text-muted);
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 /* 响应式 */
@@ -292,7 +288,7 @@
   }
 
   .ui-title {
-    font-size: 20px;
+    font-size: 1.25rem;
   }
 
   .ui-input-header {

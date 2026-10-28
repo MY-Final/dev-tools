@@ -17,10 +17,8 @@
   width: 100%;
   max-width: 580px;
   background: var(--glass-bg);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--glass-border);
-  border-radius: 20px;
+  border-radius: 16px;
   padding: 32px;
   box-shadow: var(--shadow-xl);
 }
@@ -31,7 +29,7 @@
 }
 
 .uv-title {
-  font-size: 22px;
+  font-size: 1.25rem;
   font-weight: 700;
   font-family: 'JetBrains Mono', monospace;
   color: var(--color-text);
@@ -39,7 +37,7 @@
 }
 
 .uv-subtitle {
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--color-text-muted);
 }
 
@@ -57,10 +55,10 @@
   gap: 10px;
   padding: 14px 32px;
   background: var(--color-accent-soft);
-  color: #fff;
+  color: var(--color-text-inverse);
   border: none;
-  border-radius: 14px;
-  font-size: 15px;
+  border-radius: 12px;
+  font-size: 0.875rem;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -94,9 +92,9 @@
   padding: 12px 16px;
   background: rgba(229, 62, 62, 0.08);
   border: 1px solid rgba(229, 62, 62, 0.2);
-  border-radius: 10px;
+  border-radius: 8px;
   color: var(--color-danger, #e53e3e);
-  font-size: 13px;
+  font-size: 0.8125rem;
   margin-bottom: 16px;
 }
 
@@ -112,14 +110,14 @@
 }
 
 .uv-device-name {
-  font-size: 16px;
+  font-size: 1rem;
   font-weight: 700;
   color: var(--color-text);
   margin-bottom: 4px;
 }
 
 .uv-device-maker {
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--color-text-muted);
 }
 
@@ -136,23 +134,22 @@
   padding: 14px;
   background: var(--color-editor-bg);
   border: 1px solid var(--color-border);
-  border-radius: 10px;
+  border-radius: 8px;
   text-align: center;
 }
 
 .uv-vidpid-label {
   display: block;
-  font-size: 10px;
+  font-size: 0.625rem;
   font-weight: 700;
   color: var(--color-text-muted);
-  text-transform: uppercase;
   letter-spacing: 0.08em;
   margin-bottom: 6px;
 }
 
 .uv-vidpid-value {
   display: block;
-  font-size: 20px;
+  font-size: 1.25rem;
   font-weight: 700;
   font-family: 'JetBrains Mono', monospace;
   color: var(--color-accent-soft);
@@ -161,7 +158,7 @@
 .uv-vidpid-vendor {
   display: block;
   margin-top: 4px;
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--color-text-secondary);
   font-weight: 500;
 }
@@ -184,7 +181,7 @@
   border-radius: 8px;
   background: var(--color-surface);
   color: var(--color-text-secondary);
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -198,7 +195,7 @@
 
 .uv-btn-active {
   background: var(--color-accent-soft);
-  color: #fff;
+  color: var(--color-text-inverse);
   border-color: var(--color-accent-soft);
 }
 
@@ -209,10 +206,9 @@
 }
 
 .uv-section-title {
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 700;
   color: var(--color-text-muted);
-  text-transform: uppercase;
   letter-spacing: 0.06em;
   margin: 0 0 10px;
   padding-bottom: 8px;
@@ -225,7 +221,7 @@
   padding: 12px 14px;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: 10px;
+  border-radius: 8px;
   margin-bottom: 8px;
 }
 
@@ -237,9 +233,8 @@
 }
 
 .uv-col-type {
-  font-size: 10px;
+  font-size: 0.625rem;
   font-weight: 700;
-  text-transform: uppercase;
   padding: 2px 7px;
   border-radius: 4px;
   background: var(--color-accent-soft-subtle);
@@ -247,7 +242,7 @@
 }
 
 .uv-col-usage {
-  font-size: 12px;
+  font-size: 0.75rem;
   font-family: 'JetBrains Mono', monospace;
   color: var(--color-text);
 }
@@ -260,7 +255,7 @@
 }
 
 .uv-col-report {
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-family: 'JetBrains Mono', monospace;
   color: var(--color-text-muted);
 }
@@ -286,7 +281,7 @@
 }
 
 .uv-report-id {
-  font-size: 10px;
+  font-size: 0.625rem;
   font-weight: 700;
   font-family: 'JetBrains Mono', monospace;
   color: var(--color-accent-soft);
@@ -294,7 +289,7 @@
 }
 
 .uv-report-data {
-  font-size: 10px;
+  font-size: 0.625rem;
   font-family: 'JetBrains Mono', monospace;
   color: var(--color-text);
   word-break: break-all;
@@ -307,7 +302,7 @@
   text-align: center;
   padding: 20px;
   color: var(--color-text-muted);
-  font-size: 13px;
+  font-size: 0.8125rem;
   line-height: 1.5;
 }
 

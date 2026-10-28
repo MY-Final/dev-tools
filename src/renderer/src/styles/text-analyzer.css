@@ -17,10 +17,8 @@
   width: 100%;
   max-width: 780px;
   background: var(--glass-bg);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--glass-border);
-  border-radius: 20px;
+  border-radius: 16px;
   padding: 32px;
   box-shadow: var(--shadow-xl);
 }
@@ -31,7 +29,7 @@
 }
 
 .ta-title {
-  font-size: 24px;
+  font-size: 1.5rem;
   font-weight: 700;
   color: var(--color-text);
   font-family: 'JetBrains Mono', monospace;
@@ -40,7 +38,7 @@
 }
 
 .ta-subtitle {
-  font-size: 14px;
+  font-size: 0.875rem;
   color: var(--color-text-muted);
 }
 
@@ -57,10 +55,9 @@
 }
 
 .ta-input-label {
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 600;
   color: var(--color-text-muted);
-  text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
@@ -75,7 +72,7 @@
   border: 1px solid var(--color-border);
   border-radius: 6px;
   color: var(--color-text-muted);
-  font-size: 11px;
+  font-size: 0.6875rem;
   cursor: pointer;
   transition: all 0.15s ease;
 }
@@ -92,7 +89,7 @@
   border: 1px solid var(--color-border);
   border-radius: 12px;
   color: var(--color-text);
-  font-size: 14px;
+  font-size: 0.875rem;
   font-family: 'Inter', sans-serif;
   line-height: 1.6;
   resize: vertical;
@@ -137,7 +134,7 @@
   width: 36px;
   height: 36px;
   background: var(--color-accent-soft-subtle);
-  border-radius: 10px;
+  border-radius: 8px;
   color: var(--color-accent-soft);
   flex-shrink: 0;
 }
@@ -151,14 +148,14 @@
 
 .ta-stat-value {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 18px;
+  font-size: 1rem;
   font-weight: 700;
   color: var(--color-text);
   line-height: 1.2;
 }
 
 .ta-stat-label {
-  font-size: 11px;
+  font-size: 0.6875rem;
   color: var(--color-text-muted);
   white-space: nowrap;
   overflow: hidden;
@@ -177,7 +174,7 @@
   }
 
   .ta-title {
-    font-size: 20px;
+    font-size: 1.25rem;
   }
 
   .ta-input-header {
@@ -191,7 +188,7 @@
   }
 
   .ta-stat-value {
-    font-size: 16px;
+    font-size: 1rem;
   }
 }
 
@@ -208,7 +205,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 600;
   color: var(--color-text);
   margin-bottom: 14px;
@@ -227,7 +224,7 @@
 }
 
 .ta-gen-label {
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--color-text-secondary);
   min-width: 40px;
 }
@@ -239,7 +236,7 @@
   border: 1px solid var(--color-border);
   border-radius: 8px;
   color: var(--color-text);
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-family: 'JetBrains Mono', monospace;
   outline: none;
 }
@@ -258,7 +255,7 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--color-text-secondary);
   cursor: pointer;
 }
@@ -273,10 +270,10 @@
   gap: 6px;
   padding: 8px 18px;
   background: var(--color-accent-soft);
-  color: white;
+  color: var(--color-text-inverse);
   border: none;
   border-radius: 8px;
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -299,10 +296,9 @@
 }
 
 .ta-gen-output-label {
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 600;
   color: var(--color-text-muted);
-  text-transform: uppercase;
 }
 
 .ta-gen-output-actions {
@@ -315,7 +311,7 @@
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: 8px;
-  font-size: 12px;
+  font-size: 0.75rem;
   line-height: 1.7;
   color: var(--color-text);
   white-space: pre-wrap;

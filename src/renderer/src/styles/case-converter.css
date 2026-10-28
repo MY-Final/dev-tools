@@ -17,10 +17,8 @@
   width: 100%;
   max-width: 680px;
   background: var(--glass-bg);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--glass-border);
-  border-radius: 20px;
+  border-radius: 16px;
   padding: 32px;
   box-shadow: var(--shadow-xl);
 }
@@ -31,7 +29,7 @@
 }
 
 .cc-title {
-  font-size: 24px;
+  font-size: 1.5rem;
   font-weight: 700;
   color: var(--color-text);
   font-family: 'JetBrains Mono', monospace;
@@ -40,7 +38,7 @@
 }
 
 .cc-subtitle {
-  font-size: 14px;
+  font-size: 0.875rem;
   color: var(--color-text-muted);
 }
 
@@ -57,10 +55,9 @@
 }
 
 .cc-input-label {
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 600;
   color: var(--color-text-muted);
-  text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
@@ -75,7 +72,7 @@
   border: 1px solid var(--color-border);
   border-radius: 6px;
   color: var(--color-text-muted);
-  font-size: 11px;
+  font-size: 0.6875rem;
   cursor: pointer;
   transition: all 0.15s ease;
 }
@@ -90,9 +87,9 @@
   padding: 12px 14px;
   background: var(--color-editor-bg);
   border: 1px solid var(--color-border);
-  border-radius: 10px;
+  border-radius: 8px;
   color: var(--color-text);
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-family: 'JetBrains Mono', monospace;
   line-height: 1.5;
   resize: vertical;
@@ -123,7 +120,7 @@
   padding: 8px 14px;
   border: 1px solid var(--color-border);
   border-radius: 8px;
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -165,7 +162,7 @@
   padding: 10px 14px;
   background: var(--color-editor-bg);
   border: 1px solid var(--color-border);
-  border-radius: 10px;
+  border-radius: 8px;
   transition: all 0.15s ease;
 }
 
@@ -182,14 +179,14 @@
 }
 
 .cc-result-label {
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 600;
   color: var(--color-text);
   font-family: 'JetBrains Mono', monospace;
 }
 
 .cc-result-hint {
-  font-size: 11px;
+  font-size: 0.6875rem;
   color: var(--color-text-muted);
 }
 
@@ -204,7 +201,7 @@
 .cc-result-value {
   flex: 1;
   font-family: 'JetBrains Mono', monospace;
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--color-accent-soft);
   background: var(--color-surface);
   border: 1px solid var(--color-border);
@@ -251,7 +248,7 @@
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: 8px;
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--color-text-muted);
 }
 
@@ -267,7 +264,7 @@
   }
 
   .cc-title {
-    font-size: 20px;
+    font-size: 1.25rem;
   }
 
   .cc-input-header {

@@ -17,10 +17,8 @@
   width: 100%;
   max-width: 640px;
   background: var(--glass-bg);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--glass-border);
-  border-radius: 20px;
+  border-radius: 16px;
   padding: 32px;
   box-shadow: var(--shadow-xl);
 }
@@ -31,7 +29,7 @@
 }
 
 .dcs-title {
-  font-size: 24px;
+  font-size: 1.5rem;
   font-weight: 700;
   color: var(--color-text);
   font-family: 'JetBrains Mono', monospace;
@@ -40,7 +38,7 @@
 }
 
 .dcs-subtitle {
-  font-size: 14px;
+  font-size: 0.875rem;
   color: var(--color-text-muted);
 }
 
@@ -62,7 +60,7 @@
   background: transparent;
   border: none;
   color: var(--color-text);
-  font-size: 14px;
+  font-size: 0.875rem;
   outline: none;
 }
 
@@ -81,7 +79,7 @@
 .dcs-category {
   background: var(--color-editor-bg);
   border: 1px solid var(--color-border);
-  border-radius: 14px;
+  border-radius: 12px;
   overflow: hidden;
 }
 
@@ -95,23 +93,23 @@
 }
 
 .dcs-category-icon {
-  font-size: 18px;
+  font-size: 1rem;
 }
 
 .dcs-category-label {
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 600;
   color: var(--color-text);
 }
 
 .dcs-category-count {
   margin-left: auto;
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 600;
   color: var(--color-text-muted);
   background: var(--color-border);
   padding: 2px 8px;
-  border-radius: 10px;
+  border-radius: 8px;
 }
 
 /* 命令列表 */
@@ -147,15 +145,15 @@
 
 .dcs-command-text {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--color-accent-soft);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--color-text);
   flex-shrink: 0;
 }
 
 .dcs-command-desc {
   flex: 1;
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--color-text-secondary);
   min-width: 0;
   overflow: hidden;
@@ -212,10 +210,9 @@
 
 .dcs-detail-label {
   display: block;
-  font-size: 10px;
+  font-size: 0.625rem;
   font-weight: 600;
   color: var(--color-text-muted);
-  text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-bottom: 6px;
 }
@@ -238,14 +235,14 @@
 
 .dcs-param-flag {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--color-accent-soft);
   min-width: 60px;
 }
 
 .dcs-param-desc {
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--color-text-secondary);
 }
 
@@ -262,7 +259,7 @@
 .dcs-detail-code code {
   flex: 1;
   font-family: 'JetBrains Mono', monospace;
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--color-text);
   word-break: break-all;
 }
@@ -275,7 +272,7 @@
   gap: 12px;
   padding: 40px;
   color: var(--color-text-muted);
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 /* 响应式 */
@@ -290,7 +287,7 @@
   }
 
   .dcs-title {
-    font-size: 20px;
+    font-size: 1.25rem;
   }
 
   .dcs-command {
@@ -314,7 +311,7 @@
 }
 
 .dcs-container-hint {
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--color-text-muted);
   text-align: center;
   padding: 0 8px;
@@ -333,7 +330,7 @@
   padding: 10px 14px;
   background: var(--color-editor-bg);
   border: 1px solid var(--color-border);
-  border-radius: 10px;
+  border-radius: 8px;
 }
 
 .dcs-container-action-info {
@@ -342,20 +339,80 @@
 }
 
 .dcs-container-action-desc {
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 500;
   color: var(--color-text);
 }
 
 /* Docker Hub */
-.dcs-dockerhub { display: flex; flex-direction: column; gap: 10px; }
-.dcs-hub-item { padding: 14px 16px; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 12px; transition: all .2s ease; }
-.dcs-hub-item:hover { border-color: var(--color-border-hover); }
-.dcs-hub-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
-.dcs-hub-name { display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 700; color: var(--color-text); }
-.dcs-hub-badge { font-size: 10px; font-weight: 700; text-transform: uppercase; padding: 2px 6px; background: var(--color-accent-soft-subtle); color: var(--color-accent-soft); border-radius: 4px; }
-.dcs-hub-desc { font-size: 12px; color: var(--color-text-muted); margin-bottom: 6px; }
-.dcs-hub-meta { display: flex; gap: 14px; font-size: 11px; color: var(--color-text-muted); margin-bottom: 10px; }
-.dcs-hub-meta span { display: flex; align-items: center; gap: 3px; }
-.dcs-hub-cmd { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: var(--color-editor-bg); border: 1px solid var(--color-border); border-radius: 8px; }
-.dcs-hub-cmd code { flex: 1; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--color-accent-soft); word-break: break-all; }
+.dcs-dockerhub {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.dcs-hub-item {
+  padding: 14px 16px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+.dcs-hub-item:hover {
+  border-color: var(--color-border-hover);
+}
+.dcs-hub-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+.dcs-hub-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+.dcs-hub-badge {
+  font-size: 0.625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  background: var(--color-accent-soft-subtle);
+  color: var(--color-accent-soft);
+  border-radius: 4px;
+}
+.dcs-hub-desc {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  margin-bottom: 6px;
+}
+.dcs-hub-meta {
+  display: flex;
+  gap: 14px;
+  font-size: 0.6875rem;
+  color: var(--color-text-muted);
+  margin-bottom: 10px;
+}
+.dcs-hub-meta span {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+.dcs-hub-cmd {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--color-editor-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+}
+.dcs-hub-cmd code {
+  flex: 1;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  color: var(--color-accent-soft);
+  word-break: break-all;
+}

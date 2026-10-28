@@ -17,10 +17,8 @@
   width: 100%;
   max-width: 640px;
   background: var(--glass-bg);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--glass-border);
-  border-radius: 20px;
+  border-radius: 16px;
   padding: 32px;
   box-shadow: var(--shadow-xl);
 }
@@ -31,7 +29,7 @@
 }
 
 .cs-title {
-  font-size: 24px;
+  font-size: 1.5rem;
   font-weight: 700;
   color: var(--color-text);
   font-family: 'JetBrains Mono', monospace;
@@ -40,7 +38,7 @@
 }
 
 .cs-subtitle {
-  font-size: 14px;
+  font-size: 0.875rem;
   color: var(--color-text-muted);
 }
 
@@ -62,7 +60,7 @@
   background: transparent;
   border: none;
   color: var(--color-text);
-  font-size: 14px;
+  font-size: 0.875rem;
   outline: none;
 }
 
@@ -81,7 +79,7 @@
 .cs-category {
   background: var(--color-editor-bg);
   border: 1px solid var(--color-border);
-  border-radius: 14px;
+  border-radius: 12px;
   overflow: hidden;
 }
 
@@ -95,23 +93,23 @@
 }
 
 .cs-category-icon {
-  font-size: 18px;
+  font-size: 1rem;
 }
 
 .cs-category-label {
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 600;
   color: var(--color-text);
 }
 
 .cs-category-count {
   margin-left: auto;
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 600;
   color: var(--color-text-muted);
   background: var(--color-border);
   padding: 2px 8px;
-  border-radius: 10px;
+  border-radius: 8px;
 }
 
 /* 命令列表 */
@@ -147,15 +145,15 @@
 
 .cs-command-text {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--color-accent-soft);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--color-text);
   flex-shrink: 0;
 }
 
 .cs-command-desc {
   flex: 1;
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--color-text-secondary);
   min-width: 0;
   overflow: hidden;
@@ -212,10 +210,9 @@
 
 .cs-detail-label {
   display: block;
-  font-size: 10px;
+  font-size: 0.625rem;
   font-weight: 600;
   color: var(--color-text-muted);
-  text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-bottom: 6px;
 }
@@ -238,14 +235,14 @@
 
 .cs-param-flag {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--color-accent-soft);
   min-width: 60px;
 }
 
 .cs-param-desc {
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--color-text-secondary);
 }
 
@@ -262,7 +259,7 @@
 .cs-detail-code code {
   flex: 1;
   font-family: 'JetBrains Mono', monospace;
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--color-text);
   word-break: break-all;
 }
@@ -275,7 +272,7 @@
   gap: 12px;
   padding: 40px;
   color: var(--color-text-muted);
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 /* 响应式 */
@@ -290,7 +287,7 @@
   }
 
   .cs-title {
-    font-size: 20px;
+    font-size: 1.25rem;
   }
 
   .cs-command {

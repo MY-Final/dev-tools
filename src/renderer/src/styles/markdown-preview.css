@@ -18,8 +18,6 @@
   flex: 1;
   width: 100%;
   background: var(--glass-bg);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--glass-border);
   border-radius: 16px;
   padding: 20px;
@@ -39,14 +37,14 @@
 }
 
 .mp-title {
-  font-size: 20px;
+  font-size: 1.25rem;
   font-weight: 700;
   font-family: 'JetBrains Mono', monospace;
   margin: 0;
 }
 
 .mp-subtitle {
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--color-text-muted);
   margin: 0 0 0 auto;
 }
@@ -77,10 +75,9 @@
 }
 
 .mp-pane-label {
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 600;
   color: var(--color-text-muted);
-  text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
@@ -98,7 +95,7 @@
   border-radius: 6px;
   background: var(--color-surface);
   color: var(--color-text-secondary);
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -119,9 +116,9 @@
   padding: 14px;
   background: var(--color-editor-bg);
   border: 1px solid var(--color-border);
-  border-radius: 10px;
+  border-radius: 8px;
   color: var(--color-text);
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-family: 'JetBrains Mono', monospace;
   resize: none;
   outline: none;
@@ -131,7 +128,7 @@
 
 .mp-textarea:focus {
   border-color: var(--color-accent-soft);
-  box-shadow: 0 0 0 3px var(--color-accent-soft-subtle);
+  box-shadow: 0 0 0 2px var(--color-accent-soft-subtle);
 }
 
 .mp-textarea::placeholder {
@@ -145,18 +142,18 @@
   padding: 14px;
   background: var(--color-editor-bg);
   border: 1px solid var(--color-border);
-  border-radius: 10px;
+  border-radius: 8px;
   overflow-y: auto;
-  font-size: 14px;
+  font-size: 0.875rem;
   line-height: 1.7;
   color: var(--color-text);
 }
 
-.mp-preview h1 { font-size: 24px; font-weight: 700; margin: 0 0 12px; padding-bottom: 8px; border-bottom: 1px solid var(--color-border); }
-.mp-preview h2 { font-size: 20px; font-weight: 700; margin: 20px 0 10px; }
-.mp-preview h3 { font-size: 16px; font-weight: 600; margin: 16px 0 8px; }
-.mp-preview h4 { font-size: 14px; font-weight: 600; margin: 12px 0 6px; }
-.mp-preview h5, .mp-preview h6 { font-size: 13px; font-weight: 600; margin: 10px 0 4px; }
+.mp-preview h1 { font-size: 1.5rem; font-weight: 700; margin: 0 0 12px; padding-bottom: 8px; border-bottom: 1px solid var(--color-border); }
+.mp-preview h2 { font-size: 1.25rem; font-weight: 700; margin: 20px 0 10px; }
+.mp-preview h3 { font-size: 1rem; font-weight: 600; margin: 16px 0 8px; }
+.mp-preview h4 { font-size: 0.875rem; font-weight: 600; margin: 12px 0 6px; }
+.mp-preview h5, .mp-preview h6 { font-size: 0.8125rem; font-weight: 600; margin: 10px 0 4px; }
 .mp-preview p { margin: 0 0 10px; }
 .mp-preview strong { font-weight: 700; }
 .mp-preview em { font-style: italic; }
@@ -172,7 +169,7 @@
 }
 .mp-preview code {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 12px;
+  font-size: 0.75rem;
   background: var(--color-surface);
   padding: 2px 5px;
   border-radius: 4px;
@@ -212,7 +209,7 @@
   width: 100%;
   border-collapse: collapse;
   margin: 10px 0;
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 .mp-preview td {
   padding: 6px 10px;
