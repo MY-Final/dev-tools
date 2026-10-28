@@ -1,421 +1,239 @@
 /* ========================================
-   AES/DES Encryptor 页面
+   AES / DES Encryptor
+   算法工具条 + 输入/输出双栏
    ======================================== */
 
-.ade-page {
-  width: 100%;
-  height: 100%;
+.ade-toolbar {
+  overflow: hidden;
+}
+
+.ade-toolbar-row {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
-  padding: 40px 24px;
-  overflow-y: auto;
+  flex-wrap: wrap;
+  gap: 10px 24px;
+  padding: 10px 14px;
 }
 
-.ade-card {
-  width: 100%;
-  max-width: 640px;
-  background: var(--glass-bg);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--glass-border);
-  border-radius: 20px;
-  padding: 32px;
-  box-shadow: var(--shadow-xl);
-}
-
-.ade-header {
-  text-align: center;
-  margin-bottom: 28px;
-}
-
-.ade-title {
-  font-size: 24px;
-  font-weight: 700;
-  color: var(--color-text);
-  font-family: 'JetBrains Mono', monospace;
-  letter-spacing: -0.5px;
-  margin-bottom: 6px;
-}
-
-.ade-subtitle {
-  font-size: 14px;
-  color: var(--color-text-muted);
-}
-
-/* 行布局 */
-.ade-row {
+.ade-toolbar-group {
   display: flex;
-  gap: 16px;
-  margin-bottom: 20px;
-}
-
-.ade-selector-group {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
+  align-items: center;
   gap: 8px;
 }
 
 .ade-label {
-  font-size: 11px;
-  font-weight: 600;
   color: var(--color-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.ade-selector {
-  display: flex;
-  gap: 6px;
-  padding: 5px;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
-}
-
-.ade-selector-btn {
-  flex: 1;
-  padding: 8px 6px;
-  background: transparent;
-  border: 1px solid transparent;
-  border-radius: 8px;
-  color: var(--color-text-muted);
-  font-size: 12px;
-  font-weight: 600;
-  font-family: 'JetBrains Mono', monospace;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  font-size: var(--text-2xs);
+  font-weight: 500;
+  letter-spacing: 0.02em;
   white-space: nowrap;
 }
 
-.ade-selector-btn:hover {
-  color: var(--color-text-secondary);
-  background: var(--color-surface-hover);
+.ade-hint {
+  color: var(--color-text-muted);
+  font-size: var(--text-2xs);
+  font-weight: 400;
 }
 
-.ade-selector-btn.active {
-  background: var(--color-accent-soft);
-  color: var(--color-text-inverse);
-  border-color: var(--color-accent-soft);
+/* ── 输入 ───────────────────────────────────── */
+
+.ade-input-panel {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
-/* 输入区域 */
-.ade-input-area {
-  margin-bottom: 16px;
+.ade-field {
+  padding: 12px 14px;
+  border-top: 1px solid var(--color-border);
 }
 
-.ade-input-header {
+.ade-field:first-of-type {
+  border-top: 0;
+}
+
+.ade-field--data {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+
+.ade-field-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 8px;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 7px;
 }
 
-.ade-input-label {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--color-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.ade-format-group {
+.ade-field-tools {
   display: flex;
+  align-items: center;
   gap: 4px;
-  padding: 3px;
-  background: var(--color-editor-bg);
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  align-items: center;
 }
 
-.ade-format-btn {
-  padding: 4px 10px;
-  background: transparent;
-  border: 1px solid transparent;
-  border-radius: 6px;
-  color: var(--color-text-muted);
-  font-size: 11px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.ade-format-btn:hover {
-  color: var(--color-text-secondary);
-}
-
-.ade-format-btn.active {
-  background: var(--color-accent-soft-subtle);
-  color: var(--color-accent-soft);
-  border-color: var(--color-accent-soft);
-}
-
-.ade-gen-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.ade-field-tools .tool-icon-btn {
   width: 26px;
   height: 26px;
-  background: var(--color-accent-soft-subtle);
-  border: 1px solid var(--color-accent-soft);
-  border-radius: 6px;
-  color: var(--color-accent-soft);
-  cursor: pointer;
-  transition: all 0.15s ease;
-  margin-left: 4px;
-}
-
-.ade-gen-btn:hover {
-  background: var(--color-accent-soft);
-  color: var(--color-text-inverse);
-}
-
-.ade-input {
-  width: 100%;
-  padding: 10px 14px;
-  background: var(--color-editor-bg);
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  color: var(--color-text);
-  font-size: 13px;
-  font-family: 'JetBrains Mono', monospace;
-  line-height: 1.5;
-  transition: all 0.2s ease;
-  outline: none;
-}
-
-.ade-input:focus {
-  border-color: var(--color-accent-soft);
-}
-
-.ade-input::placeholder {
-  color: var(--color-text-muted);
 }
 
 .ade-textarea {
+  display: block;
+  flex: 1;
   width: 100%;
-  padding: 12px 14px;
-  background: var(--color-editor-bg);
+  min-height: 148px;
+  padding: 10px 12px;
   border: 1px solid var(--color-border);
-  border-radius: 10px;
+  border-radius: var(--radius-md);
+  background: var(--color-editor-bg);
   color: var(--color-text);
-  font-size: 13px;
   font-family: 'JetBrains Mono', monospace;
-  line-height: 1.5;
-  resize: vertical;
-  transition: all 0.2s ease;
+  font-size: var(--text-sm);
+  line-height: 1.6;
   outline: none;
-}
-
-.ade-textarea:focus {
-  border-color: var(--color-accent-soft);
+  resize: vertical;
+  transition:
+    border-color 0.12s ease,
+    box-shadow 0.12s ease;
 }
 
 .ade-textarea::placeholder {
   color: var(--color-text-muted);
 }
 
-/* 操作按钮区域 */
+.ade-textarea:hover:not(:focus) {
+  border-color: var(--color-border-hover);
+}
+
+.ade-textarea:focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 2px var(--color-accent-subtle);
+}
+
 .ade-actions {
   display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 20px;
-  flex-wrap: wrap;
-}
-
-.ade-action-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 10px 18px;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  color: var(--color-text-muted);
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.ade-action-btn:hover {
-  border-color: var(--color-border-hover);
-  color: var(--color-text-secondary);
-}
-
-.ade-action-btn.active.encrypt {
-  background: var(--color-accent-soft-subtle);
-  border-color: var(--color-accent-soft);
-  color: var(--color-accent-soft);
-}
-
-.ade-action-btn.active.decrypt {
-  background: var(--color-success-subtle, var(--color-accent-soft-subtle));
-  border-color: var(--color-success, var(--color-accent-soft));
-  color: var(--color-success, var(--color-accent-soft));
-}
-
-.ade-output-format {
-  display: flex;
-  align-items: center;
   gap: 8px;
+  padding: 12px 14px;
+  border-top: 1px solid var(--color-border);
+}
+
+/* ── 输出 ───────────────────────────────────── */
+
+.ade-output-panel {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.ade-output-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
   margin-left: auto;
 }
 
-.ade-process-btn {
-  padding: 10px 20px;
-  background: var(--color-accent-soft);
-  border: 1px solid var(--color-accent-soft);
-  border-radius: 10px;
-  color: var(--color-text-inverse);
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
+.ade-output-actions .tool-btn {
+  height: 26px;
+  padding: 0 8px;
+  font-size: var(--text-2xs);
 }
 
-.ade-process-btn:hover {
-  filter: brightness(1.1);
-}
-
-.ade-clear-btn {
+.ade-output-body {
   display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 10px 14px;
-  background: transparent;
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  color: var(--color-text-muted);
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.ade-clear-btn:hover {
-  border-color: var(--color-border-hover);
-  color: var(--color-text-secondary);
-}
-
-/* 错误信息 */
-.ade-error {
-  padding: 12px 16px;
-  background: var(--color-danger-subtle);
-  border: 1px solid var(--color-danger);
-  border-radius: 10px;
-  color: var(--color-danger);
-  font-size: 13px;
-  margin-bottom: 20px;
-  word-break: break-all;
-}
-
-/* 输出区域 */
-.ade-output-area {
-  padding: 16px;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 14px;
-}
-
-.ade-output-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 10px;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
 }
 
 .ade-output-label {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--color-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.ade-copy-btn {
   display: flex;
   align-items: center;
-  gap: 5px;
-  padding: 5px 10px;
-  background: var(--color-editor-bg);
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 14px 0;
   color: var(--color-text-muted);
-  font-size: 11px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.15s ease;
+  font-size: var(--text-2xs);
 }
 
-.ade-copy-btn:hover {
-  border-color: var(--color-accent-soft);
-  color: var(--color-accent-soft);
+.ade-output-label .tool-btn {
+  height: 24px;
+  padding: 0 8px;
+  font-size: var(--text-2xs);
 }
 
 .ade-output-content {
-  padding: 10px 12px;
-  background: var(--color-editor-bg);
+  flex: 1;
+  min-height: 120px;
+  margin: 8px 14px 0;
+  padding: 12px;
+  overflow: auto;
   border: 1px solid var(--color-border);
-  border-radius: 8px;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 12px;
+  border-radius: var(--radius-md);
+  background: var(--color-editor-bg);
   color: var(--color-text);
-  word-break: break-all;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: var(--text-sm);
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  user-select: all;
+}
+
+.ade-output-body > .ade-output-content:last-child {
+  margin-bottom: 14px;
+}
+
+.ade-tag-block {
+  padding-bottom: 14px;
+}
+
+.ade-tag-block .ade-output-content {
+  min-height: 0;
+  margin-bottom: 0;
+}
+
+.ade-error {
+  margin: 14px;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  background: var(--color-danger-subtle);
+  color: var(--color-danger);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+}
+
+.ade-empty {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  padding: 24px;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
   line-height: 1.6;
+  text-align: center;
 }
 
-.ade-output-content.ade-tag {
-  font-size: 11px;
-  color: var(--color-accent-soft);
-  background: var(--color-accent-soft-subtle);
-  border-color: var(--color-accent-soft);
-}
+/* ── 窄容器 ─────────────────────────────────── */
 
-/* 响应式 */
-@media (max-width: 600px) {
-  .ade-page {
-    padding: 24px 16px;
-  }
-
-  .ade-card {
-    padding: 24px 20px;
-    border-radius: 16px;
-  }
-
-  .ade-title {
-    font-size: 20px;
-  }
-
-  .ade-row {
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  .ade-input-header {
-    flex-direction: column;
+@container tool (max-width: 640px) {
+  .ade-toolbar-group {
     align-items: flex-start;
-    gap: 8px;
+    flex-direction: column;
+    gap: 4px;
   }
 
-  .ade-actions {
+  .ade-field-head {
+    align-items: flex-start;
     flex-direction: column;
   }
 
-  .ade-action-btn,
-  .ade-process-btn,
-  .ade-clear-btn {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .ade-output-format {
+  .ade-output-actions {
     margin-left: 0;
-    width: 100%;
-    justify-content: space-between;
   }
 }

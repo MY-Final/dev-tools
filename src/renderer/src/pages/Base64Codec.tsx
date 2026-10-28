@@ -116,115 +116,135 @@ export default function Base64Codec(): React.JSX.Element {
   }, [])
 
   return (
-    <div className="b64-page">
-      <div className="b64-card">
-        <div className="b64-header">
-          <h2 className="b64-title">Base64 Codec</h2>
-          <p className="b64-subtitle">Base64 编码与解码，支持 Unicode 和 Base64URL</p>
+    <div className="b64-page tool-page">
+      <header className="tool-page-header">
+        <div className="tool-page-heading">
+          <h2 className="tool-page-title">Base64 Codec</h2>
+          <p className="tool-page-desc">Base64 编码与解码，支持 Unicode 文本与 Base64URL 变体。</p>
         </div>
+        <div className="tool-page-actions">
+          <button type="button" className="tool-btn tool-btn--outline" onClick={clear}>
+            <RotateCcw size={14} aria-hidden="true" />
+            清空
+          </button>
+        </div>
+      </header>
 
-        <div className="b64-controls">
-          <div className="b64-mode-selector">
+      <section className="tool-panel b64-toolbar">
+        <div className="b64-toolbar-row">
+          <div className="tool-segmented">
             <button
-              className={`b64-mode-btn ${mode === 'encode' ? 'active' : ''}`}
+              type="button"
+              className={`tool-seg ${mode === 'encode' ? 'active' : ''}`}
               onClick={() => setMode('encode')}
+              aria-pressed={mode === 'encode'}
             >
               编码
             </button>
             <button
-              className={`b64-mode-btn ${mode === 'decode' ? 'active' : ''}`}
+              type="button"
+              className={`tool-seg ${mode === 'decode' ? 'active' : ''}`}
               onClick={() => setMode('decode')}
+              aria-pressed={mode === 'decode'}
             >
               解码
             </button>
           </div>
-          <div className="b64-variant-selector">
+          <div className="tool-segmented">
             <button
-              className={`b64-variant-btn ${variant === 'standard' ? 'active' : ''}`}
+              type="button"
+              className={`tool-seg ${variant === 'standard' ? 'active' : ''}`}
               onClick={() => setVariant('standard')}
+              aria-pressed={variant === 'standard'}
             >
               Standard
             </button>
             <button
-              className={`b64-variant-btn ${variant === 'url' ? 'active' : ''}`}
+              type="button"
+              className={`tool-seg ${variant === 'url' ? 'active' : ''}`}
               onClick={() => setVariant('url')}
+              aria-pressed={variant === 'url'}
             >
               URL
             </button>
           </div>
+          <span className="b64-toolbar-note">
+            {variant === 'url'
+              ? 'Base64URL 使用 - 和 _，无填充字符'
+              : mode === 'encode'
+                ? '输入文本 / JSON / URL'
+                : '输入 Base64 字符串'}
+          </span>
         </div>
-
-        {variant === 'url' && (
-          <div className="b64-hint">
-            Base64URL 使用 - 和 _ 替代 + 和 /，无填充字符，适用于 URL 和 JWT
-          </div>
-        )}
 
         {isLikelyBase64 && mode === 'encode' && (
           <div className="b64-detect">
-            <AlertTriangle size={14} />
+            <AlertTriangle size={13} aria-hidden="true" />
             <span>输入内容看起来像 Base64</span>
-            <button className="b64-detect-btn" onClick={switchToDecode}>
+            <button type="button" className="b64-detect-btn" onClick={switchToDecode}>
               切换到解码
             </button>
           </div>
         )}
+      </section>
 
-        <div className="b64-io">
-          <div className="b64-input-area">
-            <div className="b64-input-header">
-              <span className="b64-input-label">输入</span>
-              <span className="b64-input-hint">
-                {mode === 'encode' ? '文本 / JSON / URL' : 'Base64 字符串'}
-              </span>
-            </div>
-            <textarea
-              className="b64-textarea"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder={mode === 'encode' ? '输入要编码的文本...' : '输入要解码的 Base64...'}
-              rows={6}
-            />
+      <div className="b64-io">
+        <section className="tool-panel b64-pane">
+          <div className="tool-panel-head">
+            <h3 className="tool-panel-title">输入</h3>
           </div>
+          <textarea
+            className="b64-textarea"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder={mode === 'encode' ? '输入要编码的文本…' : '输入要解码的 Base64…'}
+            aria-label={mode === 'encode' ? '要编码的文本' : '要解码的 Base64'}
+            spellCheck={false}
+          />
+        </section>
 
-          <div className="b64-swap-area">
-            <button className="b64-swap-btn" onClick={swap} disabled={!output}>
-              <ArrowLeftRight size={16} />
-            </button>
-          </div>
-
-          <div className="b64-output-area">
-            <div className="b64-output-header">
-              <span className="b64-output-label">输出</span>
-              <div className="b64-output-actions">
-                {formattedJSON && (
-                  <button className="b64-format-btn" onClick={formatJSON}>
-                    <Braces size={13} />
-                    格式化 JSON
-                  </button>
-                )}
-                <button className="b64-copy-btn" onClick={copyOutput} disabled={!output}>
-                  {copied ? <Check size={13} /> : <Copy size={13} />}
-                  {copied ? '已复制' : '复制'}
-                </button>
-              </div>
-            </div>
-            <textarea
-              className="b64-textarea b64-output"
-              value={error || output}
-              readOnly
-              placeholder="结果将在这里显示..."
-              rows={6}
-            />
-          </div>
-        </div>
-
-        <div className="b64-actions">
-          <button className="b64-action-btn" onClick={clear}>
-            <RotateCcw size={14} />
-            清空
+        <div className="b64-swap-area">
+          <button
+            type="button"
+            className="tool-icon-btn b64-swap-btn"
+            onClick={swap}
+            disabled={!output}
+            title="交换输入与输出"
+            aria-label="交换输入与输出"
+          >
+            <ArrowLeftRight size={15} aria-hidden="true" />
           </button>
         </div>
+
+        <section className="tool-panel b64-pane">
+          <div className="tool-panel-head">
+            <h3 className="tool-panel-title">输出</h3>
+            <div className="b64-output-actions">
+              {formattedJSON && (
+                <button type="button" className="tool-btn" onClick={formatJSON}>
+                  <Braces size={13} aria-hidden="true" />
+                  格式化 JSON
+                </button>
+              )}
+              <button type="button" className="tool-btn" onClick={copyOutput} disabled={!output}>
+                {copied ? (
+                  <Check size={13} aria-hidden="true" />
+                ) : (
+                  <Copy size={13} aria-hidden="true" />
+                )}
+                {copied ? '已复制' : '复制'}
+              </button>
+            </div>
+          </div>
+          <textarea
+            className={`b64-textarea b64-output ${error ? 'b64-output--error' : ''}`}
+            value={error || output}
+            readOnly
+            placeholder="结果将在这里显示…"
+            aria-label="转换结果"
+            spellCheck={false}
+          />
+        </section>
       </div>
     </div>
   )

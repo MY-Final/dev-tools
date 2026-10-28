@@ -84,17 +84,14 @@ async function aesEncrypt(
   }
 
   const algoName = mode === 'CTR' ? 'AES-CTR' : 'AES-CBC'
-  const algoParams: AesCtrParams | AesCbcParams = mode === 'CTR'
-    ? { name: 'AES-CTR', counter: toArrayBuffer(ivBytes!), length: 64 }
-    : { name: 'AES-CBC', iv: toArrayBuffer(ivBytes!) }
+  const algoParams: AesCtrParams | AesCbcParams =
+    mode === 'CTR'
+      ? { name: 'AES-CTR', counter: toArrayBuffer(ivBytes!), length: 64 }
+      : { name: 'AES-CBC', iv: toArrayBuffer(ivBytes!) }
 
-  const cryptoKey = await crypto.subtle.importKey(
-    'raw',
-    toArrayBuffer(keyBytes),
-    algoName,
-    false,
-    ['encrypt']
-  )
+  const cryptoKey = await crypto.subtle.importKey('raw', toArrayBuffer(keyBytes), algoName, false, [
+    'encrypt'
+  ])
   const result = await crypto.subtle.encrypt(algoParams, cryptoKey, toArrayBuffer(data))
   return { ciphertext: new Uint8Array(result) }
 }
@@ -120,17 +117,14 @@ async function aesDecrypt(
   }
 
   const algoName = mode === 'CTR' ? 'AES-CTR' : 'AES-CBC'
-  const algoParams: AesCtrParams | AesCbcParams = mode === 'CTR'
-    ? { name: 'AES-CTR', counter: toArrayBuffer(ivBytes!), length: 64 }
-    : { name: 'AES-CBC', iv: toArrayBuffer(ivBytes!) }
+  const algoParams: AesCtrParams | AesCbcParams =
+    mode === 'CTR'
+      ? { name: 'AES-CTR', counter: toArrayBuffer(ivBytes!), length: 64 }
+      : { name: 'AES-CBC', iv: toArrayBuffer(ivBytes!) }
 
-  const cryptoKey = await crypto.subtle.importKey(
-    'raw',
-    toArrayBuffer(keyBytes),
-    algoName,
-    false,
-    ['decrypt']
-  )
+  const cryptoKey = await crypto.subtle.importKey('raw', toArrayBuffer(keyBytes), algoName, false, [
+    'decrypt'
+  ])
   const result = await crypto.subtle.decrypt(algoParams, cryptoKey, toArrayBuffer(data))
   return new Uint8Array(result)
 }
@@ -199,7 +193,8 @@ export default function AesDesEncryptor(): React.JSX.Element {
 
   const mode = cipherType === 'AES' ? aesMode : desMode
   const needsIv = mode === 'CBC' || mode === 'GCM' || mode === 'CTR'
-  const keySizeBytes = cipherType === 'AES' ? AES_KEY_SIZES[aesKeySize].bytes : cipherType === 'DES' ? 8 : 24
+  const keySizeBytes =
+    cipherType === 'AES' ? AES_KEY_SIZES[aesKeySize].bytes : cipherType === 'DES' ? 8 : 24
 
   // Auto-generate IV
   const generateIv = useCallback(() => {
@@ -215,70 +210,91 @@ export default function AesDesEncryptor(): React.JSX.Element {
   }, [keySizeBytes])
 
   // Process encrypt/decrypt
-  const process = useCallback(async () => {
-    if (!inputData) {
-      setError('请输入数据')
-      return
-    }
-    if (!keyInput) {
-      setError('请输入密钥')
-      return
-    }
-    if (needsIv && !ivInput) {
-      setError(`${mode} 模式需要 IV`)
-      return
-    }
-
-    try {
-      const keyBytes = parseBytes(keyInput, keyFormat)
-      if (keyBytes.length !== keySizeBytes) {
-        setError(`密钥长度必须为 ${keySizeBytes} 字节 (${keySizeBytes * 8} bits)，当前为 ${keyBytes.length} 字节`)
+  const process = useCallback(
+    async (act: Action) => {
+      setAction(act)
+      if (!inputData) {
+        setError('请输入数据')
+        return
+      }
+      if (!keyInput) {
+        setError('请输入密钥')
+        return
+      }
+      if (needsIv && !ivInput) {
+        setError(`${mode} 模式需要 IV`)
         return
       }
 
-      let ivBytes: Uint8Array | null = null
-      if (needsIv) {
-        ivBytes = parseBytes(ivInput, ivFormat)
-        const expectedIvLen = mode === 'GCM' ? 12 : 16
-        if (ivBytes.length !== expectedIvLen) {
-          setError(`IV 长度必须为 ${expectedIvLen} 字节，当前为 ${ivBytes.length} 字节`)
+      try {
+        const keyBytes = parseBytes(keyInput, keyFormat)
+        if (keyBytes.length !== keySizeBytes) {
+          setError(
+            `密钥长度必须为 ${keySizeBytes} 字节 (${keySizeBytes * 8} bits)，当前为 ${keyBytes.length} 字节`
+          )
           return
         }
-      }
 
-      setError('')
-      setOutputTag('')
+        let ivBytes: Uint8Array | null = null
+        if (needsIv) {
+          ivBytes = parseBytes(ivInput, ivFormat)
+          const expectedIvLen = mode === 'GCM' ? 12 : 16
+          if (ivBytes.length !== expectedIvLen) {
+            setError(`IV 长度必须为 ${expectedIvLen} 字节，当前为 ${ivBytes.length} 字节`)
+            return
+          }
+        }
 
-      if (cipherType === 'AES') {
-        if (action === 'encrypt') {
-          const dataBytes = parseBytes(inputData, inputFormat)
-          const result = await aesEncrypt(dataBytes, keyBytes, ivBytes, aesMode)
-          const outputBytes = result.tag ? concatBytes(result.ciphertext, result.tag) : result.ciphertext
-          setOutputData(formatOutput(outputBytes, outputFormat))
-          if (result.tag) setOutputTag(bytesToHex(result.tag))
+        setError('')
+        setOutputTag('')
+
+        if (cipherType === 'AES') {
+          if (act === 'encrypt') {
+            const dataBytes = parseBytes(inputData, inputFormat)
+            const result = await aesEncrypt(dataBytes, keyBytes, ivBytes, aesMode)
+            const outputBytes = result.tag
+              ? concatBytes(result.ciphertext, result.tag)
+              : result.ciphertext
+            setOutputData(formatOutput(outputBytes, outputFormat))
+            if (result.tag) setOutputTag(bytesToHex(result.tag))
+          } else {
+            const dataBytes = parseBytes(inputData, inputFormat)
+            const result = await aesDecrypt(dataBytes, keyBytes, ivBytes, aesMode)
+            setOutputData(new TextDecoder().decode(result))
+          }
         } else {
-          const dataBytes = parseBytes(inputData, inputFormat)
-          const result = await aesDecrypt(dataBytes, keyBytes, ivBytes, aesMode)
-          setOutputData(new TextDecoder().decode(result))
+          const isTriple = cipherType === '3DES'
+          if (act === 'encrypt') {
+            const dataBytes = parseBytes(inputData, inputFormat)
+            const result = desEncrypt(dataBytes, keyBytes, ivBytes, isTriple)
+            setOutputData(formatOutput(result, outputFormat))
+          } else {
+            const dataBytes = parseBytes(inputData, inputFormat)
+            const result = desDecrypt(dataBytes, keyBytes, ivBytes, isTriple)
+            setOutputData(new TextDecoder().decode(result))
+          }
         }
-      } else {
-        const isTriple = cipherType === '3DES'
-        if (action === 'encrypt') {
-          const dataBytes = parseBytes(inputData, inputFormat)
-          const result = desEncrypt(dataBytes, keyBytes, ivBytes, isTriple)
-          setOutputData(formatOutput(result, outputFormat))
-        } else {
-          const dataBytes = parseBytes(inputData, inputFormat)
-          const result = desDecrypt(dataBytes, keyBytes, ivBytes, isTriple)
-          setOutputData(new TextDecoder().decode(result))
-        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : '处理失败')
+        setOutputData('')
+        setOutputTag('')
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : '处理失败')
-      setOutputData('')
-      setOutputTag('')
-    }
-  }, [inputData, inputFormat, keyInput, keyFormat, ivInput, ivFormat, cipherType, aesMode, desMode, aesKeySize, action, outputFormat, needsIv, mode, keySizeBytes])
+    },
+    [
+      inputData,
+      inputFormat,
+      keyInput,
+      keyFormat,
+      ivInput,
+      ivFormat,
+      cipherType,
+      aesMode,
+      outputFormat,
+      needsIv,
+      mode,
+      keySizeBytes
+    ]
+  )
 
   const copyOutput = useCallback(async () => {
     if (!outputData) return
@@ -312,23 +328,34 @@ export default function AesDesEncryptor(): React.JSX.Element {
   }, [])
 
   return (
-    <div className="ade-page">
-      <div className="ade-card">
-        <div className="ade-header">
-          <h2 className="ade-title">AES/DES Encryptor</h2>
-          <p className="ade-subtitle">对称加密/解密，支持多种算法和模式</p>
+    <div className="ade-page tool-page">
+      <header className="tool-page-header">
+        <div className="tool-page-heading">
+          <h2 className="tool-page-title">AES / DES Encryptor</h2>
+          <p className="tool-page-desc">
+            使用 Web Crypto 与 node-forge 进行对称加密和解密，支持 AES、DES 与 3DES。
+          </p>
         </div>
+        <div className="tool-page-actions">
+          <button type="button" className="tool-btn tool-btn--outline" onClick={clear}>
+            <RotateCcw size={14} aria-hidden="true" />
+            清空
+          </button>
+        </div>
+      </header>
 
-        {/* Cipher type selector */}
-        <div className="ade-row">
-          <div className="ade-selector-group">
+      <section className="tool-panel ade-toolbar">
+        <div className="ade-toolbar-row">
+          <div className="ade-toolbar-group">
             <span className="ade-label">算法</span>
-            <div className="ade-selector">
+            <div className="tool-segmented" role="group" aria-label="加密算法">
               {(['AES', 'DES', '3DES'] as CipherType[]).map((t) => (
                 <button
                   key={t}
-                  className={`ade-selector-btn ${cipherType === t ? 'active' : ''}`}
+                  type="button"
+                  className={`tool-seg ${cipherType === t ? 'active' : ''}`}
                   onClick={() => setCipherType(t)}
+                  aria-pressed={cipherType === t}
                 >
                   {t}
                 </button>
@@ -336,201 +363,257 @@ export default function AesDesEncryptor(): React.JSX.Element {
             </div>
           </div>
 
-          <div className="ade-selector-group">
+          <div className="ade-toolbar-group">
             <span className="ade-label">模式</span>
-            <div className="ade-selector">
+            <div className="tool-segmented" role="group" aria-label="加密模式">
               {(cipherType === 'AES' ? AES_MODES : DES_MODES).map((m) => (
                 <button
                   key={m}
-                  className={`ade-selector-btn ${mode === m ? 'active' : ''}`}
+                  type="button"
+                  className={`tool-seg ${mode === m ? 'active' : ''}`}
                   onClick={() =>
                     cipherType === 'AES' ? setAesMode(m as AesMode) : setDesMode(m as DesMode)
                   }
+                  aria-pressed={mode === m}
                 >
                   {m}
                 </button>
               ))}
             </div>
           </div>
-        </div>
 
-        {/* AES key size */}
-        {cipherType === 'AES' && (
-          <div className="ade-row">
-            <div className="ade-selector-group">
+          {cipherType === 'AES' && (
+            <div className="ade-toolbar-group">
               <span className="ade-label">密钥长度</span>
-              <div className="ade-selector">
+              <div className="tool-segmented" role="group" aria-label="AES 密钥长度">
                 {AES_KEY_SIZES.map((s, i) => (
                   <button
                     key={s.bits}
-                    className={`ade-selector-btn ${aesKeySize === i ? 'active' : ''}`}
+                    type="button"
+                    className={`tool-seg ${aesKeySize === i ? 'active' : ''}`}
                     onClick={() => setAesKeySize(i)}
+                    aria-pressed={aesKeySize === i}
                   >
-                    {s.label}
+                    {s.bits}
                   </button>
                 ))}
               </div>
             </div>
-          </div>
-        )}
-
-        {/* Key input */}
-        <div className="ade-input-area">
-          <div className="ade-input-header">
-            <span className="ade-input-label">
-              密钥 (Key) — {keySizeBytes} 字节 / {keySizeBytes * 8} bits
-            </span>
-            <div className="ade-format-group">
-              {(['text', 'hex', 'base64'] as InputFormat[]).map((f) => (
-                <button
-                  key={f}
-                  className={`ade-format-btn ${keyFormat === f ? 'active' : ''}`}
-                  onClick={() => setKeyFormat(f)}
-                >
-                  {f === 'text' ? '文本' : f.toUpperCase()}
-                </button>
-              ))}
-              <button className="ade-gen-btn" onClick={generateKey} title="自动生成密钥">
-                <RefreshCw size={12} />
-              </button>
-            </div>
-          </div>
-          <input
-            className="ade-input"
-            value={keyInput}
-            onChange={(e) => setKeyInput(e.target.value)}
-            placeholder={`输入 ${keySizeBytes} 字节密钥...`}
-          />
+          )}
         </div>
+      </section>
 
-        {/* IV input */}
-        {needsIv && (
-          <div className="ade-input-area">
-            <div className="ade-input-header">
-              <span className="ade-input-label">
-                IV / Nonce — {mode === 'GCM' ? '12' : '16'} 字节
-              </span>
-              <div className="ade-format-group">
-                {(['hex', 'base64'] as InputFormat[]).map((f) => (
-                  <button
-                    key={f}
-                    className={`ade-format-btn ${ivFormat === f ? 'active' : ''}`}
-                    onClick={() => setIvFormat(f)}
-                  >
-                    {f.toUpperCase()}
-                  </button>
-                ))}
-                <button className="ade-gen-btn" onClick={generateIv} title="自动生成 IV">
-                  <RefreshCw size={12} />
+      <div className="tool-split tool-split--even ade-layout">
+        <section className="tool-panel ade-input-panel">
+          <div className="tool-panel-head">
+            <h3 className="tool-panel-title">输入</h3>
+            <span className="ade-hint">
+              密钥 {keySizeBytes} 字节 / {keySizeBytes * 8} bit
+            </span>
+          </div>
+
+          <div className="ade-field">
+            <div className="ade-field-head">
+              <label className="ade-label" htmlFor="ade-key">
+                密钥 Key
+              </label>
+              <div className="ade-field-tools">
+                <div className="tool-segmented" role="group" aria-label="密钥格式">
+                  {(['text', 'hex', 'base64'] as InputFormat[]).map((f) => (
+                    <button
+                      key={f}
+                      type="button"
+                      className={`tool-seg ${keyFormat === f ? 'active' : ''}`}
+                      onClick={() => setKeyFormat(f)}
+                      aria-pressed={keyFormat === f}
+                    >
+                      {f === 'text' ? '文本' : f.toUpperCase()}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  className="tool-icon-btn"
+                  onClick={generateKey}
+                  title="生成随机密钥"
+                  aria-label="生成随机密钥"
+                >
+                  <RefreshCw size={14} aria-hidden="true" />
                 </button>
               </div>
             </div>
             <input
-              className="ade-input"
-              value={ivInput}
-              onChange={(e) => setIvInput(e.target.value)}
-              placeholder={`输入 ${mode === 'GCM' ? '12' : '16'} 字节 IV...`}
+              id="ade-key"
+              className="tool-input tool-input--mono"
+              value={keyInput}
+              onChange={(e) => setKeyInput(e.target.value)}
+              placeholder={`输入 ${keySizeBytes} 字节密钥…`}
+              spellCheck={false}
             />
           </div>
-        )}
 
-        {/* Input data */}
-        <div className="ade-input-area">
-          <div className="ade-input-header">
-            <span className="ade-input-label">
-              {action === 'encrypt' ? '明文输入' : '密文输入'}
-            </span>
-            <div className="ade-format-group">
-              {(['text', 'hex', 'base64'] as InputFormat[]).map((f) => (
-                <button
-                  key={f}
-                  className={`ade-format-btn ${inputFormat === f ? 'active' : ''}`}
-                  onClick={() => setInputFormat(f)}
-                >
-                  {f === 'text' ? '文本' : f.toUpperCase()}
-                </button>
-              ))}
+          {needsIv && (
+            <div className="ade-field">
+              <div className="ade-field-head">
+                <label className="ade-label" htmlFor="ade-iv">
+                  IV / Nonce
+                  <span className="ade-hint"> {mode === 'GCM' ? 12 : 16} 字节</span>
+                </label>
+                <div className="ade-field-tools">
+                  <div className="tool-segmented" role="group" aria-label="IV 格式">
+                    {(['hex', 'base64'] as InputFormat[]).map((f) => (
+                      <button
+                        key={f}
+                        type="button"
+                        className={`tool-seg ${ivFormat === f ? 'active' : ''}`}
+                        onClick={() => setIvFormat(f)}
+                        aria-pressed={ivFormat === f}
+                      >
+                        {f.toUpperCase()}
+                      </button>
+                    ))}
+                  </div>
+                  <button
+                    type="button"
+                    className="tool-icon-btn"
+                    onClick={generateIv}
+                    title="生成随机 IV"
+                    aria-label="生成随机 IV"
+                  >
+                    <RefreshCw size={14} aria-hidden="true" />
+                  </button>
+                </div>
+              </div>
+              <input
+                id="ade-iv"
+                className="tool-input tool-input--mono"
+                value={ivInput}
+                onChange={(e) => setIvInput(e.target.value)}
+                placeholder={`输入 ${mode === 'GCM' ? 12 : 16} 字节 IV…`}
+                spellCheck={false}
+              />
             </div>
-          </div>
-          <textarea
-            className="ade-textarea"
-            value={inputData}
-            onChange={(e) => setInputData(e.target.value)}
-            placeholder={action === 'encrypt' ? '输入要加密的文本...' : '输入要解密的密文...'}
-            rows={4}
-          />
-        </div>
+          )}
 
-        {/* Action buttons */}
-        <div className="ade-actions">
-          <button
-            className={`ade-action-btn ${action === 'encrypt' ? 'active encrypt' : ''}`}
-            onClick={() => setAction('encrypt')}
-          >
-            <Lock size={14} />
-            加密
-          </button>
-          <button
-            className={`ade-action-btn ${action === 'decrypt' ? 'active decrypt' : ''}`}
-            onClick={() => setAction('decrypt')}
-          >
-            <Unlock size={14} />
-            解密
-          </button>
-          <div className="ade-output-format">
-            <span className="ade-label">输出:</span>
-            <div className="ade-format-group">
-              {(['hex', 'base64'] as OutputFormat[]).map((f) => (
-                <button
-                  key={f}
-                  className={`ade-format-btn ${outputFormat === f ? 'active' : ''}`}
-                  onClick={() => setOutputFormat(f)}
-                >
-                  {f.toUpperCase()}
-                </button>
-              ))}
+          <div className="ade-field ade-field--data">
+            <div className="ade-field-head">
+              <label className="ade-label" htmlFor="ade-data">
+                {action === 'encrypt' ? '明文' : '密文'}
+              </label>
+              <div className="tool-segmented" role="group" aria-label="输入格式">
+                {(['text', 'hex', 'base64'] as InputFormat[]).map((f) => (
+                  <button
+                    key={f}
+                    type="button"
+                    className={`tool-seg ${inputFormat === f ? 'active' : ''}`}
+                    onClick={() => setInputFormat(f)}
+                    aria-pressed={inputFormat === f}
+                  >
+                    {f === 'text' ? '文本' : f.toUpperCase()}
+                  </button>
+                ))}
+              </div>
             </div>
+            <textarea
+              id="ade-data"
+              className="ade-textarea"
+              value={inputData}
+              onChange={(e) => setInputData(e.target.value)}
+              placeholder={action === 'encrypt' ? '输入要加密的文本…' : '输入要解密的密文…'}
+              rows={7}
+              spellCheck={false}
+            />
           </div>
-          <button className="ade-process-btn" onClick={process}>
-            {action === 'encrypt' ? '🔒 执行加密' : '🔓 执行解密'}
-          </button>
-          <button className="ade-clear-btn" onClick={clear}>
-            <RotateCcw size={14} />
-            清空
-          </button>
-        </div>
 
-        {/* Error */}
-        {error && <div className="ade-error">{error}</div>}
+          <div className="ade-actions">
+            <button
+              type="button"
+              className="tool-btn tool-btn--primary"
+              onClick={() => void process('encrypt')}
+            >
+              <Lock size={14} aria-hidden="true" />
+              加密
+            </button>
+            <button
+              type="button"
+              className="tool-btn tool-btn--outline"
+              onClick={() => void process('decrypt')}
+            >
+              <Unlock size={14} aria-hidden="true" />
+              解密
+            </button>
+          </div>
+        </section>
 
-        {/* Output */}
-        {outputData && !error && (
-          <div className="ade-output-area">
-            <div className="ade-output-header">
-              <span className="ade-output-label">
-                {action === 'encrypt' && mode === 'GCM' ? '密文输出（已附带 Auth Tag）' : action === 'encrypt' ? '密文输出' : '明文输出'}
-              </span>
-              <button className="ade-copy-btn" onClick={copyOutput}>
-                {copied ? <Check size={13} /> : <Copy size={13} />}
+        <section className="tool-panel ade-output-panel">
+          <div className="tool-panel-head">
+            <h3 className="tool-panel-title">输出</h3>
+            <div className="ade-output-actions">
+              <div className="tool-segmented" role="group" aria-label="输出格式">
+                {(['hex', 'base64'] as OutputFormat[]).map((f) => (
+                  <button
+                    key={f}
+                    type="button"
+                    className={`tool-seg ${outputFormat === f ? 'active' : ''}`}
+                    onClick={() => setOutputFormat(f)}
+                    aria-pressed={outputFormat === f}
+                  >
+                    {f.toUpperCase()}
+                  </button>
+                ))}
+              </div>
+              <button
+                type="button"
+                className="tool-btn"
+                onClick={copyOutput}
+                disabled={!outputData}
+              >
+                {copied ? (
+                  <Check size={13} aria-hidden="true" />
+                ) : (
+                  <Copy size={13} aria-hidden="true" />
+                )}
                 {copied ? '已复制' : '复制'}
               </button>
             </div>
-            <div className="ade-output-content">{outputData}</div>
-
-            {outputTag && (
-              <>
-                <div className="ade-output-header" style={{ marginTop: 12 }}>
-                  <span className="ade-output-label">GCM Auth Tag (16 字节)</span>
-                  <button className="ade-copy-btn" onClick={copyTag}>
-                    {copiedTag ? <Check size={13} /> : <Copy size={13} />}
-                    {copiedTag ? '已复制' : '复制'}
-                  </button>
-                </div>
-                <div className="ade-output-content ade-tag">{outputTag}</div>
-              </>
-            )}
           </div>
-        )}
+
+          {error ? (
+            <div className="ade-error" role="status">
+              {error}
+            </div>
+          ) : outputData ? (
+            <div className="ade-output-body">
+              <div className="ade-output-label">
+                {action === 'encrypt'
+                  ? mode === 'GCM'
+                    ? '密文（已附带 Auth Tag）'
+                    : '密文'
+                  : '明文'}
+              </div>
+              <pre className="ade-output-content">{outputData}</pre>
+
+              {outputTag && (
+                <div className="ade-tag-block">
+                  <div className="ade-output-label">
+                    GCM Auth Tag · 16 字节
+                    <button type="button" className="tool-btn" onClick={copyTag}>
+                      {copiedTag ? (
+                        <Check size={13} aria-hidden="true" />
+                      ) : (
+                        <Copy size={13} aria-hidden="true" />
+                      )}
+                      {copiedTag ? '已复制' : '复制 Tag'}
+                    </button>
+                  </div>
+                  <pre className="ade-output-content">{outputTag}</pre>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="ade-empty">填写密钥与 IV，输入内容后点击「加密」或「解密」。</div>
+          )}
+        </section>
       </div>
     </div>
   )

@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import { Link2, Copy, Check, ArrowLeftRight, RotateCcw } from 'lucide-react'
+import { Copy, Check, ArrowLeftRight, RotateCcw } from 'lucide-react'
 
 type Mode = 'component' | 'full'
 
@@ -69,87 +69,120 @@ export default function URLCodec(): React.JSX.Element {
   }, [])
 
   return (
-    <div className="uc-page">
-      <div className="uc-card">
-        <div className="uc-header">
-          <h2 className="uc-title">URL 编解码</h2>
-          <p className="uc-subtitle">对 URL 或参数字符串进行编码与解码</p>
+    <div className="urlc-page tool-page">
+      <header className="tool-page-header">
+        <div className="tool-page-heading">
+          <h2 className="tool-page-title">URL 编解码</h2>
+          <p className="tool-page-desc">
+            对 URL 或参数字符串进行编码与解码，支持完整链接与查询参数两种模式。
+          </p>
         </div>
-
-        <div className="uc-mode-selector">
-          <button
-            className={`uc-mode-btn ${mode === 'component' ? 'active' : ''}`}
-            onClick={() => setMode('component')}
-          >
-            参数编码
-          </button>
-          <button
-            className={`uc-mode-btn ${mode === 'full' ? 'active' : ''}`}
-            onClick={() => setMode('full')}
-          >
-            完整 URL
+        <div className="tool-page-actions">
+          <button type="button" className="tool-btn tool-btn--outline" onClick={clear}>
+            <RotateCcw size={14} aria-hidden="true" />
+            清空
           </button>
         </div>
+      </header>
 
-        <div className="uc-hint">
-          {mode === 'component'
-            ? 'encodeURIComponent — 编码所有特殊字符，适用于查询参数'
-            : 'encodeURI — 保留 URL 结构字符（: / ? # & =），适用于完整链接'}
+      <section className="tool-panel urlc-toolbar">
+        <div className="urlc-toolbar-row">
+          <div className="tool-segmented">
+            <button
+              type="button"
+              className={`tool-seg ${mode === 'component' ? 'active' : ''}`}
+              onClick={() => setMode('component')}
+              aria-pressed={mode === 'component'}
+            >
+              参数编码
+            </button>
+            <button
+              type="button"
+              className={`tool-seg ${mode === 'full' ? 'active' : ''}`}
+              onClick={() => setMode('full')}
+              aria-pressed={mode === 'full'}
+            >
+              完整 URL
+            </button>
+          </div>
+          <span className="urlc-hint">
+            {mode === 'component'
+              ? 'encodeURIComponent — 编码所有特殊字符，适用于查询参数'
+              : 'encodeURI — 保留 URL 结构字符（: / ? # & =），适用于完整链接'}
+          </span>
         </div>
+      </section>
 
-        <div className="uc-input-area">
-          <div className="uc-input-header">
-            <span className="uc-input-label">输入</span>
-            <div className="uc-samples">
+      <div className="tool-split tool-split--even urlc-layout">
+        <section className="tool-panel urlc-pane">
+          <div className="tool-panel-head">
+            <h3 className="tool-panel-title">输入</h3>
+            <div className="urlc-samples">
               {SAMPLES.map((s, i) => (
-                <button key={i} className="uc-sample-btn" onClick={() => loadSample(s)}>
+                <button
+                  key={i}
+                  type="button"
+                  className="urlc-sample-btn"
+                  onClick={() => loadSample(s)}
+                >
                   示例 {i + 1}
                 </button>
               ))}
             </div>
           </div>
           <textarea
-            className="uc-textarea"
+            className="urlc-textarea"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="输入要编码或解码的文本..."
-            rows={4}
+            placeholder="输入要编码或解码的文本…"
+            aria-label="要编码或解码的文本"
+            spellCheck={false}
           />
-        </div>
+          <div className="urlc-actions">
+            <button type="button" className="tool-btn tool-btn--primary" onClick={encode}>
+              编码
+            </button>
+            <button type="button" className="tool-btn tool-btn--outline" onClick={decode}>
+              解码
+            </button>
+          </div>
+        </section>
 
-        <div className="uc-actions">
-          <button className="uc-btn uc-btn-primary" onClick={encode}>
-            <Link2 size={15} />
-            编码
-          </button>
-          <button className="uc-btn uc-btn-secondary" onClick={decode}>
-            <Link2 size={15} />
-            解码
-          </button>
-          <button className="uc-btn uc-btn-ghost" onClick={swap} disabled={!output}>
-            <ArrowLeftRight size={15} />
-            互换
-          </button>
-          <button className="uc-btn uc-btn-ghost" onClick={clear}>
-            <RotateCcw size={15} />
-            清空
-          </button>
-        </div>
-
-        {error && <div className="uc-error">{error}</div>}
-
-        {output && (
-          <div className="uc-output-area">
-            <div className="uc-output-header">
-              <span className="uc-output-label">输出</span>
-              <button className="uc-copy-btn" onClick={copyOutput}>
-                {copied ? <Check size={14} /> : <Copy size={14} />}
+        <section className="tool-panel urlc-pane urlc-output-pane">
+          <div className="tool-panel-head">
+            <h3 className="tool-panel-title">输出</h3>
+            <div className="urlc-output-actions">
+              <button
+                type="button"
+                className="tool-icon-btn"
+                onClick={swap}
+                disabled={!output}
+                title="互换到输入"
+                aria-label="互换到输入"
+              >
+                <ArrowLeftRight size={14} aria-hidden="true" />
+              </button>
+              <button type="button" className="tool-btn" onClick={copyOutput} disabled={!output}>
+                {copied ? (
+                  <Check size={13} aria-hidden="true" />
+                ) : (
+                  <Copy size={13} aria-hidden="true" />
+                )}
                 {copied ? '已复制' : '复制'}
               </button>
             </div>
-            <div className="uc-output-text">{output}</div>
           </div>
-        )}
+
+          {error ? (
+            <div className="urlc-error" role="status">
+              {error}
+            </div>
+          ) : output ? (
+            <pre className="urlc-output-text">{output}</pre>
+          ) : (
+            <div className="urlc-empty">选择模式并输入内容，点击「编码」或「解码」查看结果。</div>
+          )}
+        </section>
       </div>
     </div>
   )

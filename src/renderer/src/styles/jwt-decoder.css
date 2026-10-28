@@ -1,393 +1,231 @@
 /* ========================================
-   JWT Decoder 页面
+   JWT Decoder
+   输入平面 + Header/Payload 双栏 + 时间信息
    ======================================== */
 
-.jd-page {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  padding: 40px 24px;
-  overflow-y: auto;
+.jd-input {
+  overflow: hidden;
 }
 
-.jd-card {
-  width: 100%;
-  max-width: 600px;
-  background: var(--glass-bg);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--glass-border);
-  border-radius: 20px;
-  padding: 32px;
-  box-shadow: var(--shadow-xl);
-}
-
-.jd-header {
-  text-align: center;
-  margin-bottom: 28px;
-}
-
-.jd-title {
-  font-size: 24px;
-  font-weight: 700;
-  color: var(--color-text);
-  font-family: 'JetBrains Mono', monospace;
-  letter-spacing: -0.5px;
-  margin-bottom: 6px;
-}
-
-.jd-subtitle {
-  font-size: 14px;
-  color: var(--color-text-muted);
-}
-
-/* 输入区域 */
-.jd-input-area {
-  margin-bottom: 20px;
-}
-
-.jd-input-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 10px;
-}
-
-.jd-input-label {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--color-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.jd-input-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.jd-link-btn {
-  background: none;
-  border: none;
-  color: var(--color-accent-soft);
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  padding: 0;
-  transition: opacity 0.15s ease;
-}
-
-.jd-link-btn:hover {
-  opacity: 0.8;
+.jd-input:focus-within {
+  box-shadow: inset 0 0 0 1px var(--color-accent);
 }
 
 .jd-textarea {
+  display: block;
   width: 100%;
+  min-height: 88px;
   padding: 12px 14px;
+  border: 0;
   background: var(--color-editor-bg);
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
   color: var(--color-text);
-  font-size: 12px;
   font-family: 'JetBrains Mono', monospace;
-  line-height: 1.5;
-  resize: vertical;
-  transition: all 0.2s ease;
+  font-size: var(--text-sm);
+  line-height: 1.65;
   outline: none;
-}
-
-.jd-textarea:focus {
-  border-color: var(--color-accent-soft);
+  resize: vertical;
+  overflow-wrap: anywhere;
 }
 
 .jd-textarea::placeholder {
   color: var(--color-text-muted);
 }
 
-.jd-input-footer {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 8px;
-}
-
-.jd-clear-btn {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  padding: 5px 12px;
-  background: transparent;
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-  color: var(--color-text-muted);
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.jd-clear-btn:hover {
-  border-color: var(--color-border-hover);
-  color: var(--color-text-secondary);
-}
-
 /* 状态 */
+
 .jd-status {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 10px;
-  padding: 14px 16px;
-  background: var(--color-editor-bg);
+  gap: 6px;
+  height: 22px;
+  padding: 0 8px;
   border: 1px solid var(--color-border);
-  border-left-width: 4px;
-  border-radius: 10px;
-  margin-bottom: 20px;
+  border-radius: var(--radius-xs);
+  font-size: var(--text-2xs);
+  font-weight: 500;
+  white-space: nowrap;
 }
 
-.jd-expires {
-  margin-left: auto;
-  font-size: 12px;
-  color: var(--color-text-muted);
+.jd-status--valid {
+  border-color: color-mix(in srgb, var(--color-success) 35%, var(--color-border));
+  background: var(--color-success-subtle, transparent);
+  color: var(--color-success);
 }
 
-/* 错误 */
+.jd-status--expired {
+  border-color: color-mix(in srgb, var(--color-warning) 40%, var(--color-border));
+  background: var(--color-warning-subtle);
+  color: var(--color-warning);
+}
+
+.jd-status--invalid {
+  border-color: color-mix(in srgb, var(--color-danger) 40%, var(--color-border));
+  background: var(--color-danger-subtle);
+  color: var(--color-danger);
+}
+
+.jd-status-extra {
+  padding-left: 6px;
+  border-left: 1px solid currentColor;
+  opacity: 0.75;
+  font-weight: 400;
+}
+
 .jd-error {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px 14px;
+  gap: 6px;
+  margin: 0;
+  padding: 8px 14px;
+  border-top: 1px solid color-mix(in srgb, var(--color-danger) 24%, var(--color-border));
   background: var(--color-danger-subtle);
-  border: 1px solid var(--color-danger);
-  border-radius: 10px;
-  font-size: 12px;
   color: var(--color-danger);
-  margin-bottom: 20px;
+  font-size: var(--text-xs);
 }
 
-/* Section */
+/* ── 结果 ───────────────────────────────────── */
+
+.jd-results {
+  align-items: start;
+}
+
 .jd-section {
-  margin-bottom: 20px;
-}
-
-.jd-section:last-child {
-  margin-bottom: 0;
-}
-
-.jd-section-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 10px;
-}
-
-.jd-section-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--color-text);
-}
-
-.jd-section-title svg {
-  color: var(--color-accent-soft);
-}
-
-.jd-section-label {
-  display: block;
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--color-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 12px;
-}
-
-.jd-copy-btn {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  padding: 5px 10px;
-  background: var(--color-editor-bg);
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-  color: var(--color-text-muted);
-  font-size: 11px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.jd-copy-btn:hover {
-  border-color: var(--color-accent-soft);
-  color: var(--color-accent-soft);
-}
-
-/* JSON */
-.jd-json-block {
-  padding: 14px;
-  background: var(--color-editor-bg);
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  overflow-x: auto;
+  overflow: hidden;
 }
 
 .jd-json {
   margin: 0;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 12px;
-  line-height: 1.6;
+  padding: 12px 14px;
+  background: var(--color-editor-bg);
   color: var(--color-text);
-  white-space: pre;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: var(--text-xs);
+  line-height: 1.65;
+  overflow: auto;
+  max-height: 280px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
-/* Meta */
 .jd-meta {
   display: flex;
-  gap: 12px;
-  margin-top: 10px;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  padding: 10px 14px;
+  border-top: 1px solid var(--color-border);
 }
 
 .jd-meta-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 12px;
-  background: var(--color-editor-bg);
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
 }
 
 .jd-meta-label {
-  font-size: 11px;
   color: var(--color-text-muted);
+  font-size: var(--text-2xs);
 }
 
 .jd-meta-value {
+  color: var(--color-text);
   font-family: 'JetBrains Mono', monospace;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--color-accent-soft);
+  font-size: var(--text-xs);
+  overflow-wrap: anywhere;
 }
 
 /* 时间信息 */
-.jd-time-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+
+.jd-details {
+  overflow: hidden;
 }
 
-.jd-time-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 14px;
-  background: var(--color-editor-bg);
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
+.jd-details-note {
+  color: var(--color-text-muted);
+  font-size: var(--text-2xs);
+  white-space: nowrap;
+}
+
+.jd-time-row {
+  gap: 16px;
 }
 
 .jd-time-claim {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.jd-time-claim code {
+  color: var(--color-text);
   font-family: 'JetBrains Mono', monospace;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--color-accent-soft);
-  background: var(--color-accent-soft-subtle);
-  padding: 2px 8px;
-  border-radius: 4px;
-}
-
-.jd-time-desc {
-  font-size: 11px;
-  color: var(--color-text-muted);
-}
-
-.jd-time-value {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 2px;
-}
-
-.jd-time-ts {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 11px;
-  color: var(--color-text-muted);
+  font-size: var(--text-sm);
 }
 
 .jd-time-human {
-  font-size: 12px;
-  color: var(--color-text);
-  font-weight: 500;
+  flex: 1;
+  min-width: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+  text-align: right;
 }
 
-/* Token 信息 */
-.jd-info-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-}
-
-.jd-info-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 14px;
-  background: var(--color-editor-bg);
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-}
-
-.jd-info-label {
-  font-size: 12px;
+.jd-time-ts {
+  flex-shrink: 0;
+  width: 92px;
   color: var(--color-text-muted);
-}
-
-.jd-info-value {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--color-text);
+  font-size: var(--text-2xs);
+  text-align: right;
 }
 
-/* 响应式 */
-@media (max-width: 600px) {
-  .jd-page {
-    padding: 24px 16px;
+.jd-empty-row {
+  padding: 14px;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+/* 签名 */
+
+.jd-signature {
+  overflow: hidden;
+}
+
+.jd-signature-text {
+  margin: 0;
+  padding: 12px 14px;
+  color: var(--color-text-secondary);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: var(--text-xs);
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+
+.jd-signature-note {
+  margin: 0;
+  padding: 0 14px 12px;
+  color: var(--color-text-muted);
+  font-size: var(--text-2xs);
+}
+
+.jd-placeholder {
+  padding: 28px 20px;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-lg);
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  line-height: 1.6;
+  text-align: center;
+}
+
+/* ── 窄容器 ─────────────────────────────────── */
+
+@container tool (max-width: 640px) {
+  .jd-details-note {
+    display: none;
   }
 
-  .jd-card {
-    padding: 24px 20px;
-    border-radius: 16px;
+  .jd-time-row {
+    flex-wrap: wrap;
+    gap: 4px 12px;
   }
 
-  .jd-title {
-    font-size: 20px;
-  }
-
-  .jd-meta {
-    flex-direction: column;
-  }
-
-  .jd-time-item {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-  }
-
-  .jd-time-value {
-    align-items: flex-start;
-  }
-
-  .jd-info-grid {
-    grid-template-columns: 1fr;
+  .jd-time-human {
+    flex-basis: calc(100% - 100px);
+    text-align: left;
   }
 }

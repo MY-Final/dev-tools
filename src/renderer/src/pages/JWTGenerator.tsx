@@ -1,16 +1,4 @@
-import {
-  Copy,
-  Check,
-  Eye,
-  EyeOff,
-  Plus,
-  Shield,
-  User,
-  Users,
-  Wand2,
-  Key,
-  Clock
-} from 'lucide-react'
+import { Copy, Check, Eye, EyeOff, Plus, Wand2, Key } from 'lucide-react'
 import {
   useJWTGenerator,
   type Algorithm,
@@ -41,11 +29,10 @@ const CLAIMS = [
 const ROLE_TEMPLATES: {
   id: RoleTemplate
   label: string
-  icon: React.ComponentType<{ size?: number }>
 }[] = [
-  { id: 'admin', label: 'Admin', icon: Shield },
-  { id: 'user', label: 'User', icon: User },
-  { id: 'guest', label: 'Guest', icon: Users }
+  { id: 'admin', label: 'Admin' },
+  { id: 'user', label: 'User' },
+  { id: 'guest', label: 'Guest' }
 ]
 
 const PAYLOAD_TEMPLATES = [
@@ -82,230 +69,254 @@ export default function JWTGenerator(): React.JSX.Element {
   } = useJWTGenerator()
 
   return (
-    <div className="jwt-page">
-      <div className="jwt-bg-decoration" />
-
-      <div className="jwt-container">
-        <div className="jwt-header">
-          <h2 className="jwt-title">JWT Generator</h2>
-          <p className="jwt-subtitle">快速生成和调试 JSON Web Token</p>
+    <div className="jwt-page tool-page">
+      <header className="tool-page-header">
+        <div className="tool-page-heading">
+          <h2 className="tool-page-title">JWT Generator</h2>
+          <p className="tool-page-desc">
+            编辑 Header 与 Payload，实时生成并解析 HS256/384/512 签名的 JSON Web Token。
+          </p>
         </div>
+        <div className="tool-page-actions">
+          <button
+            type="button"
+            className="tool-btn tool-btn--primary"
+            onClick={copyJWT}
+            disabled={!jwt}
+          >
+            {toast ? <Check size={14} aria-hidden="true" /> : <Copy size={14} aria-hidden="true" />}
+            {toast || '复制 JWT'}
+          </button>
+        </div>
+      </header>
 
-        <div className="jwt-content">
-          {/* 左侧配置 */}
-          <div className="jwt-config-panel">
-            {/* 算法选择 */}
-            <div className="jwt-section">
-              <div className="jwt-section-header">
-                <span className="jwt-section-label">算法</span>
-              </div>
-              <div className="jwt-algorithms">
-                {ALGORITHMS.map((alg) => (
-                  <button
-                    key={alg}
-                    className={`jwt-alg-btn ${algorithm === alg ? 'active' : ''}`}
-                    onClick={() => updateAlgorithm(alg)}
-                  >
-                    {alg}
-                  </button>
-                ))}
-              </div>
+      <section className="tool-panel jwt-toolbar">
+        <div className="jwt-toolbar-row">
+          <div className="jwt-toolbar-group">
+            <span className="jwt-field-label">算法</span>
+            <div className="tool-segmented" role="group" aria-label="签名算法">
+              {ALGORITHMS.map((alg) => (
+                <button
+                  key={alg}
+                  type="button"
+                  className={`tool-seg ${algorithm === alg ? 'active' : ''}`}
+                  onClick={() => updateAlgorithm(alg)}
+                  aria-pressed={algorithm === alg}
+                >
+                  {alg}
+                </button>
+              ))}
             </div>
+          </div>
+          <div className="jwt-toolbar-group">
+            <label className="jwt-field-label" htmlFor="jwt-expiration">
+              过期时间
+            </label>
+            <select
+              id="jwt-expiration"
+              className="tool-select"
+              value={expiration}
+              onChange={(e) => updateExpiration(e.target.value as Expiration)}
+            >
+              {EXPIRATIONS.map((exp) => (
+                <option key={exp.value} value={exp.value}>
+                  {exp.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </section>
 
-            {/* Header */}
-            <div className="jwt-section">
-              <div className="jwt-section-header">
-                <span className="jwt-section-label">Header</span>
-                {headerError && <span className="jwt-error">{headerError}</span>}
-              </div>
-              <textarea
-                className={`jwt-textarea ${headerError ? 'error' : ''}`}
-                value={headerJson}
-                onChange={(e) => setHeaderJson(e.target.value)}
-                rows={4}
-                spellCheck={false}
-              />
+      <div className="tool-split tool-split--even jwt-layout">
+        <div className="jwt-config">
+          <section className="tool-panel jwt-editor jwt-editor--header">
+            <div className="tool-panel-head">
+              <h3 className="tool-panel-title">Header</h3>
+              {headerError && (
+                <span className="jwt-inline-error" role="status">
+                  {headerError}
+                </span>
+              )}
             </div>
+            <textarea
+              className={`jwt-textarea ${headerError ? 'error' : ''}`}
+              value={headerJson}
+              onChange={(e) => setHeaderJson(e.target.value)}
+              rows={4}
+              spellCheck={false}
+              aria-label="JWT Header JSON"
+            />
+          </section>
 
-            {/* Payload */}
-            <div className="jwt-section">
-              <div className="jwt-section-header">
-                <span className="jwt-section-label">Payload</span>
-                {payloadError && <span className="jwt-error">{payloadError}</span>}
+          <section className="tool-panel jwt-editor jwt-editor--payload">
+            <div className="tool-panel-head">
+              <h3 className="tool-panel-title">Payload</h3>
+              {payloadError && (
+                <span className="jwt-inline-error" role="status">
+                  {payloadError}
+                </span>
+              )}
+            </div>
+            <textarea
+              className={`jwt-textarea ${payloadError ? 'error' : ''}`}
+              value={payloadJson}
+              onChange={(e) => setPayloadJson(e.target.value)}
+              rows={9}
+              spellCheck={false}
+              aria-label="JWT Payload JSON"
+            />
+
+            <div className="jwt-quick">
+              <div className="jwt-quick-row">
+                <span className="jwt-field-label">快捷 Claim</span>
+                <div className="jwt-chips">
+                  {CLAIMS.map((claim) => (
+                    <button
+                      key={claim.id}
+                      type="button"
+                      className="jwt-chip"
+                      onClick={() => addClaim(claim.id)}
+                    >
+                      <Plus size={10} aria-hidden="true" />
+                      {claim.label}
+                    </button>
+                  ))}
+                </div>
               </div>
-              <textarea
-                className={`jwt-textarea ${payloadError ? 'error' : ''}`}
-                value={payloadJson}
-                onChange={(e) => setPayloadJson(e.target.value)}
-                rows={8}
-                spellCheck={false}
-              />
 
-              {/* 快捷 Claim */}
-              <div className="jwt-claims">
-                <span className="jwt-claims-label">快捷添加:</span>
-                {CLAIMS.map((claim) => (
-                  <button
-                    key={claim.id}
-                    className="jwt-claim-btn"
-                    onClick={() => addClaim(claim.id)}
-                  >
-                    <Plus size={10} />
-                    {claim.label}
+              <div className="jwt-quick-row">
+                <span className="jwt-field-label">模板</span>
+                <div className="jwt-chips">
+                  {PAYLOAD_TEMPLATES.map((tpl) => (
+                    <button
+                      key={tpl.id}
+                      type="button"
+                      className="jwt-chip"
+                      onClick={() => applyPayloadTemplate(tpl.id)}
+                    >
+                      {tpl.label}
+                    </button>
+                  ))}
+                  <button type="button" className="jwt-chip" onClick={generateRandomPayload}>
+                    <Wand2 size={11} aria-hidden="true" />
+                    随机
                   </button>
-                ))}
+                </div>
               </div>
 
-              {/* 角色模板 */}
-              <div className="jwt-templates">
-                <span className="jwt-templates-label">角色:</span>
-                {ROLE_TEMPLATES.map((role) => {
-                  const Icon = role.icon
-                  return (
+              <div className="jwt-quick-row">
+                <span className="jwt-field-label">角色</span>
+                <div className="jwt-chips">
+                  {ROLE_TEMPLATES.map((role) => (
                     <button
                       key={role.id}
-                      className="jwt-template-btn"
+                      type="button"
+                      className="jwt-chip"
                       onClick={() => applyRoleTemplate(role.id)}
                     >
-                      <Icon size={12} />
                       {role.label}
-                    </button>
-                  )
-                })}
-              </div>
-
-              {/* Payload 模板 */}
-              <div className="jwt-templates">
-                <span className="jwt-templates-label">模板:</span>
-                {PAYLOAD_TEMPLATES.map((tpl) => (
-                  <button
-                    key={tpl.id}
-                    className="jwt-template-btn"
-                    onClick={() => applyPayloadTemplate(tpl.id)}
-                  >
-                    {tpl.label}
-                  </button>
-                ))}
-                <button className="jwt-template-btn jwt-random-btn" onClick={generateRandomPayload}>
-                  <Wand2 size={12} />
-                  随机生成
-                </button>
-              </div>
-
-              {/* 过期时间 */}
-              <div className="jwt-expiration">
-                <div className="jwt-expiration-label">
-                  <Clock size={14} />
-                  <span>过期时间</span>
-                </div>
-                <div className="jwt-expiration-options">
-                  {EXPIRATIONS.map((exp) => (
-                    <button
-                      key={exp.value}
-                      className={`jwt-exp-btn ${expiration === exp.value ? 'active' : ''}`}
-                      onClick={() => updateExpiration(exp.value)}
-                    >
-                      {exp.label}
                     </button>
                   ))}
                 </div>
               </div>
             </div>
+          </section>
 
-            {/* Secret */}
-            <div className="jwt-section">
-              <div className="jwt-section-header">
-                <span className="jwt-section-label">Secret</span>
-                <div className="jwt-secret-actions">
-                  <button
-                    className="jwt-icon-btn"
-                    onClick={() => generateRandomSecret(32)}
-                    title="生成 32 位 Secret"
-                  >
-                    <Key size={14} />
-                  </button>
-                  <button
-                    className="jwt-icon-btn"
-                    onClick={() => setShowSecret(!showSecret)}
-                    title={showSecret ? '隐藏' : '显示'}
-                  >
-                    {showSecret ? <EyeOff size={14} /> : <Eye size={14} />}
-                  </button>
-                </div>
-              </div>
-              <div className="jwt-secret-input-wrapper">
-                <input
-                  className="jwt-input"
-                  type={showSecret ? 'text' : 'password'}
-                  value={secret}
-                  onChange={(e) => setSecret(e.target.value)}
-                  placeholder="Enter secret key"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* 右侧结果 */}
-          <div className="jwt-result-panel">
-            {/* JWT Token */}
-            <div className="jwt-token-section">
-              <div className="jwt-token-header">
-                <span className="jwt-token-label">JWT Token</span>
-                <button className="jwt-copy-btn" onClick={copyJWT} disabled={!jwt}>
-                  {toast ? <Check size={14} /> : <Copy size={14} />}
-                  {toast || '复制 JWT'}
+          <section className="tool-panel jwt-secret">
+            <div className="tool-panel-head">
+              <h3 className="tool-panel-title">签名密钥</h3>
+              <div className="jwt-secret-actions">
+                <button
+                  type="button"
+                  className="tool-icon-btn"
+                  onClick={() => generateRandomSecret(32)}
+                  title="生成 32 位密钥"
+                  aria-label="生成随机密钥"
+                >
+                  <Key size={14} aria-hidden="true" />
+                </button>
+                <button
+                  type="button"
+                  className="tool-icon-btn"
+                  onClick={() => setShowSecret(!showSecret)}
+                  title={showSecret ? '隐藏密钥' : '显示密钥'}
+                  aria-label={showSecret ? '隐藏密钥' : '显示密钥'}
+                >
+                  {showSecret ? (
+                    <EyeOff size={14} aria-hidden="true" />
+                  ) : (
+                    <Eye size={14} aria-hidden="true" />
+                  )}
                 </button>
               </div>
-              <div className="jwt-token-content">
-                {jwt ? (
-                  <code className="jwt-token-text">{jwt}</code>
-                ) : (
-                  <div className="jwt-token-placeholder">配置左侧参数后自动生成 JWT</div>
-                )}
-              </div>
             </div>
+            <div className="jwt-secret-body">
+              <input
+                className="tool-input tool-input--mono jwt-secret-input"
+                type={showSecret ? 'text' : 'password'}
+                value={secret}
+                onChange={(e) => setSecret(e.target.value)}
+                placeholder="输入 HMAC 密钥"
+                aria-label="HMAC 签名密钥"
+                spellCheck={false}
+              />
+              <span className="jwt-secret-hint">HS256 密钥长度建议不少于 32 字节</span>
+            </div>
+          </section>
+        </div>
 
-            {/* JWT 预览 */}
-            {jwtParts && (
-              <div className="jwt-preview">
-                <div className="jwt-preview-header">
-                  <span className="jwt-preview-label">JWT 解析预览</span>
-                </div>
-
-                <div className="jwt-preview-sections">
-                  <div className="jwt-preview-section">
-                    <div className="jwt-preview-section-header">
-                      <span className="jwt-preview-dot header" />
-                      <span>Header</span>
-                    </div>
-                    <pre className="jwt-preview-code">{jwtParts.header}</pre>
-                  </div>
-
-                  <div className="jwt-preview-section">
-                    <div className="jwt-preview-section-header">
-                      <span className="jwt-preview-dot payload" />
-                      <span>Payload</span>
-                    </div>
-                    <pre className="jwt-preview-code">{jwtParts.payload}</pre>
-                  </div>
-
-                  <div className="jwt-preview-section">
-                    <div className="jwt-preview-section-header">
-                      <span className="jwt-preview-dot signature" />
-                      <span>Signature</span>
-                    </div>
-                    <pre className="jwt-preview-code signature">{jwtParts.signature}</pre>
-                  </div>
-                </div>
+        <div className="jwt-output">
+          <section className="tool-panel jwt-token">
+            <div className="tool-panel-head">
+              <h3 className="tool-panel-title">JWT Token</h3>
+              <button type="button" className="tool-btn" onClick={copyJWT} disabled={!jwt}>
+                {toast ? (
+                  <Check size={13} aria-hidden="true" />
+                ) : (
+                  <Copy size={13} aria-hidden="true" />
+                )}
+                {toast || '复制'}
+              </button>
+            </div>
+            {jwt ? (
+              <pre className="jwt-token-text">{jwt}</pre>
+            ) : (
+              <div className="jwt-empty">
+                {headerError || payloadError
+                  ? '修正 JSON 语法后自动生成 Token。'
+                  : '编辑左侧内容后自动生成 Token。'}
               </div>
             )}
-          </div>
+          </section>
+
+          {jwtParts && (
+            <section className="tool-panel jwt-preview">
+              <div className="tool-panel-head">
+                <h3 className="tool-panel-title">解析预览</h3>
+              </div>
+              <div className="jwt-preview-body">
+                <div className="jwt-preview-block">
+                  <span className="jwt-preview-label">Header</span>
+                  <pre className="jwt-preview-code">{jwtParts.header}</pre>
+                </div>
+                <div className="jwt-preview-block">
+                  <span className="jwt-preview-label">Payload</span>
+                  <pre className="jwt-preview-code">{jwtParts.payload}</pre>
+                </div>
+                <div className="jwt-preview-block">
+                  <span className="jwt-preview-label">Signature</span>
+                  <pre className="jwt-preview-code jwt-preview-signature">{jwtParts.signature}</pre>
+                </div>
+              </div>
+            </section>
+          )}
         </div>
       </div>
 
       {toast && (
-        <div className="jwt-toast">
-          <Check size={14} />
+        <div className="jwt-toast" role="status">
+          <Check size={14} aria-hidden="true" />
           {toast}
         </div>
       )}
