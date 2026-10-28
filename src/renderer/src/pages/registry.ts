@@ -11,7 +11,7 @@ import type { ComponentType } from 'react'
 
 const pageMap: Record<string, React.LazyExoticComponent<ComponentType>> = {
   'data-size-converter': lazy(() => import('./Converter')),
-  'my-ip': lazy(() => import('./MyIP')),
+  'my-ip': lazy(() => import('./MyIp')),
   'device-info': lazy(() => import('./DeviceInfo')),
   'token-generator': lazy(() => import('./TokenGenerator')),
   'jwt-generator': lazy(() => import('./JWTGenerator')),
