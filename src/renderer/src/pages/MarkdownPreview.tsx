@@ -22,7 +22,11 @@ import {
 } from 'lucide-react'
 import TextFileBar from '@renderer/components/TextFileBar'
 import { Popover, PopoverContent, PopoverTrigger } from '@renderer/components/ui/popover'
-import { buildHtmlDocument, renderMarkdown } from '@renderer/lib/markdown-render'
+import {
+  buildHtmlDocument,
+  renderMarkdown,
+  type MarkdownHeading
+} from '@renderer/lib/markdown-render'
 import '../styles/markdown-preview.css'
 
 const DEMO_MARKDOWN = `# Markdown 预览
@@ -225,6 +229,34 @@ function decodeHash(href: string): string {
   } catch {
     return href.slice(1)
   }
+}
+
+interface OutlineListProps {
+  headings: MarkdownHeading[]
+  onJump: (id: string) => void
+}
+
+/** Same list feeds the wide-screen rail and the narrow-screen popover. */
+function OutlineList({ headings, onJump }: OutlineListProps): React.JSX.Element {
+  if (headings.length === 0) {
+    return <p className="mp-outline-empty">文档中还没有标题</p>
+  }
+  return (
+    <nav className="mp-outline-list" aria-label="文档大纲">
+      {headings.map((heading) => (
+        <button
+          key={heading.id}
+          type="button"
+          className="mp-outline-item"
+          data-level={heading.level}
+          title={heading.text}
+          onClick={() => onJump(heading.id)}
+        >
+          {heading.text || '(空标题)'}
+        </button>
+      ))}
+    </nav>
+  )
 }
 
 function downloadHtml(content: string): void {
@@ -456,33 +488,20 @@ export default function MarkdownPreview(): React.JSX.Element {
               <div className="mp-actions">
                 <Popover open={outlineOpen} onOpenChange={setOutlineOpen}>
                   <PopoverTrigger asChild>
-                    <button type="button" className="mp-btn" title="文档大纲">
+                    <button type="button" className="mp-btn mp-outline-btn" title="文档大纲">
                       <ListTree size={13} />
                       大纲 · {rendered.headings.length}
                     </button>
                   </PopoverTrigger>
-                  <PopoverContent className="mp-outline-pop" align="end" sideOffset={6}>
-                    {rendered.headings.length > 0 ? (
-                      <nav className="mp-outline-list" aria-label="文档大纲">
-                        {rendered.headings.map((heading) => (
-                          <button
-                            key={heading.id}
-                            type="button"
-                            className="mp-outline-item"
-                            data-level={heading.level}
-                            title={heading.text}
-                            onClick={() => {
-                              scrollPreviewTo(heading.id)
-                              setOutlineOpen(false)
-                            }}
-                          >
-                            {heading.text || '(空标题)'}
-                          </button>
-                        ))}
-                      </nav>
-                    ) : (
-                      <p className="mp-outline-empty">文档中还没有标题</p>
-                    )}
+                  <PopoverContent className="mp-outline-pop" align="start" sideOffset={6}>
+                    <span className="mp-outline-pop-title">文档大纲</span>
+                    <OutlineList
+                      headings={rendered.headings}
+                      onJump={(id) => {
+                        scrollPreviewTo(id)
+                        setOutlineOpen(false)
+                      }}
+                    />
                   </PopoverContent>
                 </Popover>
 
@@ -524,6 +543,15 @@ export default function MarkdownPreview(): React.JSX.Element {
               )}
             </div>
           </section>
+
+          {/* Wide layouts keep the outline beside the panes instead of over them. */}
+          <aside className="mp-outline-rail" aria-label="文档大纲">
+            <span className="mp-outline-rail-title">
+              大纲
+              <span className="mp-outline-rail-count">{rendered.headings.length}</span>
+            </span>
+            <OutlineList headings={rendered.headings} onJump={scrollPreviewTo} />
+          </aside>
         </div>
 
         <footer className="mp-stats">
