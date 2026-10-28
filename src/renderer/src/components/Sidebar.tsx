@@ -85,7 +85,7 @@ function NavButton({
       title={collapsed ? item.label : undefined}
       aria-current={active ? 'page' : undefined}
     >
-      <Icon size={18} className="nav-icon" />
+      <Icon size={collapsed ? 18 : 16} className="nav-icon" />
       {!collapsed && <span className="nav-label">{item.label}</span>}
       {collapsed && <span className="nav-tooltip">{item.label}</span>}
     </button>
@@ -398,6 +398,19 @@ export default function Sidebar({
         </div>
 
         <div className="sidebar-scroll">
+          {!effectiveCollapsed && (
+            <div className="sidebar-search-wrap">
+              <button className="sidebar-search" type="button" onClick={openCommandPalette}>
+                <Search size={14} className="sidebar-search-icon" />
+                <span className="sidebar-search-input">搜索工具</span>
+                <span className="sidebar-search-keys" aria-hidden="true">
+                  <kbd>Ctrl</kbd>
+                  <kbd>K</kbd>
+                </span>
+              </button>
+            </div>
+          )}
+
           {/* 首页 */}
           <div className="nav-group">
             {navItems.map((item) => (
@@ -411,20 +424,12 @@ export default function Sidebar({
             ))}
           </div>
 
-          {!effectiveCollapsed && (
-            <button className="sidebar-search" type="button" onClick={openCommandPalette}>
-              <Search size={14} className="sidebar-search-icon" />
-              <span className="sidebar-search-input">快速搜索...</span>
-              <kbd className="sidebar-search-kbd">Ctrl K</kbd>
-            </button>
-          )}
-
           {/* 收藏 */}
           {favoriteTools.length > 0 && (
             <div className="nav-group">
               {!effectiveCollapsed && (
                 <div className="nav-category-header nav-favorites-header">
-                  <Star size={14} className="nav-category-icon nav-favorites-icon" />
+                  <Star size={15} className="nav-category-icon nav-favorites-icon" />
                   <span className="nav-category-label">收藏</span>
                   <span className="nav-category-count">{favoriteTools.length}</span>
                 </div>
@@ -442,7 +447,7 @@ export default function Sidebar({
                   onMouseLeave={handleFlyoutClose}
                   onKeyDown={(e) => handleCategoryKeyDown('__favorites__', e)}
                 >
-                  <Star size={14} />
+                  <Star size={18} />
                 </button>
               )}
               {!effectiveCollapsed &&
@@ -460,7 +465,7 @@ export default function Sidebar({
                       onClick={() => navigateToTool(tool.id)}
                       aria-current={currentPage === tool.id ? 'page' : undefined}
                     >
-                      <Icon size={18} className="nav-icon" />
+                      <Icon size={16} className="nav-icon" />
                       <div className="nav-label-wrapper">
                         <span className="nav-label">{tool.name}</span>
                         {showShortDesc && <span className="nav-desc">{tool.shortDesc}</span>}
@@ -488,7 +493,7 @@ export default function Sidebar({
                     aria-expanded={!isCategoryCollapsed}
                     aria-controls={categoryToolsId}
                   >
-                    <CategoryIcon size={14} className="nav-category-icon" />
+                    <CategoryIcon size={15} className="nav-category-icon" />
                     <span className="nav-category-label">{category}</span>
                     <ChevronDown
                       size={12}
@@ -511,7 +516,7 @@ export default function Sidebar({
                     onMouseLeave={handleFlyoutClose}
                     onKeyDown={(e) => handleCategoryKeyDown(category, e)}
                   >
-                    <CategoryIcon size={14} />
+                    <CategoryIcon size={18} />
                   </button>
                 )}
 
@@ -528,7 +533,7 @@ export default function Sidebar({
                           onClick={() => navigateToTool(tool.id)}
                           aria-current={currentPage === tool.id ? 'page' : undefined}
                         >
-                          <Icon size={18} className="nav-icon" />
+                          <Icon size={16} className="nav-icon" />
                           <div className="nav-label-wrapper">
                             <span className="nav-label">{tool.name}</span>
                             {showShortDesc && <span className="nav-desc">{tool.shortDesc}</span>}
@@ -552,9 +557,9 @@ export default function Sidebar({
             aria-label={theme === 'dark' ? '切换到浅色模式' : '切换到深色模式'}
           >
             {theme === 'dark' ? (
-              <Sun size={18} className="nav-icon" />
+              <Sun size={effectiveCollapsed ? 18 : 16} className="nav-icon" />
             ) : (
-              <Moon size={18} className="nav-icon" />
+              <Moon size={effectiveCollapsed ? 18 : 16} className="nav-icon" />
             )}
             {!effectiveCollapsed && (
               <span className="nav-label">{theme === 'dark' ? '浅色模式' : '深色模式'}</span>
@@ -586,9 +591,9 @@ export default function Sidebar({
             }
           >
             {effectiveCollapsed ? (
-              <ChevronsRight size={18} className="nav-icon" />
+              <ChevronsRight size={effectiveCollapsed ? 18 : 16} className="nav-icon" />
             ) : (
-              <ChevronsLeft size={18} className="nav-icon" />
+              <ChevronsLeft size={effectiveCollapsed ? 18 : 16} className="nav-icon" />
             )}
             {!effectiveCollapsed && (
               <span className="nav-label">{viewportMode === 'mobile' ? '关闭菜单' : '收起'}</span>
@@ -614,7 +619,7 @@ export default function Sidebar({
                   flyoutData[0] === '收藏'
                     ? Star
                     : categoryIcons[flyoutData[0]] || categoryIcons.__default
-                return <Icon size={14} />
+                return <Icon size={15} />
               })()}
               <span>{flyoutData[0]}</span>
             </div>

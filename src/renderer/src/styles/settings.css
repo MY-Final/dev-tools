@@ -9,28 +9,28 @@
 }
 
 .settings-card {
-  width: min(100%, 1160px);
+  width: min(100%, 1120px);
   margin: 0 auto;
   background: transparent;
 }
 
 .settings-header {
-  padding: 46px 28px 22px;
+  padding: 36px 28px 20px;
 }
 
 .settings-title {
   margin: 0 0 6px;
   color: var(--color-text);
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 30px;
-  font-weight: 800;
-  letter-spacing: -0.04em;
+  font-size: var(--text-3xl);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
 }
 
 .settings-subtitle {
   margin: 0;
   color: var(--color-text-muted);
-  font-size: 13px;
+  font-size: var(--text-sm);
 }
 
 .settings-layout {
@@ -47,12 +47,11 @@
   align-self: start;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 8px;
+  gap: 2px;
+  padding: 6px;
   border: 1px solid var(--color-border);
-  border-radius: 16px;
-  background: color-mix(in srgb, var(--color-surface) 78%, transparent);
-  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.04);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
 }
 
 .settings-nav-item {
@@ -60,19 +59,21 @@
   align-items: center;
   gap: 10px;
   width: 100%;
-  min-height: 40px;
-  padding: 0 11px;
+  min-height: 34px;
+  padding: 0 10px;
   border: 1px solid transparent;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   background: transparent;
   color: var(--color-text-secondary);
   font-family: inherit;
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 600;
   text-align: left;
   text-decoration: none;
   cursor: pointer;
-  transition: all 0.16s ease;
+  transition:
+    background-color 0.12s ease,
+    color 0.12s ease;
 }
 
 .settings-nav-item svg,
@@ -87,28 +88,31 @@
   justify-content: center;
   width: 15px;
   font-family: 'JetBrains Mono', monospace;
-  font-size: 9px;
+  font-size: 0.625rem;
   font-weight: 800;
   letter-spacing: -0.04em;
 }
 
-.settings-nav-item:hover {
-  border-color: var(--color-accent-soft-subtle);
-  background: var(--color-accent-soft-subtle);
+.settings-nav-item:hover:not(.active) {
+  background: var(--color-surface-hover);
   color: var(--color-text);
 }
 
+.settings-nav-item:active:not(.active) {
+  background: var(--color-surface-active);
+}
+
+/* 与侧边栏导航同一套选中语义：中性填充，不用琥珀 */
 .settings-nav-item.active {
-  border-color: var(--color-accent-soft);
-  background: var(--color-accent-soft-subtle);
-  color: var(--color-accent-soft);
+  background: var(--color-surface-active);
+  color: var(--color-text);
 }
 
 .settings-nav-item:hover svg,
 .settings-nav-item:hover .settings-nav-emoji,
 .settings-nav-item.active svg,
 .settings-nav-item.active .settings-nav-emoji {
-  color: var(--color-accent-soft);
+  color: var(--color-text-secondary);
 }
 
 .settings-content {
@@ -176,7 +180,7 @@
   gap: 10px;
   margin: 0;
   color: var(--color-text);
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 750;
   letter-spacing: -0.01em;
 }
@@ -247,25 +251,25 @@
 .settings-item-label {
   margin: 0 0 4px;
   color: var(--color-text);
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 700;
 }
 
 .settings-item-description {
   margin: 0;
   color: var(--color-text-muted);
-  font-size: 12px;
+  font-size: 0.75rem;
   line-height: 1.55;
 }
 
 .settings-item-description code {
   padding: 1px 5px;
   border: 1px solid var(--color-border);
-  border-radius: 5px;
+  border-radius: 4px;
   background: var(--color-editor-bg);
   color: var(--color-text-secondary);
   font-family: 'JetBrains Mono', monospace;
-  font-size: 11px;
+  font-size: 0.6875rem;
 }
 
 .settings-item-column {
@@ -280,7 +284,7 @@
 .settings-textarea {
   width: 100%;
   border: 1px solid var(--color-border);
-  border-radius: 10px;
+  border-radius: 8px;
   background: var(--color-editor-bg);
   color: var(--color-text);
   font-family: 'JetBrains Mono', monospace;
@@ -295,7 +299,7 @@
 .settings-select {
   min-height: 38px;
   padding: 0 12px;
-  font-size: 12px;
+  font-size: 0.75rem;
 }
 
 .settings-input-sm {
@@ -305,7 +309,7 @@
 .settings-textarea {
   min-height: 112px;
   padding: 12px;
-  font-size: 12px;
+  font-size: 0.75rem;
   line-height: 1.6;
   resize: vertical;
 }
@@ -314,7 +318,7 @@
 .settings-select:focus,
 .settings-textarea:focus {
   border-color: var(--color-accent-soft);
-  box-shadow: 0 0 0 3px var(--color-accent-soft-subtle);
+  box-shadow: 0 0 0 2px var(--color-accent-soft-subtle);
 }
 
 .settings-input::placeholder,
@@ -395,12 +399,15 @@
 .settings-option {
   min-height: 32px;
   padding: 0 14px;
-  border: 0;
-  border-radius: 9px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
   background: transparent;
   color: var(--color-text-secondary);
   cursor: pointer;
-  transition: all 0.16s ease;
+  transition:
+    background-color 0.12s ease,
+    border-color 0.12s ease,
+    color 0.12s ease;
 }
 
 .settings-option:hover:not(.active) {
@@ -408,16 +415,19 @@
   color: var(--color-text);
 }
 
+.settings-option:active:not(.active) {
+  background: var(--color-surface-active);
+}
+
 .settings-option.active {
-  background: var(--color-surface);
+  background: var(--color-surface-active);
+  border-color: var(--color-border-active);
   color: var(--color-text);
-  box-shadow:
-    0 1px 4px rgba(0, 0, 0, 0.12),
-    0 0 0 1px var(--color-border);
+  font-weight: 500;
 }
 
 .settings-option-label {
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 700;
   white-space: nowrap;
 }
@@ -430,8 +440,8 @@
   min-height: 38px;
   padding: 0 16px;
   border: 1px solid transparent;
-  border-radius: 11px;
-  font-size: 13px;
+  border-radius: 12px;
+  font-size: 0.8125rem;
   font-weight: 700;
   line-height: 1;
   white-space: nowrap;
@@ -478,7 +488,7 @@
   border-radius: 8px;
   background: transparent;
   color: var(--color-accent-soft);
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 700;
   cursor: pointer;
 }
@@ -500,7 +510,7 @@
   background: var(--color-editor-bg);
   color: var(--color-text-secondary);
   font-family: 'JetBrains Mono', monospace;
-  font-size: 11px;
+  font-size: 0.6875rem;
 }
 
 .updater-actions {
@@ -553,7 +563,7 @@
   padding: 14px 0;
   border-bottom: 1px solid var(--color-border);
   color: var(--color-text-secondary);
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
 .shortcuts-table tr:last-child td {
@@ -582,7 +592,7 @@
   background: var(--color-editor-bg);
   color: var(--color-text);
   font-family: 'JetBrains Mono', monospace;
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 700;
 }
 
@@ -595,7 +605,7 @@
   min-height: 36px;
   padding: 0 12px;
   border: 1px solid var(--color-border);
-  border-radius: 10px;
+  border-radius: 8px;
   background: var(--color-surface);
   color: var(--color-text);
   cursor: pointer;
@@ -609,12 +619,12 @@
 
 .shortcut-recorder.recording {
   border-color: var(--color-accent-soft);
-  box-shadow: 0 0 0 3px var(--color-accent-soft-subtle);
+  box-shadow: 0 0 0 2px var(--color-accent-soft-subtle);
 }
 
 .shortcut-recorder-hint {
   color: var(--color-accent-soft);
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 700;
 }
 
@@ -636,7 +646,7 @@
   flex-direction: column;
   overflow: hidden;
   border: 1px solid var(--color-border);
-  border-radius: 18px;
+  border-radius: 16px;
   background: var(--color-surface);
   box-shadow: var(--shadow-xl);
 }
@@ -665,7 +675,7 @@
   gap: 8px;
   margin: 0;
   color: var(--color-text);
-  font-size: 15px;
+  font-size: 0.875rem;
   font-weight: 800;
 }
 
@@ -676,7 +686,7 @@
   width: 34px;
   height: 34px;
   border: 1px solid var(--color-border);
-  border-radius: 9px;
+  border-radius: 8px;
   background: transparent;
   color: var(--color-text-muted);
   cursor: pointer;
@@ -696,7 +706,7 @@
 .settings-modal-date,
 .settings-modal-empty {
   color: var(--color-text-muted);
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
 .settings-modal-date {
@@ -710,7 +720,7 @@
 
 .settings-modal-notes {
   color: var(--color-text);
-  font-size: 14px;
+  font-size: 0.875rem;
   line-height: 1.75;
   word-break: break-word;
 }
@@ -720,7 +730,7 @@
 .settings-modal-notes h3 {
   margin: 20px 0 10px;
   color: var(--color-accent-soft);
-  font-size: 16px;
+  font-size: 1rem;
 }
 
 .settings-modal-notes p {
@@ -736,10 +746,10 @@
 .settings-modal-notes code {
   padding: 1px 6px;
   border: 1px solid var(--color-border);
-  border-radius: 5px;
+  border-radius: 4px;
   background: var(--color-editor-bg);
   font-family: 'JetBrains Mono', monospace;
-  font-size: 12px;
+  font-size: 0.75rem;
 }
 
 .settings-modal-notes a {
