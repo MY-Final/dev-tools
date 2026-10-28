@@ -13,6 +13,7 @@ import {
 import { useSettings } from '@renderer/lib/contexts'
 import { useUpdater } from '@renderer/lib/updater-context'
 import { formatShortcut } from '@renderer/lib/shortcuts'
+import { isWebRuntime } from '@renderer/lib/platform'
 import ShortcutRecorder from '@renderer/components/ShortcutRecorder'
 import StatusMessage from '@renderer/components/StatusMessage'
 import Dialog from '@renderer/components/ui/dialog'
@@ -66,6 +67,7 @@ export default function SettingsPage(): React.JSX.Element {
   const [fetchedModels, setFetchedModels] = useState<string[]>([])
   const [settingsPath, setSettingsPath] = useState('')
   const [activeSection, setActiveSection] = useState('appearance')
+  const webRuntime = isWebRuntime()
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({
     appearance: false,
     editor: false,
@@ -228,24 +230,28 @@ export default function SettingsPage(): React.JSX.Element {
               <span className="settings-nav-emoji">npm</span>
               <span>npm Registry</span>
             </button>
-            <button
-              type="button"
-              className={`settings-nav-item ${activeSection === 'maven' ? 'active' : ''}`}
-              aria-current={activeSection === 'maven' ? 'page' : undefined}
-              onClick={() => selectSection('maven')}
-            >
-              <span className="settings-nav-emoji">MVN</span>
-              <span>Maven Search</span>
-            </button>
-            <button
-              type="button"
-              className={`settings-nav-item ${activeSection === 'proxy' ? 'active' : ''}`}
-              aria-current={activeSection === 'proxy' ? 'page' : undefined}
-              onClick={() => selectSection('proxy')}
-            >
-              <Wifi size={15} />
-              <span>代理</span>
-            </button>
+            {!webRuntime && (
+              <>
+                <button
+                  type="button"
+                  className={`settings-nav-item ${activeSection === 'maven' ? 'active' : ''}`}
+                  aria-current={activeSection === 'maven' ? 'page' : undefined}
+                  onClick={() => selectSection('maven')}
+                >
+                  <span className="settings-nav-emoji">MVN</span>
+                  <span>Maven Search</span>
+                </button>
+                <button
+                  type="button"
+                  className={`settings-nav-item ${activeSection === 'proxy' ? 'active' : ''}`}
+                  aria-current={activeSection === 'proxy' ? 'page' : undefined}
+                  onClick={() => selectSection('proxy')}
+                >
+                  <Wifi size={15} />
+                  <span>代理</span>
+                </button>
+              </>
+            )}
             <button
               type="button"
               className={`settings-nav-item ${activeSection === 'shortcuts' ? 'active' : ''}`}
@@ -799,7 +805,7 @@ export default function SettingsPage(): React.JSX.Element {
             )}
 
             {/* Maven 搜索设置 */}
-            {activeSection === 'maven' && (
+            {!webRuntime && activeSection === 'maven' && (
               <>
                 <button
                   type="button"
@@ -849,7 +855,7 @@ export default function SettingsPage(): React.JSX.Element {
             )}
 
             {/* 代理设置 */}
-            {activeSection === 'proxy' && (
+            {!webRuntime && activeSection === 'proxy' && (
               <>
                 <button
                   type="button"
@@ -1039,30 +1045,32 @@ export default function SettingsPage(): React.JSX.Element {
                   aria-labelledby="settings-updater-header"
                   className={`settings-section-body ${!collapsedSections.updater ? 'open' : ''}`}
                 >
-                  <div className="settings-item">
-                    <div className="settings-item-info">
-                      <p id="settings-updater-auto-check-label" className="settings-item-label">
-                        自动检查更新
-                      </p>
-                      <p
-                        id="settings-updater-auto-check-description"
-                        className="settings-item-description"
-                      >
-                        启动时自动检查新版本
-                      </p>
+                  {!webRuntime && (
+                    <div className="settings-item">
+                      <div className="settings-item-info">
+                        <p id="settings-updater-auto-check-label" className="settings-item-label">
+                          自动检查更新
+                        </p>
+                        <p
+                          id="settings-updater-auto-check-description"
+                          className="settings-item-description"
+                        >
+                          启动时自动检查新版本
+                        </p>
+                      </div>
+                      <label className="settings-toggle">
+                        <input
+                          type="checkbox"
+                          role="switch"
+                          checked={settings.updater.autoCheck}
+                          aria-labelledby="settings-updater-auto-check-label"
+                          aria-describedby="settings-updater-auto-check-description"
+                          onChange={(e) => updateUpdater({ autoCheck: e.target.checked })}
+                        />
+                        <span className="settings-toggle-slider" />
+                      </label>
                     </div>
-                    <label className="settings-toggle">
-                      <input
-                        type="checkbox"
-                        role="switch"
-                        checked={settings.updater.autoCheck}
-                        aria-labelledby="settings-updater-auto-check-label"
-                        aria-describedby="settings-updater-auto-check-description"
-                        onChange={(e) => updateUpdater({ autoCheck: e.target.checked })}
-                      />
-                      <span className="settings-toggle-slider" />
-                    </label>
-                  </div>
+                  )}
 
                   <div className="settings-item">
                     <div className="settings-item-info">
@@ -1071,42 +1079,57 @@ export default function SettingsPage(): React.JSX.Element {
                     </div>
                   </div>
 
-                  <div className="settings-item">
-                    <div className="settings-item-info">
-                      <p className="settings-item-label">状态</p>
-                      <StatusMessage
-                        className={`settings-item-description ${hasError ? 'updater-error' : ''}`}
-                        tone={updaterStatusTone}
-                        busy={status.type === 'checking' || status.type === 'downloading'}
-                      >
-                        {updaterStatusMessage}
-                      </StatusMessage>
-                    </div>
-                    {isAvailable && (releaseNotes || releaseDate) && (
-                      <button className="settings-link-btn" onClick={openNotes}>
-                        <FileText size={13} />
-                        更新说明
-                      </button>
-                    )}
-                  </div>
-
-                  {isDownloading && status.type === 'downloading' && (
-                    <div
-                      className="updater-progress"
-                      role="progressbar"
-                      aria-label="更新下载进度"
-                      aria-valuemin={0}
-                      aria-valuemax={100}
-                      aria-valuenow={status.percent}
-                    >
-                      <div
-                        className="updater-progress-bar"
-                        style={{ width: `${status.percent}%` }}
-                      />
+                  {webRuntime && (
+                    <div className="settings-item">
+                      <div className="settings-item-info">
+                        <p className="settings-item-label">更新方式</p>
+                        <p className="settings-item-description">
+                          Web 版随页面部署自动更新；自动更新仅桌面版支持。
+                        </p>
+                      </div>
                     </div>
                   )}
 
-                  {settingsPath && (
+                  {!webRuntime && (
+                    <>
+                      <div className="settings-item">
+                        <div className="settings-item-info">
+                          <p className="settings-item-label">状态</p>
+                          <StatusMessage
+                            className={`settings-item-description ${hasError ? 'updater-error' : ''}`}
+                            tone={updaterStatusTone}
+                            busy={status.type === 'checking' || status.type === 'downloading'}
+                          >
+                            {updaterStatusMessage}
+                          </StatusMessage>
+                        </div>
+                        {isAvailable && (releaseNotes || releaseDate) && (
+                          <button className="settings-link-btn" onClick={openNotes}>
+                            <FileText size={13} />
+                            更新说明
+                          </button>
+                        )}
+                      </div>
+
+                      {isDownloading && status.type === 'downloading' && (
+                        <div
+                          className="updater-progress"
+                          role="progressbar"
+                          aria-label="更新下载进度"
+                          aria-valuemin={0}
+                          aria-valuemax={100}
+                          aria-valuenow={status.percent}
+                        >
+                          <div
+                            className="updater-progress-bar"
+                            style={{ width: `${status.percent}%` }}
+                          />
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                  {!webRuntime && settingsPath && (
                     <div className="settings-item">
                       <div className="settings-item-info">
                         <p className="settings-item-label">配置文件</p>
@@ -1120,52 +1143,59 @@ export default function SettingsPage(): React.JSX.Element {
                     <div className="settings-item-info">
                       <p className="settings-item-label">维护操作</p>
                       <p className="settings-item-description">
-                        检查应用更新，或将设置恢复为默认值
+                        {webRuntime ? '将设置恢复为默认值' : '检查应用更新，或将设置恢复为默认值'}
                       </p>
                     </div>
                     <div className="updater-actions">
-                      {!isAvailable && !isDownloading && !isDownloaded && (
-                        <button
-                          className="settings-btn settings-btn-primary"
-                          onClick={checkForUpdates}
-                          disabled={isChecking}
-                        >
-                          <RefreshCw size={15} className={isChecking ? 'updater-spin' : ''} />
-                          检查更新
-                        </button>
-                      )}
-                      {isAvailable && (
+                      {!webRuntime && (
                         <>
-                          <button
-                            className="settings-btn settings-btn-primary"
-                            onClick={downloadUpdate}
-                          >
-                            <Download size={15} />
-                            下载更新
-                          </button>
-                          {(releaseNotes || releaseDate) && (
+                          {!isAvailable && !isDownloading && !isDownloaded && (
                             <button
-                              className="settings-btn settings-btn-secondary"
-                              onClick={openNotes}
+                              className="settings-btn settings-btn-primary"
+                              onClick={checkForUpdates}
+                              disabled={isChecking}
                             >
-                              <FileText size={13} />
-                              更新说明
+                              <RefreshCw size={15} className={isChecking ? 'updater-spin' : ''} />
+                              检查更新
                             </button>
                           )}
+                          {isAvailable && (
+                            <>
+                              <button
+                                className="settings-btn settings-btn-primary"
+                                onClick={downloadUpdate}
+                              >
+                                <Download size={15} />
+                                下载更新
+                              </button>
+                              {(releaseNotes || releaseDate) && (
+                                <button
+                                  className="settings-btn settings-btn-secondary"
+                                  onClick={openNotes}
+                                >
+                                  <FileText size={13} />
+                                  更新说明
+                                </button>
+                              )}
+                            </>
+                          )}
+                          {isDownloaded && (
+                            <button
+                              className="settings-btn settings-btn-primary"
+                              onClick={quitAndInstall}
+                            >
+                              重启并安装
+                            </button>
+                          )}
+                          <button
+                            className="settings-btn settings-btn-secondary"
+                            onClick={openNotes}
+                          >
+                            <FileText size={13} />
+                            更新说明
+                          </button>
                         </>
                       )}
-                      {isDownloaded && (
-                        <button
-                          className="settings-btn settings-btn-primary"
-                          onClick={quitAndInstall}
-                        >
-                          重启并安装
-                        </button>
-                      )}
-                      <button className="settings-btn settings-btn-secondary" onClick={openNotes}>
-                        <FileText size={13} />
-                        更新说明
-                      </button>
                       <button
                         className="settings-btn settings-btn-secondary"
                         onClick={resetToDefaults}

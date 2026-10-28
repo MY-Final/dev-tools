@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef, useMemo, useId } from 'react'
-import { tools } from '@renderer/tools/registry'
+import { supportsWeb, tools } from '@renderer/tools/registry'
 import type { ToolItem as RegistryToolItem } from '@renderer/types/tool'
+import { isWebRuntime } from '@renderer/lib/platform'
 import StatusMessage from '@renderer/components/StatusMessage'
 
 interface ToolItem {
@@ -9,6 +10,7 @@ interface ToolItem {
   desc: string
   icon: RegistryToolItem['icon']
   category: string
+  platforms: RegistryToolItem['platforms']
 }
 
 const ALL_TOOLS = tools as unknown as ToolItem[]
@@ -28,6 +30,7 @@ const FOCUSABLE_SELECTOR = [
 ].join(',')
 
 export default function CommandPalette({ onNavigate }: Props): React.JSX.Element {
+  const webRuntime = isWebRuntime()
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [selectedIndex, setSelectedIndex] = useState(0)
@@ -260,6 +263,11 @@ export default function CommandPalette({ onNavigate }: Props): React.JSX.Element
                   <span className="cmd-palette-item-name">{tool.name}</span>
                   <span className="cmd-palette-item-desc">{tool.desc}</span>
                 </div>
+                {webRuntime && !supportsWeb(tool) && (
+                  <span className="platform-badge" title="该工具需要下载桌面版">
+                    桌面端
+                  </span>
+                )}
                 <span className="cmd-palette-item-category">{tool.category}</span>
               </div>
             ))

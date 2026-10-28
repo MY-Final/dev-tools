@@ -3,12 +3,14 @@ import { Download, FileText } from 'lucide-react'
 import Sidebar from '@renderer/components/Sidebar'
 import CommandPalette from '@renderer/components/CommandPalette'
 import ToolHelp from '@renderer/components/ToolHelp'
+import ElectronOnlyPage from '@renderer/components/ElectronOnlyPage'
 import { ErrorBoundary } from '@renderer/components/ErrorBoundary'
 import Home from '@renderer/pages/Home'
 import About from '@renderer/pages/About'
 import SettingsPage from '@renderer/pages/SettingsPage'
 import Dialog from '@renderer/components/ui/dialog'
 import { getPageComponent } from '@renderer/pages/registry'
+import { getTool, supportsWeb } from '@renderer/tools/registry'
 import { SettingsProvider, useSettings } from '@renderer/lib/contexts'
 import { UpdaterProvider, useUpdater } from '@renderer/lib/updater-context'
 import { matchShortcut } from '@renderer/lib/shortcuts'
@@ -139,15 +141,24 @@ function AppContent(): React.JSX.Element {
     // Tool pages via registry
     const PageComponent = getPageComponent(currentPage)
     if (PageComponent) {
+      const tool = getTool(currentPage)
+      const page = (
+        <div className="tool-shell">
+          <section className="tool-shell-main">
+            <ToolHelp toolId={currentPage} />
+            <PageComponent />
+          </section>
+        </div>
+      )
+
       return (
         <ErrorBoundary>
           <Suspense fallback={<div className="page-loading">Loading…</div>}>
-            <div className="tool-shell">
-              <section className="tool-shell-main">
-                <ToolHelp toolId={currentPage} />
-                <PageComponent />
-              </section>
-            </div>
+            {tool && !supportsWeb(tool) ? (
+              <ElectronOnlyPage toolName={tool.name}>{page}</ElectronOnlyPage>
+            ) : (
+              page
+            )}
           </Suspense>
         </ErrorBoundary>
       )

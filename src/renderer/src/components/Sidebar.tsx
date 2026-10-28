@@ -21,9 +21,10 @@ import {
   Menu,
   X
 } from 'lucide-react'
-import { tools } from '@renderer/tools/registry'
+import { supportsWeb, tools } from '@renderer/tools/registry'
 import { cn } from '@renderer/lib/utils'
 import { useSettings } from '@renderer/lib/contexts'
+import { isWebRuntime } from '@renderer/lib/platform'
 
 interface SidebarProps {
   currentPage: string
@@ -102,6 +103,7 @@ export default function Sidebar({
   const theme = settings.appearance.theme
   const showShortDesc = settings.appearance.showSidebarShortDesc
   const favorites = settings.favorites
+  const webRuntime = isWebRuntime()
 
   const [viewportMode, setViewportMode] = useState<ViewportMode>(() => getViewportMode())
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -535,7 +537,14 @@ export default function Sidebar({
                         >
                           <Icon size={16} className="nav-icon" />
                           <div className="nav-label-wrapper">
-                            <span className="nav-label">{tool.name}</span>
+                            <span className="nav-label-row">
+                              <span className="nav-label">{tool.name}</span>
+                              {webRuntime && !supportsWeb(tool) && (
+                                <span className="platform-badge" title="该工具需要下载桌面版">
+                                  桌面
+                                </span>
+                              )}
+                            </span>
                             {showShortDesc && <span className="nav-desc">{tool.shortDesc}</span>}
                           </div>
                         </button>
@@ -638,6 +647,11 @@ export default function Sidebar({
                 >
                   <ToolIcon size={16} />
                   <span className="nav-flyout-label">{tool.name}</span>
+                  {webRuntime && !supportsWeb(tool) && (
+                    <span className="platform-badge" title="该工具需要下载桌面版">
+                      桌面
+                    </span>
+                  )}
                 </button>
               )
             })}

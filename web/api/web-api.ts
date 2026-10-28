@@ -24,8 +24,10 @@ import {
   type UpdaterAPI,
   type OpenedFile,
   type SaveFileOptions,
-  type SaveFileResult
+  type SaveFileResult,
+  type FileEncoding
 } from '../../src/shared/contracts'
+import { decodeText, MAX_TEXT_BYTES } from '../../src/shared/text-decode'
 
 // ── Helpers ──────────────────────────────────────────────────────
 
@@ -246,64 +248,23 @@ const webUpdaterAPI = {
     }
 } satisfies UpdaterAPI
 
-// ── 3. Maven API (direct fetch) ──────────────────────────────────
+// ── 3. Maven API (not available in browser) ─────────────────────
+// Maven Central does not send Access-Control-Allow-Origin, so a browser fetch
+// can never read the response. The desktop build proxies this through the main
+// process; the web build tells the caller instead of returning an empty list.
 
-const MAVEN_DEFAULT_SEARCH = 'https://search.maven.org/solrsearch/select'
-
-async function mavenFetch(
-  params: URLSearchParams,
-  retries = 2,
-  customUrl?: string
-): Promise<Response | null> {
-  const baseUrl = customUrl || MAVEN_DEFAULT_SEARCH
-  for (let attempt = 0; attempt <= retries; attempt++) {
-    try {
-      const controller = new AbortController()
-      const timeout = setTimeout(() => controller.abort(), 15000)
-      const res = await fetch(`${baseUrl}?${params}`, { signal: controller.signal })
-      clearTimeout(timeout)
-      if (res.ok) return res
-      if (res.status === 504 && attempt < retries) {
-        await new Promise((r) => setTimeout(r, 2000 * (attempt + 1)))
-        continue
-      }
-    } catch {
-      if (attempt < retries) {
-        await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)))
-        continue
-      }
-    }
-  }
-  return null
-}
+const MAVEN_UNAVAILABLE = 'Web 版需经主进程代理访问 Maven Central，请使用桌面版'
 
 const webMavenAPI = {
-  async searchArtifacts(query: string, rows: number): Promise<unknown> {
-    const params = new URLSearchParams({ q: query, rows: String(rows || 20), wt: 'json' })
-    const stored = loadSettings()
-    const res = await mavenFetch(params, 2, stored.mavenSearchUrl)
-    if (!res) return { response: { docs: [] } }
-    return res.json()
-  },
-
-  async getVersions(groupId: string, artifactId: string): Promise<unknown> {
-    const params = new URLSearchParams({
-      q: `g:${groupId} AND a:${artifactId}`,
-      core: 'gav',
-      rows: '15',
-      wt: 'json'
-    })
-    const stored = loadSettings()
-    const res = await mavenFetch(params, 1, stored.mavenSearchUrl)
-    if (!res) return { response: { docs: [] } }
-    return res.json()
-  }
+  searchArtifacts: (): Promise<unknown> => Promise.reject(new Error(MAVEN_UNAVAILABLE)),
+  getVersions: (): Promise<unknown> => Promise.reject(new Error(MAVEN_UNAVAILABLE))
 }
 
 // ── 4. Env API (not available in browser) ────────────────────────
 
 const webEnvAPI = {
-  getEnvVars: (): Promise<Record<string, string>> => Promise.resolve({})
+  getEnvVars: (): Promise<Record<string, string>> =>
+    Promise.reject(new Error('Web 版无法读取系统环境变量，请使用桌面版'))
 }
 
 // ── 5. Translator API (direct fetch) ─────────────────────────────
@@ -450,24 +411,26 @@ function pickBrowserFile(accept: string): Promise<File | null> {
 }
 
 const webFileAPI = {
-  async open(): Promise<OpenedFile | null> {
+  async open(encoding: FileEncoding = 'auto'): Promise<OpenedFile | null> {
     const file = await pickBrowserFile(
       '.txt,.md,.markdown,.json,.yaml,.yml,.toml,.xml,.csv,.tsv,.log,.html,.css,.js,.ts,.jsx,.tsx'
     )
     if (!file) return null
-    const content = await file.text()
+    const truncated = file.size > MAX_TEXT_BYTES
+    const buffer = await file.slice(0, MAX_TEXT_BYTES).arrayBuffer()
+    const decoded = decodeText(new Uint8Array(buffer), encoding)
     return {
       path: '',
       name: file.name,
-      content,
+      content: decoded.content,
       bytes: file.size,
-      truncated: false,
-      encoding: 'utf-8'
+      truncated,
+      encoding: decoded.encoding
     }
   },
 
   async read(): Promise<OpenedFile> {
-    throw new Error('Web 版不支持按路径读取文件，请使用「打开文件」')
+    throw new Error('Web 版无法按路径读取文件，请重新使用「打开」选择文件')
   },
 
   async save(options: SaveFileOptions): Promise<SaveFileResult> {

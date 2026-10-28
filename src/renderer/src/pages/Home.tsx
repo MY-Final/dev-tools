@@ -1,8 +1,9 @@
 import { useState, useMemo } from 'react'
 import { Search, Layers, Star } from 'lucide-react'
-import { tools } from '@renderer/tools/registry'
+import { supportsWeb, tools } from '@renderer/tools/registry'
 import type { ToolItem } from '@renderer/types/tool'
 import { useSettings } from '@renderer/lib/contexts'
+import { isWebRuntime } from '@renderer/lib/platform'
 import '../styles/home.css'
 
 // ── Tags ──────────────────────────────────────────────────────
@@ -31,6 +32,7 @@ interface HomeProps {
 export default function Home({ onSelectTool }: HomeProps): React.JSX.Element {
   const { settings, updateFavorites } = useSettings()
   const favorites = settings.favorites
+  const webRuntime = isWebRuntime()
   const [search, setSearch] = useState('')
   const [selectedTag, setSelectedTag] = useState<string | null>(null)
 
@@ -143,6 +145,11 @@ export default function Home({ onSelectTool }: HomeProps): React.JSX.Element {
                           <span className="home-tool-title-row">
                             <span className="home-tool-name">{t.name}</span>
                             {t.isNew && <span className="home-tool-badge">新</span>}
+                            {webRuntime && !supportsWeb(t) && (
+                              <span className="home-tool-badge" title="该工具需要下载桌面版">
+                                桌面端
+                              </span>
+                            )}
                           </span>
                           <span className="home-tool-desc">{t.desc}</span>
                         </span>

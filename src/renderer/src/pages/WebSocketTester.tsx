@@ -3,6 +3,7 @@ import {
   Radio, Plug, PlugZap, Send, Trash2, Copy, Check,
   Plus, X, KeyRound, Code, Shield, SendHorizonal
 } from 'lucide-react'
+import { isWebRuntime } from '@renderer/lib/platform'
 import '../styles/websocket-tester.css'
 
 interface LogEntry {
@@ -66,10 +67,6 @@ function encodeBasicAuth(username: string, password: string): string {
   let binary = ''
   for (const byte of bytes) binary += String.fromCharCode(byte)
   return `Basic ${btoa(binary)}`
-}
-
-function isWebRuntime(): boolean {
-  return window.electron?.process?.platform === 'web'
 }
 
 function buildUrl(

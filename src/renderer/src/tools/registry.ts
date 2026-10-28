@@ -1,4 +1,4 @@
-import type { ToolItem } from '@renderer/types/tool'
+import type { ToolItem, ToolPlatform } from '@renderer/types/tool'
 import { getIcon } from './icons'
 import toolsData from './tools.json'
 
@@ -13,7 +13,10 @@ interface ToolConfig {
   isNew?: boolean
   usage?: string
   tags?: string[]
+  platforms?: ToolPlatform[]
 }
+
+const DEFAULT_PLATFORMS: ToolPlatform[] = ['desktop', 'web']
 
 export const tools: ToolItem[] = (toolsData as ToolConfig[]).map((tool) => ({
   id: tool.id,
@@ -25,5 +28,14 @@ export const tools: ToolItem[] = (toolsData as ToolConfig[]).map((tool) => ({
   categoryIcon: getIcon(tool.categoryIcon),
   isNew: tool.isNew,
   usage: tool.usage,
-  tags: tool.tags
+  tags: tool.tags,
+  platforms: tool.platforms ?? DEFAULT_PLATFORMS
 }))
+
+export function getTool(id: string): ToolItem | undefined {
+  return tools.find((tool) => tool.id === id)
+}
+
+export function supportsWeb(tool: Pick<ToolItem, 'platforms'>): boolean {
+  return tool.platforms.includes('web')
+}

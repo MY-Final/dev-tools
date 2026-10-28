@@ -19,7 +19,8 @@
     "tags": ["网络", "运维"],
     "icon": "Globe",
     "category": "网络工具",
-    "categoryIcon": "Globe"
+    "categoryIcon": "Globe",
+    "platforms": ["desktop"]
   },
   {
     "id": "device-info",
@@ -250,7 +251,8 @@
     "tags": ["后端"],
     "icon": "Package",
     "category": "资源搜索",
-    "categoryIcon": "Search"
+    "categoryIcon": "Search",
+    "platforms": ["desktop"]
   },
   {
     "id": "file-generator",
@@ -283,7 +285,8 @@
     "tags": ["后端", "运维"],
     "icon": "Terminal",
     "category": "系统工具",
-    "categoryIcon": "Monitor"
+    "categoryIcon": "Monitor",
+    "platforms": ["desktop"]
   },
   {
     "id": "ascii-table",

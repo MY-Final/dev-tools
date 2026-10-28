@@ -24,6 +24,32 @@
   flex-direction: column;
 }
 
+/* 平台能力徽标：Web 端标注仅桌面可用的工具 */
+.platform-badge {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 5px;
+  border-radius: 4px;
+  background: var(--color-accent-subtle);
+  color: var(--color-accent);
+  font-size: var(--text-2xs);
+  line-height: 1.5;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.nav-label-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.nav-label-row .nav-label {
+  min-width: 0;
+}
+
 /* 页面切换加载状态 */
 .page-loading {
   display: flex;

@@ -1,12 +1,5 @@
 import { Download } from 'lucide-react'
-
-function isWeb(): boolean {
-  try {
-    return window.electron?.process?.platform === 'web'
-  } catch {
-    return true // safe fallback for environments where window.electron doesn't exist
-  }
-}
+import { isWebRuntime } from '@renderer/lib/platform'
 
 export default function ElectronOnlyPage({
   children,
@@ -15,7 +8,7 @@ export default function ElectronOnlyPage({
   children: React.ReactNode
   toolName: string
 }): React.JSX.Element {
-  if (!isWeb()) {
+  if (!isWebRuntime()) {
     return <>{children}</>
   }
 
@@ -31,13 +24,9 @@ export default function ElectronOnlyPage({
           <br />
           当前浏览器中无法使用。
         </p>
-        <p className="electron-only-hint">
-          请下载 Dev Tools 桌面版来使用此功能
-        </p>
+        <p className="electron-only-hint">请下载 Dev Tools 桌面版来使用此功能</p>
         <div className="electron-only-divider" />
-        <p className="electron-only-alt">
-          其他大部分工具在浏览器中均可正常使用，尽情探索吧！
-        </p>
+        <p className="electron-only-alt">其他大部分工具在浏览器中均可正常使用，尽情探索吧！</p>
       </div>
     </div>
   )
