@@ -108,7 +108,7 @@
 /* 统计网格 */
 .ta-stats-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
   gap: 10px;
 }
 
@@ -262,6 +262,12 @@
 
 .ta-gen-check input {
   accent-color: var(--color-accent-soft);
+}
+
+.ta-gen-error {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--color-warning);
 }
 
 .ta-gen-btn {

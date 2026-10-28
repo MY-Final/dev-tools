@@ -1,21 +1,39 @@
 import { useState, useMemo, useCallback } from 'react'
-import { Type, FileText, Clock, Hash, Wand2, Copy, Check } from 'lucide-react'
+import { Type, FileText, Clock, Hash, Wand2, Copy, Check, Languages, RotateCcw } from 'lucide-react'
 
 interface TextStats {
   characters: number
   charactersNoSpaces: number
   words: number
+  cjkCharacters: number
+  latinWords: number
   lines: number
   paragraphs: number
+  sentences: number
   bytes: number
-  readingTime: number
-  speakingTime: number
+  readingSeconds: number
+  speakingSeconds: number
 }
 
+// Han, Kana and Hangul are counted per character; everything else is split on whitespace.
+const CJK_PATTERN = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}]/gu
+const LATIN_WORD_PATTERN = /[A-Za-z0-9À-ɏ]+(?:['’-][A-Za-z0-9À-ɏ]+)*/g
+
+// Characters per minute for CJK, words per minute for alphabetic text.
+const CJK_READING_SPEED = 300
+const CJK_SPEAKING_SPEED = 200
+const WORD_READING_SPEED = 200
+const WORD_SPEAKING_SPEED = 130
+
 function analyzeText(text: string): TextStats {
-  const characters = text.length
-  const charactersNoSpaces = text.replace(/\s/g, '').length
-  const words = text.trim() ? text.trim().split(/\s+/).length : 0
+  const codePoints = Array.from(text)
+  const characters = codePoints.length
+  const charactersNoSpaces = codePoints.filter((c) => !/\s/.test(c)).length
+
+  const cjkCharacters = text.match(CJK_PATTERN)?.length ?? 0
+  const latinWords = text.replace(CJK_PATTERN, ' ').match(LATIN_WORD_PATTERN)?.length ?? 0
+  const words = cjkCharacters + latinWords
+
   const lines = text ? text.split('\n').length : 0
   const paragraphs = text.trim()
     ? text
@@ -23,19 +41,31 @@ function analyzeText(text: string): TextStats {
         .split(/\n\s*\n/)
         .filter((p) => p.trim()).length
     : 0
+  const sentences = text.trim()
+    ? (text.match(/[^.!?。！？…]+[.!?。！？…]+|[^.!?。！？…]+$/g) ?? []).filter((s) => s.trim())
+        .length
+    : 0
   const bytes = new TextEncoder().encode(text).length
-  const readingTime = Math.ceil(words / 200)
-  const speakingTime = Math.ceil(words / 130)
+
+  const readingSeconds = Math.ceil(
+    (latinWords / WORD_READING_SPEED + cjkCharacters / CJK_READING_SPEED) * 60
+  )
+  const speakingSeconds = Math.ceil(
+    (latinWords / WORD_SPEAKING_SPEED + cjkCharacters / CJK_SPEAKING_SPEED) * 60
+  )
 
   return {
     characters,
     charactersNoSpaces,
     words,
+    cjkCharacters,
+    latinWords,
     lines,
     paragraphs,
+    sentences,
     bytes,
-    readingTime,
-    speakingTime
+    readingSeconds,
+    speakingSeconds
   }
 }
 
@@ -46,12 +76,15 @@ function formatBytes(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
-function formatTime(seconds: number): string {
-  if (seconds < 60) return `${seconds} sec`
-  const minutes = Math.floor(seconds / 60)
-  const remainingSeconds = seconds % 60
-  if (remainingSeconds === 0) return `${minutes} min`
-  return `${minutes} min ${remainingSeconds} sec`
+function formatDuration(totalSeconds: number): string {
+  if (totalSeconds <= 0) return '0 秒'
+  if (totalSeconds < 60) return `${totalSeconds} 秒`
+  const minutes = Math.floor(totalSeconds / 60)
+  const seconds = totalSeconds % 60
+  if (minutes < 60) return seconds === 0 ? `${minutes} 分钟` : `${minutes} 分 ${seconds} 秒`
+  const hours = Math.floor(minutes / 60)
+  const restMinutes = minutes % 60
+  return restMinutes === 0 ? `${hours} 小时` : `${hours} 小时 ${restMinutes} 分`
 }
 
 interface GenConfig {
@@ -67,7 +100,8 @@ interface GenConfig {
 const CHAR_POOLS = {
   english: 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ ',
   numbers: '0123456789',
-  punctuation: '\uFF0C\u3002\uFF01\uFF1F\uFF1B\uFF1A\u201C\u201D\u2018\u2019\u3001\uFF08\uFF09\u300A\u300B\u3010\u3011\u2026\u2014\uFF5E\u00B7',
+  punctuation:
+    '\uFF0C\u3002\uFF01\uFF1F\uFF1B\uFF1A\u201C\u201D\u2018\u2019\u3001\uFF08\uFF09\u300A\u300B\u3010\u3011\u2026\u2014\uFF5E\u00B7',
   symbols: '!@#$%^&*()_+-=[]{}|;:<>?,./'
 }
 
@@ -123,6 +157,14 @@ function generateText(config: GenConfig): string {
   return generated
 }
 
+const MIN_GENERATED_LENGTH = 10
+const MAX_GENERATED_LENGTH = 100000
+
+function clampGeneratedLength(value: number): number {
+  if (!Number.isFinite(value)) return MIN_GENERATED_LENGTH
+  return Math.min(MAX_GENERATED_LENGTH, Math.max(MIN_GENERATED_LENGTH, Math.floor(value)))
+}
+
 interface StatItem {
   label: string
   value: string | number
@@ -142,6 +184,7 @@ export default function TextAnalyzer(): React.JSX.Element {
   })
   const [genCopied, setGenCopied] = useState(false)
   const [generated, setGenerated] = useState('')
+  const [genError, setGenError] = useState('')
 
   const stats = useMemo(() => analyzeText(text), [text])
 
@@ -150,11 +193,14 @@ export default function TextAnalyzer(): React.JSX.Element {
       { label: '字符数', value: stats.characters.toLocaleString(), icon: Type },
       { label: '字符数（不含空格）', value: stats.charactersNoSpaces.toLocaleString(), icon: Type },
       { label: '单词数', value: stats.words.toLocaleString(), icon: FileText },
+      { label: '中日韩字符', value: stats.cjkCharacters.toLocaleString(), icon: Languages },
+      { label: '西文单词', value: stats.latinWords.toLocaleString(), icon: FileText },
+      { label: '句子数', value: stats.sentences.toLocaleString(), icon: FileText },
       { label: '行数', value: stats.lines.toLocaleString(), icon: FileText },
       { label: '段落数', value: stats.paragraphs.toLocaleString(), icon: FileText },
       { label: '字节大小', value: formatBytes(stats.bytes), icon: Hash },
-      { label: '阅读时间', value: formatTime(stats.readingTime), icon: Clock },
-      { label: '演讲时间', value: formatTime(stats.speakingTime), icon: Clock }
+      { label: '阅读时间', value: formatDuration(stats.readingSeconds), icon: Clock },
+      { label: '演讲时间', value: formatDuration(stats.speakingSeconds), icon: Clock }
     ],
     [stats]
   )
@@ -164,7 +210,14 @@ export default function TextAnalyzer(): React.JSX.Element {
   }, [])
 
   const handleGenerate = useCallback(() => {
-    setGenerated(generateText(genConfig))
+    const next = generateText(genConfig)
+    if (!next) {
+      setGenError('至少选择一种字符类型后再生成')
+      setGenerated('')
+      return
+    }
+    setGenError('')
+    setGenerated(next)
   }, [genConfig])
 
   const handleUseGenerated = useCallback(() => {
@@ -181,12 +234,9 @@ export default function TextAnalyzer(): React.JSX.Element {
     }
   }, [generated])
 
-  const updateGenConfig = useCallback(
-    <K extends keyof GenConfig>(key: K, value: GenConfig[K]) => {
-      setGenConfig((prev) => ({ ...prev, [key]: value }))
-    },
-    []
-  )
+  const updateGenConfig = useCallback(<K extends keyof GenConfig>(key: K, value: GenConfig[K]) => {
+    setGenConfig((prev) => ({ ...prev, [key]: value }))
+  }, [])
 
   return (
     <div className="ta-page">
@@ -220,6 +270,15 @@ export default function TextAnalyzer(): React.JSX.Element {
               >
                 中文示例
               </button>
+              <button
+                className="ta-sample-btn"
+                onClick={() => setText('')}
+                disabled={!text}
+                aria-label="清空输入文本"
+              >
+                <RotateCcw size={12} />
+                清空
+              </button>
             </div>
           </div>
           <textarea
@@ -245,9 +304,15 @@ export default function TextAnalyzer(): React.JSX.Element {
                 type="number"
                 className="ta-gen-length"
                 value={genConfig.length}
-                min={10}
-                max={100000}
-                onChange={(e) => updateGenConfig('length', Number(e.target.value) || 10)}
+                min={MIN_GENERATED_LENGTH}
+                max={MAX_GENERATED_LENGTH}
+                onChange={(e) =>
+                  updateGenConfig('length', clampGeneratedLength(e.target.valueAsNumber))
+                }
+                onBlur={(e) => {
+                  e.target.value = String(genConfig.length)
+                }}
+                aria-label="生成文本长度"
               />
             </div>
             <div className="ta-gen-chars">
@@ -275,12 +340,16 @@ export default function TextAnalyzer(): React.JSX.Element {
             </button>
           </div>
 
+          {genError && (
+            <p className="ta-gen-error" role="status">
+              {genError}
+            </p>
+          )}
+
           {generated && (
             <div className="ta-gen-output">
               <div className="ta-gen-output-header">
-                <span className="ta-gen-output-label">
-                  生成结果 ({generated.length} 字符)
-                </span>
+                <span className="ta-gen-output-label">生成结果 ({generated.length} 字符)</span>
                 <div className="ta-gen-output-actions">
                   <button className="ta-sample-btn" onClick={handleUseGenerated}>
                     使用此文本

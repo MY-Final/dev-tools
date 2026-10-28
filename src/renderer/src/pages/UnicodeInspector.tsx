@@ -16,8 +16,16 @@ interface CharInfo {
   cssEscape: string
   jsEscape: string
   category: string
-  name: string
   block: string
+}
+
+// Injecting a long paragraph would otherwise build one chip, one info object and
+// one DOM button per code point on every keystroke.
+const MAX_INPUT_LENGTH = 300
+
+interface GraphemeInfo {
+  grapheme: string
+  codePoints: CharInfo[]
 }
 
 const UNICODE_CATEGORIES: Record<string, string> = {
@@ -51,6 +59,41 @@ const UNICODE_CATEGORIES: Record<string, string> = {
   Cs: 'Surrogate',
   Co: 'Private Use',
   Cn: 'Unassigned'
+}
+
+// Unicode general categories ordered from specific to broad; `String.prototype`
+// property escapes resolve them for every script without a hand-written table.
+const CATEGORY_PATTERNS: Record<string, RegExp> = {
+  Lu: /\p{Lu}/u,
+  Ll: /\p{Ll}/u,
+  Lt: /\p{Lt}/u,
+  Lm: /\p{Lm}/u,
+  Lo: /\p{Lo}/u,
+  Mn: /\p{Mn}/u,
+  Mc: /\p{Mc}/u,
+  Me: /\p{Me}/u,
+  Nd: /\p{Nd}/u,
+  Nl: /\p{Nl}/u,
+  No: /\p{No}/u,
+  Pc: /\p{Pc}/u,
+  Pd: /\p{Pd}/u,
+  Ps: /\p{Ps}/u,
+  Pe: /\p{Pe}/u,
+  Pi: /\p{Pi}/u,
+  Pf: /\p{Pf}/u,
+  Po: /\p{Po}/u,
+  Sm: /\p{Sm}/u,
+  Sc: /\p{Sc}/u,
+  Sk: /\p{Sk}/u,
+  So: /\p{So}/u,
+  Zs: /\p{Zs}/u,
+  Zl: /\p{Zl}/u,
+  Zp: /\p{Zp}/u,
+  Cc: /\p{Cc}/u,
+  Cf: /\p{Cf}/u,
+  Cs: /\p{Cs}/u,
+  Co: /\p{Co}/u,
+  Cn: /\p{Cn}/u
 }
 
 // Known Unicode blocks
@@ -136,13 +179,13 @@ function getUtf16Hex(cp: number): string {
 }
 
 function getCategory(cp: number): string {
-  // Note: only detects basic ASCII ranges; CJK, emoji, Arabic etc. fall through to 'Other'
-  if (cp >= 0x41 && cp <= 0x5a) return UNICODE_CATEGORIES['Lu']
-  if (cp >= 0x61 && cp <= 0x7a) return UNICODE_CATEGORIES['Ll']
-  if (cp >= 0x30 && cp <= 0x39) return UNICODE_CATEGORIES['Nd']
-  if (cp < 0x20 || cp === 0x7f) return UNICODE_CATEGORIES['Cc']
-  if (cp >= 0x80 && cp <= 0x9f) return UNICODE_CATEGORIES['Cc']
-  return 'Category unavailable (limited mapping)'
+  // Intl.Segmenter and the Unicode property escapes cover every script; fall back
+  // to the built-in description table when a code point matches no class.
+  const char = String.fromCodePoint(cp)
+  for (const [key, pattern] of Object.entries(CATEGORY_PATTERNS)) {
+    if (pattern.test(char)) return UNICODE_CATEGORIES[key] ?? key
+  }
+  return '未分类 (Cn)'
 }
 
 function analyzeChar(char: string): CharInfo | null {
@@ -151,8 +194,6 @@ function analyzeChar(char: string): CharInfo | null {
   if (cp === undefined) return null
 
   const hex = cp.toString(16).toUpperCase().padStart(4, '0')
-  const isPrintable = cp >= 0x20 && cp !== 0x7f && cp < 0x80
-  const name = isPrintable ? char : `U+${hex}`
 
   return {
     char,
@@ -169,7 +210,6 @@ function analyzeChar(char: string): CharInfo | null {
     cssEscape: `\\${hex}`,
     jsEscape: cp <= 0xffff ? `\\u${hex}` : `\\u{${hex}}`,
     category: getCategory(cp),
-    name,
     block: getBlock(cp)
   }
 }
@@ -199,20 +239,25 @@ export default function UnicodeInspector(): React.JSX.Element {
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [copiedKey, setCopiedKey] = useState<string | null>(null)
 
-  const chars = useMemo(() => {
+  const graphemes = useMemo((): GraphemeInfo[] => {
     if (!input) return []
-    // Spread to properly handle surrogate pairs (emoji etc.)
-    return [...input]
+    const segmenter = new Intl.Segmenter(undefined, { granularity: 'grapheme' })
+    const result: GraphemeInfo[] = []
+    for (const { segment } of segmenter.segment(input)) {
+      const codePoints = Array.from(segment)
+        .map((c) => analyzeChar(c))
+        .filter((info): info is CharInfo => info !== null)
+      if (codePoints.length > 0) result.push({ grapheme: segment, codePoints })
+    }
+    return result
   }, [input])
 
-  const allChars = useMemo(() => {
-    return chars.map((c) => analyzeChar(c)).filter(Boolean) as CharInfo[]
-  }, [chars])
+  const allChars = useMemo(() => graphemes.flatMap((grapheme) => grapheme.codePoints), [graphemes])
 
   const selectedChar = allChars[Math.min(selectedIndex, allChars.length - 1)] ?? null
 
   const updateInput = useCallback((value: string) => {
-    setInput(value)
+    setInput(value.slice(0, MAX_INPUT_LENGTH))
     setSelectedIndex(0)
   }, [])
 
@@ -231,7 +276,9 @@ export default function UnicodeInspector(): React.JSX.Element {
       <div className="ui-card">
         <div className="ui-header">
           <h2 className="ui-title">Unicode Inspector</h2>
-          <p className="ui-subtitle">输入字符，查看编码与有限 Unicode 信息（分类/Block 为内置常用范围）</p>
+          <p className="ui-subtitle">
+            查看码点、UTF-8/16 编码、Unicode 分类与转义序列；按字形分组，组合字符可作为整体分析
+          </p>
         </div>
 
         <div className="ui-input-area">
@@ -255,23 +302,28 @@ export default function UnicodeInspector(): React.JSX.Element {
           />
         </div>
 
-        {allChars.length > 1 && (
+        {graphemes.length > 1 && (
           <div className="ui-char-list">
             <span className="ui-char-list-label">
-              <Info size={12} />
-              检测到 {allChars.length} 个字符，当前查看第 {Math.min(selectedIndex + 1, allChars.length)} 个
+              <Info size={12} />共 {graphemes.length} 个字符 · {allChars.length} 个码点，当前查看第{' '}
+              {Math.min(selectedIndex + 1, allChars.length)} 个
             </span>
             <div className="ui-char-chips">
-              {allChars.map((info, i) => (
-                <button
-                  key={i}
-                  className={`ui-char-chip ${i === Math.min(selectedIndex, allChars.length - 1) ? 'active' : ''}`}
-                  onClick={() => setSelectedIndex(i)}
-                  title={info.hex}
-                >
-                  {info.char}
-                </button>
-              ))}
+              {graphemes.map((grapheme, i) => {
+                const offset = graphemes
+                  .slice(0, i)
+                  .reduce((sum, item) => sum + item.codePoints.length, 0)
+                return (
+                  <button
+                    key={`${grapheme.grapheme}-${i}`}
+                    className={`ui-char-chip ${offset === selectedIndex ? 'active' : ''}`}
+                    onClick={() => setSelectedIndex(offset)}
+                    title={`${grapheme.codePoints.map((c) => c.hex).join(' ')}${grapheme.codePoints.length > 1 ? ` · ${grapheme.codePoints.length} 个码点` : ''}`}
+                  >
+                    {grapheme.grapheme}
+                  </button>
+                )
+              })}
             </div>
           </div>
         )}
