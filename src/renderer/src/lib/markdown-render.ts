@@ -111,10 +111,10 @@ function createRenderer(
 }
 
 /**
- * Markdown to HTML with no sanitizing. Raw HTML in the source passes through
- * unchanged, so never inject this output directly; use `renderMarkdown`.
+ * Markdown to HTML with no sanitizing. Only `renderMarkdown` may hand this to
+ * the DOM: raw HTML in the source passes through unchanged.
  */
-export function parseMarkdown(source: string): MarkdownRender {
+function parseMarkdown(source: string): MarkdownRender {
   const headings: MarkdownHeading[] = []
   const marked = new Marked({ gfm: true, renderer: createRenderer(createSlugger(), headings) })
   return { html: marked.parse(source, { async: false }), headings }
