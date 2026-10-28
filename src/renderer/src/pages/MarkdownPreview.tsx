@@ -1,403 +1,357 @@
-import { useState, useMemo, useCallback } from 'react'
-import { FileText, Copy, Check, RotateCcw, Download } from 'lucide-react'
+import { useCallback, useMemo, useRef, useState } from 'react'
+import type { LucideIcon } from 'lucide-react'
+import {
+  Bold,
+  Check,
+  Code,
+  Copy,
+  Download,
+  FileText,
+  Heading,
+  Italic,
+  Link,
+  Link2,
+  List,
+  ListChecks,
+  ListOrdered,
+  ListTree,
+  Quote,
+  RotateCcw,
+  SquareCode,
+  Table
+} from 'lucide-react'
+import TextFileBar from '@renderer/components/TextFileBar'
+import { buildHtmlDocument, renderMarkdown } from '@renderer/lib/markdown-render'
 import '../styles/markdown-preview.css'
 
-function escapeHTML(value: string): string {
-  return value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;')
-}
+const DEMO_MARKDOWN = `# Markdown 预览
 
-function decodeHtmlEntities(value: string): string {
-  return value
-    .replace(/&amp;/gi, '&')
-    .replace(/&lt;/gi, '<')
-    .replace(/&gt;/gi, '>')
-    .replace(/&quot;/gi, '"')
-    .replace(/&#39;/gi, "'")
-    .replace(/&#x27;/gi, "'")
-    .replace(/&colon;/gi, ':')
-    .replace(/&#58;/gi, ':')
-    .replace(/&#x3a;/gi, ':')
-}
+这是一个 **实时** 预览的编辑器，支持 *斜体*、~~删除线~~ 和 \`行内代码\`。
 
-function sanitizeUrl(rawUrl: string, allowMailto: boolean): string | null {
-  let candidate = rawUrl.trim()
-  for (let pass = 0; pass < 3; pass++) {
-    const decoded = decodeHtmlEntities(candidate)
-    if (decoded === candidate) break
-    candidate = decoded
-  }
+## 列表
 
-  // Control characters and whitespace can be used to disguise dangerous schemes.
-  candidate = Array.from(candidate)
-    .filter((character) => {
-      const code = character.charCodeAt(0)
-      return code > 0x1f && code !== 0x7f && !/\s/.test(character)
-    })
-    .join('')
-  if (!candidate) return null
+- 无序列表
+  - 嵌套列表
+- [x] 已完成的任务
+- [ ] 待办任务
 
-  if (/^(?:\/|\.\/|\.\.\/|#|\?)/.test(candidate)) return candidate
+1. 第一步
+2. 第二步
 
-  try {
-    const parsed = new URL(candidate)
-    if (parsed.protocol === 'http:' || parsed.protocol === 'https:') return parsed.href
-    if (allowMailto && parsed.protocol === 'mailto:') return parsed.href
-  } catch {
-    return null
-  }
+## 表格
 
-  return null
-}
+| 左对齐 | 居中 | 右对齐 |
+| :--- | :---: | ---: |
+| 文本 | 文本 | 1,024 |
 
-// ── Inline rendering ───────────────────────────────────────────
-// Constructs that produce HTML (code, images, links, autolinks) are replaced by
-// placeholder tokens first. Emphasis and strikethrough rules then only see plain
-// text, so they can never rewrite tag attributes such as href or src. Tokens are
-// restored once at the end.
+## 代码
 
-const TOKEN_START = '\uE000'
-const TOKEN_END = '\uE001'
-const TOKEN_RE = /\uE000(\d+)\uE001/g
+\`\`\`ts
+const greet = (name: string) => 'Hello, ' + name
+\`\`\`
 
-interface InlineContext {
-  tokens: string[]
-}
+> 引用的内容会显示在左侧竖线旁。
 
-function holdToken(ctx: InlineContext, html: string): string {
-  ctx.tokens.push(html)
-  return `${TOKEN_START}${ctx.tokens.length - 1}${TOKEN_END}`
-}
+## 链接
 
-// A token can reference earlier tokens (e.g. a code span inside a link label),
-// so restoration recurses. Indices always point backwards, so it terminates.
-function restoreTokens(ctx: InlineContext, text: string): string {
-  return text.replace(TOKEN_RE, (_match, index: string) =>
-    restoreTokens(ctx, ctx.tokens[Number(index)] ?? '')
-  )
-}
-
-// `escaped` must already be HTML-escaped.
-function formatInline(ctx: InlineContext, escaped: string): string {
-  let text = escaped
-
-  // Code spans: content is already escaped and must not be formatted further.
-  text = text.replace(/`([^`]+)`/g, (_match, code: string) =>
-    holdToken(ctx, `<code>${code}</code>`)
-  )
-
-  text = text.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (_match, alt: string, url: string) => {
-    const safeUrl = sanitizeUrl(url, false)
-    return holdToken(
-      ctx,
-      safeUrl ? `<img src="${escapeHTML(safeUrl)}" alt="${alt}" loading="lazy">` : alt
-    )
-  })
-
-  // The label keeps its own inline formatting; the whole anchor becomes one token
-  // so emphasis cannot open inside it and close outside it.
-  text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_match, label: string, url: string) => {
-    const labelHtml = formatInline(ctx, label)
-    const safeUrl = sanitizeUrl(url, true)
-    return holdToken(
-      ctx,
-      safeUrl
-        ? `<a href="${escapeHTML(safeUrl)}" target="_blank" rel="noopener noreferrer">${labelHtml}</a>`
-        : labelHtml
-    )
-  })
-
-  // Autolinks: <https://...>. The angle brackets are already escaped here.
-  text = text.replace(/&lt;((?:https?|mailto):[^\s]+?)&gt;/g, (_match, target: string) => {
-    const safeUrl = sanitizeUrl(target, true)
-    return holdToken(
-      ctx,
-      safeUrl
-        ? `<a href="${escapeHTML(safeUrl)}" target="_blank" rel="noopener noreferrer">${target}</a>`
-        : target
-    )
-  })
-
-  // Bare URLs are kept as literal text so underscores or asterisks inside them stay intact.
-  text = text.replace(/https?:\/\/[^\s]+/g, (url) => holdToken(ctx, url))
-
-  // Emphasis. Underscore forms require a non-word boundary so snake_case_name is left alone.
-  text = text
-    .replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>')
-    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*(.+?)\*/g, '<em>$1</em>')
-    .replace(/(^|[^A-Za-z0-9_])___(.+?)___(?![A-Za-z0-9_])/g, '$1<strong><em>$2</em></strong>')
-    .replace(/(^|[^A-Za-z0-9_])__(.+?)__(?![A-Za-z0-9_])/g, '$1<strong>$2</strong>')
-    .replace(/(^|[^A-Za-z0-9_])_(.+?)_(?![A-Za-z0-9_])/g, '$1<em>$2</em>')
-    .replace(/~~(.+?)~~/g, '<del>$1</del>')
-
-  return text
-}
-
-function renderInline(source: string): string {
-  const ctx: InlineContext = { tokens: [] }
-  // Strip the placeholder delimiters from user input so they cannot collide with tokens.
-  const escaped = escapeHTML(source.replace(/[\uE000\uE001]/g, ''))
-  return restoreTokens(ctx, formatInline(ctx, escaped))
-}
-
-// ── Block rendering ────────────────────────────────────────────
-
-const HEADING_RE = /^#{1,6} /
-const HR_RE = /^---+$/
-const UL_RE = /^[*-] /
-const OL_RE = /^\d+\. /
-const QUOTE_RE = /^> /
-const FENCE_RE = /^```/
-
-function isTableLine(line: string): boolean {
-  return /^\|/.test(line) && /\|$/.test(line)
-}
-
-// Matches the GFM delimiter row, e.g. |------|:--|--:|
-function isTableAlignRow(line: string): boolean {
-  return /^\|(\s*:?-+:?\s*\|)+$/.test(line.trim())
-}
-
-function isBlockStart(line: string): boolean {
-  return (
-    FENCE_RE.test(line) ||
-    HEADING_RE.test(line) ||
-    HR_RE.test(line) ||
-    UL_RE.test(line) ||
-    OL_RE.test(line) ||
-    isTableLine(line) ||
-    QUOTE_RE.test(line)
-  )
-}
-
-// Raw HTML is escaped before parsing. This renderer only emits a fixed set of
-// safe tags, so preview output is trusted even though it is injected as HTML.
-function parseMarkdown(md: string): string {
-  const lines = md.split('\n')
-  const out: string[] = []
-  let i = 0
-
-  while (i < lines.length) {
-    const line = lines[i]
-
-    // Code blocks (fenced)
-    if (FENCE_RE.test(line)) {
-      const codeLines: string[] = []
-      i++
-      while (i < lines.length && !FENCE_RE.test(lines[i])) {
-        codeLines.push(lines[i])
-        i++
-      }
-      i++ // skip closing ```
-      out.push(`<pre><code>${escapeHTML(codeLines.join('\n'))}</code></pre>`)
-      continue
-    }
-
-    // Headings
-    if (HEADING_RE.test(line)) {
-      const level = line.match(/^(#+)/)![1].length
-      const text = line.slice(level + 1)
-      out.push(`<h${level}>${renderInline(text)}</h${level}>`)
-      i++
-      continue
-    }
-
-    // Horizontal rule: only a line made of three or more dashes
-    if (HR_RE.test(line)) {
-      out.push('<hr>')
-      i++
-      continue
-    }
-
-    // Unordered list (consecutive items)
-    if (UL_RE.test(line)) {
-      const items: string[] = []
-      while (i < lines.length && UL_RE.test(lines[i])) {
-        items.push(renderInline(lines[i].replace(/^[*-] /, '')))
-        i++
-      }
-      out.push('<ul>' + items.map((item) => `<li>${item}</li>`).join('') + '</ul>')
-      continue
-    }
-
-    // Ordered list (consecutive items)
-    if (OL_RE.test(line)) {
-      const items: string[] = []
-      while (i < lines.length && OL_RE.test(lines[i])) {
-        items.push(renderInline(lines[i].replace(/^\d+\. /, '')))
-        i++
-      }
-      out.push('<ol>' + items.map((item) => `<li>${item}</li>`).join('') + '</ol>')
-      continue
-    }
-
-    // Table
-    if (isTableLine(line)) {
-      const tableLines: string[] = []
-      while (i < lines.length && isTableLine(lines[i])) {
-        tableLines.push(lines[i])
-        i++
-      }
-      // The delimiter row is structural, not data. GFM places it second.
-      const hasAlignRow = tableLines.length > 1 && isTableAlignRow(tableLines[1])
-      const rows = tableLines
-        .filter((_, idx) => !(hasAlignRow && idx === 1))
-        .map((row) =>
-          row
-            .split('|')
-            .slice(1, -1)
-            .map((cell) => renderInline(cell.trim()))
-        )
-      const [headerRow, ...dataRows] = rows
-      out.push(
-        '<table><thead><tr>' +
-          headerRow.map((h) => `<th>${h}</th>`).join('') +
-          '</tr></thead><tbody>' +
-          dataRows.map((r) => '<tr>' + r.map((c) => `<td>${c}</td>`).join('') + '</tr>').join('') +
-          '</tbody></table>'
-      )
-      continue
-    }
-
-    // Blockquote
-    if (QUOTE_RE.test(line)) {
-      const quotes: string[] = []
-      while (i < lines.length && QUOTE_RE.test(lines[i])) {
-        quotes.push(renderInline(lines[i].replace(/^> /, '')))
-        i++
-      }
-      out.push('<blockquote>' + quotes.join('<br>') + '</blockquote>')
-      continue
-    }
-
-    // Empty line = paragraph break
-    if (line.trim() === '') {
-      i++
-      continue
-    }
-
-    // Paragraph: consecutive non-blank lines that do not start another block
-    // become one <p>, with line breaks preserved as <br>.
-    const paragraph: string[] = []
-    while (i < lines.length && lines[i].trim() !== '' && !isBlockStart(lines[i])) {
-      paragraph.push(renderInline(lines[i]))
-      i++
-    }
-    out.push('<p>' + paragraph.join('<br>') + '</p>')
-  }
-
-  return out.join('\n')
-}
-
-// ── Standalone HTML export ─────────────────────────────────────
-// The exported document must not depend on app CSS variables, so its styles are inlined.
-
-const EXPORT_CSS = `body { max-width: 860px; margin: 40px auto; padding: 0 24px; font-family: -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif; line-height: 1.7; color: #24292f; }
-h1, h2, h3, h4, h5, h6 { line-height: 1.25; margin: 1.4em 0 0.6em; }
-p, ul, ol, blockquote, pre, table { margin: 0.8em 0; }
-code { font-family: Consolas, "JetBrains Mono", monospace; font-size: 0.9em; background: #f3f4f6; padding: 0.15em 0.4em; border-radius: 4px; }
-pre { background: #f6f8fa; padding: 14px 16px; border-radius: 6px; overflow: auto; }
-pre code { background: none; padding: 0; }
-blockquote { margin-left: 0; padding: 0 1em; color: #57606a; border-left: 4px solid #d0d7de; }
-table { border-collapse: collapse; }
-th, td { border: 1px solid #d0d7de; padding: 6px 12px; text-align: left; }
-th { background: #f6f8fa; }
-img { max-width: 100%; }
-a { color: #0969da; }
-hr { border: 0; border-top: 1px solid #d0d7de; margin: 1.5em 0; }`
-
-function buildHtmlDocument(body: string): string {
-  return `<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Markdown Export</title>
-<style>
-${EXPORT_CSS}
-</style>
-</head>
-<body>
-${body}
-</body>
-</html>
+访问 [项目主页](https://example.com)，或跳到 [表格](#表格)。
 `
+
+// Kana, CJK ideographs, Hangul syllables and compatibility ideographs.
+const CJK_RE = /[\u3040-\u30ff\u3400-\u9fff\uac00-\ud7af\uf900-\ufaff]/g
+const TABLE_TEMPLATE = '| 列 1 | 列 2 |\n| --- | --- |\n| 内容 | 内容 |'
+
+type PaneView = 'edit' | 'preview'
+type CopyKey = 'markdown' | 'html'
+type ScrollOrigin = 'source' | 'preview'
+type InsertKind =
+  | 'bold'
+  | 'italic'
+  | 'code'
+  | 'link'
+  | 'heading'
+  | 'bullet'
+  | 'ordered'
+  | 'task'
+  | 'quote'
+  | 'codeblock'
+  | 'table'
+
+interface TextEdit {
+  from: number
+  to: number
+  text: string
+  selectFrom: number
+  selectTo: number
+}
+
+const SYNC_RESUME_MS = 150
+
+function wrapEdit(
+  value: string,
+  from: number,
+  to: number,
+  before: string,
+  after: string,
+  placeholder: string
+): TextEdit {
+  const selected = value.slice(from, to) || placeholder
+  const start = from + before.length
+  return {
+    from,
+    to,
+    text: before + selected + after,
+    selectFrom: start,
+    selectTo: start + selected.length
+  }
+}
+
+function lineBounds(value: string, from: number, to: number): [number, number] {
+  const start = from === 0 ? 0 : value.lastIndexOf('\n', from - 1) + 1
+  const end = value.indexOf('\n', to)
+  return [start, end === -1 ? value.length : end]
+}
+
+function prefixLines(
+  value: string,
+  from: number,
+  to: number,
+  prefixAt: (lineNumber: number) => string
+): TextEdit {
+  const [start, end] = lineBounds(value, from, to)
+  const lines = value.slice(start, end).split('\n')
+  // A lone empty line still gets the prefix, so the toolbar works on a blank cursor line.
+  const skipBlank = lines.length > 1
+  let lineNumber = 0
+  const text = lines
+    .map((line) => {
+      if (skipBlank && line.trim() === '') return line
+      lineNumber++
+      return prefixAt(lineNumber) + line
+    })
+    .join('\n')
+  return { from: start, to: end, text, selectFrom: start, selectTo: start + text.length }
+}
+
+/** Inserts a block on its own lines, with blank lines separating it from neighbours. */
+function insertBlock(
+  value: string,
+  from: number,
+  to: number,
+  block: string,
+  innerStart: number,
+  innerEnd: number
+): TextEdit {
+  const lead = from === 0 ? '' : value[from - 1] === '\n' ? '\n' : '\n\n'
+  const trail = to >= value.length ? '' : value[to] === '\n' ? '\n' : '\n\n'
+  const start = from + lead.length
+  return {
+    from,
+    to,
+    text: lead + block + trail,
+    selectFrom: start + innerStart,
+    selectTo: start + innerEnd
+  }
+}
+
+const INSERTERS: Record<InsertKind, (value: string, from: number, to: number) => TextEdit> = {
+  bold: (value, from, to) => wrapEdit(value, from, to, '**', '**', '粗体文字'),
+  italic: (value, from, to) => wrapEdit(value, from, to, '*', '*', '斜体文字'),
+  code: (value, from, to) => wrapEdit(value, from, to, '`', '`', '代码'),
+  link: (value, from, to) => wrapEdit(value, from, to, '[', '](https://)', '链接文字'),
+  heading: (value, from, to) => prefixLines(value, from, to, () => '## '),
+  bullet: (value, from, to) => prefixLines(value, from, to, () => '- '),
+  ordered: (value, from, to) => prefixLines(value, from, to, (n) => `${n}. `),
+  task: (value, from, to) => prefixLines(value, from, to, () => '- [ ] '),
+  quote: (value, from, to) => prefixLines(value, from, to, () => '> '),
+  codeblock: (value, from, to) => {
+    const body = value.slice(from, to)
+    return insertBlock(value, from, to, '```\n' + body + '\n```', 4, 4 + body.length)
+  },
+  // Tables are inserted after any selection rather than replacing it.
+  table: (value, _from, to) => insertBlock(value, to, to, TABLE_TEMPLATE, 2, 2 + '列 1'.length)
+}
+
+type ToolEntry = { kind: InsertKind; label: string; icon: LucideIcon } | { kind: 'separator' }
+
+const TOOLS: ToolEntry[] = [
+  { kind: 'bold', label: '粗体', icon: Bold },
+  { kind: 'italic', label: '斜体', icon: Italic },
+  { kind: 'code', label: '行内代码', icon: Code },
+  { kind: 'link', label: '链接', icon: Link },
+  { kind: 'separator' },
+  { kind: 'heading', label: '标题', icon: Heading },
+  { kind: 'bullet', label: '无序列表', icon: List },
+  { kind: 'ordered', label: '有序列表', icon: ListOrdered },
+  { kind: 'task', label: '任务列表', icon: ListChecks },
+  { kind: 'quote', label: '引用', icon: Quote },
+  { kind: 'separator' },
+  { kind: 'codeblock', label: '代码块', icon: SquareCode },
+  { kind: 'table', label: '表格', icon: Table }
+]
+
+/**
+ * Edits through execCommand so the browser records the change in the undo stack.
+ * Falls back to a state write when execCommand is unavailable.
+ */
+function applyEdit(
+  textarea: HTMLTextAreaElement,
+  edit: TextEdit,
+  commit: (value: string) => void
+): void {
+  textarea.focus()
+  textarea.setSelectionRange(edit.from, edit.to)
+  if (document.execCommand('insertText', false, edit.text)) {
+    // The DOM already holds the new value, so React will not move the caret.
+    commit(textarea.value)
+    textarea.setSelectionRange(edit.selectFrom, edit.selectTo)
+    return
+  }
+  commit(textarea.value.slice(0, edit.from) + edit.text + textarea.value.slice(edit.to))
+  // A state write resets the caret when React commits, so restore it after that.
+  requestAnimationFrame(() => textarea.setSelectionRange(edit.selectFrom, edit.selectTo))
+}
+
+function countWords(source: string): number {
+  const cjk = source.match(CJK_RE)?.length ?? 0
+  const latin = source.replace(CJK_RE, ' ').match(/[\p{L}\p{N}]+/gu)?.length ?? 0
+  return cjk + latin
+}
+
+function decodeHash(href: string): string {
+  try {
+    return decodeURIComponent(href.slice(1))
+  } catch {
+    return href.slice(1)
+  }
+}
+
+function downloadHtml(content: string): void {
+  const url = URL.createObjectURL(new Blob([content], { type: 'text/html;charset=utf-8' }))
+  const link = document.createElement('a')
+  link.href = url
+  link.download = 'markdown-preview.html'
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000)
 }
 
 export default function MarkdownPreview(): React.JSX.Element {
-  const [input, setInput] = useState(`# Hello Markdown
+  const [input, setInput] = useState(DEMO_MARKDOWN)
+  const [view, setView] = useState<PaneView>('edit')
+  const [syncScroll, setSyncScroll] = useState(true)
+  const [outlineOpen, setOutlineOpen] = useState(true)
+  const [copied, setCopied] = useState<CopyKey | null>(null)
+  const [notice, setNotice] = useState<string | null>(null)
 
-## 实时渲染预览
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const previewRef = useRef<HTMLDivElement>(null)
+  const scrollOwner = useRef<ScrollOrigin | null>(null)
+  const scrollRelease = useRef<number | undefined>(undefined)
 
-这是一个 **Markdown** 编辑器，支持 *GFM* 语法：
+  const rendered = useMemo(() => renderMarkdown(input), [input])
+  const stats = useMemo(
+    () => ({
+      words: countWords(input),
+      lines: input === '' ? 0 : input.split('\n').length,
+      headings: rendered.headings.length
+    }),
+    [input, rendered]
+  )
+  const documentTitle = rendered.headings[0]?.text || 'Markdown 文档'
 
-### 列表
+  const flashNotice = useCallback((message: string) => {
+    setNotice(message)
+    window.setTimeout(() => setNotice(null), 2400)
+  }, [])
 
-- 无序列表项 1
-- 无序列表项 2
-- 无序列表项 3
+  const copyText = useCallback(
+    async (text: string, key: CopyKey) => {
+      try {
+        await navigator.clipboard.writeText(text)
+        setCopied(key)
+        window.setTimeout(() => setCopied(null), 1500)
+      } catch {
+        flashNotice('复制失败，请检查剪贴板权限')
+      }
+    },
+    [flashNotice]
+  )
 
-### 代码块
-
-\`\`\`javascript
-function hello() {
-  console.log('Hello, World!')
-}
-\`\`\`
-
-### 表格
-
-| 名称 | 说明 |
-|------|------|
-| 功能 | 实时预览 |
-| 支持 | GFM 语法 |
-
-### 链接和图片
-
-[GitHub](https://github.com)
-
-> 引用文本
-`)
-  const [copied, setCopied] = useState<'markdown' | 'html' | null>(null)
-
-  const htmlOutput = useMemo(() => parseMarkdown(input), [input])
-
-  const handleCopyMarkdown = useCallback(async () => {
+  const handleSaveHtml = useCallback(async () => {
+    const content = buildHtmlDocument(rendered.html, documentTitle)
     try {
-      await navigator.clipboard.writeText(input)
-      setCopied('markdown')
-      setTimeout(() => setCopied(null), 1500)
+      if (window.file) {
+        const result = await window.file.save({ content, suggestedName: 'markdown-preview.html' })
+        if (!result.canceled) flashNotice(`已保存 ${result.name}`)
+      } else {
+        downloadHtml(content)
+        flashNotice('已开始下载 markdown-preview.html')
+      }
     } catch {
-      // silently fail
+      flashNotice('保存失败')
     }
-  }, [input])
+  }, [rendered.html, documentTitle, flashNotice])
 
-  const handleCopyHtml = useCallback(async () => {
-    try {
-      await navigator.clipboard.writeText(htmlOutput)
-      setCopied('html')
-      setTimeout(() => setCopied(null), 1500)
-    } catch {
-      // silently fail
-    }
-  }, [htmlOutput])
+  const insert = useCallback((kind: InsertKind) => {
+    const textarea = textareaRef.current
+    if (!textarea) return
+    const edit = INSERTERS[kind](textarea.value, textarea.selectionStart, textarea.selectionEnd)
+    applyEdit(textarea, edit, setInput)
+  }, [])
 
-  const handleDownloadHtml = useCallback(() => {
-    const blob = new Blob([buildHtmlDocument(htmlOutput)], { type: 'text/html;charset=utf-8' })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = 'markdown-preview.html'
-    document.body.appendChild(link)
-    link.click()
-    link.remove()
-    setTimeout(() => URL.revokeObjectURL(url), 1000)
-  }, [htmlOutput])
+  const scrollPreviewTo = useCallback((id: string) => {
+    const preview = previewRef.current
+    if (!preview) return
+    const target = Array.from(preview.querySelectorAll<HTMLElement>('[id]')).find(
+      (element) => element.id === id
+    )
+    if (!target) return
+    // offsetTop is measured from the preview, which is the positioned scroll container.
+    preview.scrollTo({ top: target.offsetTop - 12, behavior: 'smooth' })
+  }, [])
+
+  // Proportional sync. Only the pane the user is driving may move the other one.
+  // Ownership is released after SYNC_RESUME_MS without events from that pane,
+  // which stops programmatic scrolls from echoing back and forth.
+  const followScroll = useCallback(
+    (origin: ScrollOrigin) => {
+      const source = textareaRef.current
+      const preview = previewRef.current
+      if (!syncScroll || !source || !preview) return
+      if (scrollOwner.current !== null && scrollOwner.current !== origin) return
+
+      scrollOwner.current = origin
+      window.clearTimeout(scrollRelease.current)
+      scrollRelease.current = window.setTimeout(() => {
+        scrollOwner.current = null
+      }, SYNC_RESUME_MS)
+
+      const from = origin === 'source' ? source : preview
+      const to = origin === 'source' ? preview : source
+      const fromRange = from.scrollHeight - from.clientHeight
+      const toRange = to.scrollHeight - to.clientHeight
+      // A hidden pane (narrow layout) reports zero height, so there is nothing to map to.
+      if (fromRange <= 0 || toRange <= 0) return
+      const next = (from.scrollTop / fromRange) * toRange
+      if (Math.abs(to.scrollTop - next) > 1) to.scrollTop = next
+    },
+    [syncScroll]
+  )
+
+  const handlePreviewClick = useCallback(
+    (event: React.MouseEvent<HTMLDivElement>) => {
+      if (!(event.target instanceof Element)) return
+      const link = event.target.closest('a')
+      const href = link?.getAttribute('href')
+      // In-document links scroll the preview instead of changing the app's route.
+      if (!href?.startsWith('#')) return
+      event.preventDefault()
+      scrollPreviewTo(decodeHash(href))
+    },
+    [scrollPreviewTo]
+  )
 
   return (
     <div className="mp-page">
@@ -405,52 +359,180 @@ function hello() {
         <div className="mp-header">
           <FileText size={20} />
           <h1 className="mp-title">Markdown Preview</h1>
-          <p className="mp-subtitle">实时 Markdown 渲染预览</p>
+          <p className="mp-subtitle">实时 Markdown 渲染预览 · GFM</p>
         </div>
 
-        <div className="mp-layout">
-          {/* Input */}
-          <div className="mp-pane">
+        <TextFileBar
+          value={input}
+          onOpened={(file) => setInput(file.content)}
+          onNew={() => setInput('')}
+          suggestedName="document.md"
+        />
+
+        <div className="mp-seg-row">
+          <div className="mp-seg" role="tablist" aria-label="切换窗格">
+            <button
+              type="button"
+              role="tab"
+              className="mp-seg-btn"
+              aria-selected={view === 'edit'}
+              onClick={() => setView('edit')}
+            >
+              编辑
+            </button>
+            <button
+              type="button"
+              role="tab"
+              className="mp-seg-btn"
+              aria-selected={view === 'preview'}
+              onClick={() => setView('preview')}
+            >
+              预览
+            </button>
+          </div>
+        </div>
+
+        <div className="mp-layout" data-view={view}>
+          <section className="mp-pane mp-pane-source" aria-label="Markdown 源码">
             <div className="mp-pane-header">
-              <span className="mp-pane-label">Markdown</span>
+              <span className="mp-pane-label">MARKDOWN</span>
               <div className="mp-actions">
-                <button className="mp-btn" onClick={handleCopyMarkdown}>
+                <button
+                  type="button"
+                  className="mp-btn"
+                  onClick={() => copyText(input, 'markdown')}
+                >
                   {copied === 'markdown' ? <Check size={13} /> : <Copy size={13} />}
                   {copied === 'markdown' ? '已复制' : '复制'}
                 </button>
-                <button className="mp-btn" onClick={() => setInput('')}>
+                <button type="button" className="mp-btn" onClick={() => setInput('')}>
                   <RotateCcw size={13} />
                   清空
                 </button>
               </div>
             </div>
+
+            <div
+              className="mp-toolbar"
+              role="toolbar"
+              aria-label="插入格式"
+              // Keeps the textarea focused and its selection intact while a button is pressed.
+              onMouseDown={(event) => event.preventDefault()}
+            >
+              {TOOLS.map((tool, index) =>
+                tool.kind === 'separator' ? (
+                  <span key={`sep-${index}`} className="mp-tool-sep" aria-hidden="true" />
+                ) : (
+                  <button
+                    key={tool.kind}
+                    type="button"
+                    className="mp-tool"
+                    title={tool.label}
+                    aria-label={tool.label}
+                    onClick={() => insert(tool.kind)}
+                  >
+                    <tool.icon size={14} />
+                  </button>
+                )
+              )}
+            </div>
+
             <textarea
+              ref={textareaRef}
               className="mp-textarea"
+              aria-label="Markdown 源码输入"
               value={input}
-              onChange={(e) => setInput(e.target.value)}
+              onChange={(event) => setInput(event.target.value)}
+              onScroll={() => followScroll('source')}
               placeholder="在此输入 Markdown..."
               spellCheck={false}
             />
-          </div>
+          </section>
 
-          {/* Preview */}
-          <div className="mp-pane">
+          <section className="mp-pane mp-pane-preview" aria-label="渲染预览">
             <div className="mp-pane-header">
-              <span className="mp-pane-label">Preview</span>
+              <span className="mp-pane-label">PREVIEW</span>
               <div className="mp-actions">
-                <button className="mp-btn" onClick={handleCopyHtml}>
+                <button
+                  type="button"
+                  className="mp-btn"
+                  aria-pressed={syncScroll}
+                  title="两个窗格滚动时互相跟随"
+                  onClick={() => setSyncScroll((on) => !on)}
+                >
+                  <Link2 size={13} />
+                  同步滚动
+                </button>
+                <button
+                  type="button"
+                  className="mp-btn"
+                  onClick={() => copyText(rendered.html, 'html')}
+                >
                   {copied === 'html' ? <Check size={13} /> : <Copy size={13} />}
                   {copied === 'html' ? '已复制' : '复制 HTML'}
                 </button>
-                <button className="mp-btn" onClick={handleDownloadHtml}>
+                <button type="button" className="mp-btn" onClick={handleSaveHtml}>
                   <Download size={13} />
-                  下载 HTML
+                  保存 HTML
                 </button>
               </div>
             </div>
-            <div className="mp-preview" dangerouslySetInnerHTML={{ __html: htmlOutput }} />
-          </div>
+
+            <div className="mp-outline">
+              <button
+                type="button"
+                className="mp-btn mp-outline-toggle"
+                aria-expanded={outlineOpen}
+                onClick={() => setOutlineOpen((open) => !open)}
+              >
+                <ListTree size={13} />
+                大纲 · {rendered.headings.length}
+              </button>
+              {outlineOpen &&
+                (rendered.headings.length > 0 ? (
+                  <nav className="mp-outline-list" aria-label="文档大纲">
+                    {rendered.headings.map((heading) => (
+                      <button
+                        key={heading.id}
+                        type="button"
+                        className="mp-outline-item"
+                        data-level={heading.level}
+                        onClick={() => scrollPreviewTo(heading.id)}
+                      >
+                        {heading.text || '(空标题)'}
+                      </button>
+                    ))}
+                  </nav>
+                ) : (
+                  <p className="mp-outline-empty">文档中还没有标题</p>
+                ))}
+            </div>
+
+            <div
+              ref={previewRef}
+              className="mp-preview"
+              onScroll={() => followScroll('preview')}
+              onClick={handlePreviewClick}
+            >
+              {rendered.html.trim() === '' ? (
+                <p className="mp-empty">在左侧输入 Markdown，这里会实时显示渲染结果。</p>
+              ) : (
+                <div className="mp-doc" dangerouslySetInnerHTML={{ __html: rendered.html }} />
+              )}
+            </div>
+          </section>
         </div>
+
+        <footer className="mp-stats">
+          <span>字数 {stats.words}</span>
+          <span>行数 {stats.lines}</span>
+          <span>标题数 {stats.headings}</span>
+          {notice && (
+            <span className="mp-notice" role="status">
+              {notice}
+            </span>
+          )}
+        </footer>
       </div>
     </div>
   )
