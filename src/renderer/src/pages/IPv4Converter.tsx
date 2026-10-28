@@ -99,8 +99,7 @@ export default function IPv4Converter(): React.JSX.Element {
       { label: 'Hexadecimal', value: '0x' + result.hex, key: 'hex' },
       { label: 'Binary', value: result.decimal.toString(2).padStart(32, '0'), key: 'binary-full' },
       { label: 'Binary (Grouped)', value: result.binary, key: 'binary-grouped' },
-      { label: 'Octal', value: result.octal, key: 'octal' },
-      { label: 'Integer', value: result.integer.toString(), key: 'integer' }
+      { label: 'Octal', value: result.octal, key: 'octal' }
     ]
   }, [result])
 
@@ -121,65 +120,89 @@ export default function IPv4Converter(): React.JSX.Element {
   const isLikelyDecimal = /^\d{1,10}$/.test(input.trim()) && parseInt(input.trim()) > 255
 
   return (
-    <div className="v4c-page">
-      <div className="v4c-card">
-        <div className="v4c-header">
-          <h2 className="v4c-title">IPv4 Converter</h2>
-          <p className="v4c-subtitle">IPv4 地址与数字格式互相转换</p>
+    <div className="v4c-page tool-page">
+      <header className="tool-page-header">
+        <div className="tool-page-heading">
+          <h2 className="tool-page-title">IPv4 Converter</h2>
+          <p className="tool-page-desc">
+            IPv4 地址与十进制、十六进制、八进制及二进制形式互相转换。
+          </p>
         </div>
+      </header>
 
-        <div className="v4c-input-area">
-          <div className="v4c-input-header">
-            <span className="v4c-input-label">输入</span>
+      <section className="tool-panel v4c-input-panel">
+        <div className="v4c-input-body">
+          <div className="v4c-input-head">
+            <label className="v4c-input-label" htmlFor="v4c-input">
+              IPv4 地址或十进制整数
+            </label>
             <div className="v4c-samples">
-              <button className="v4c-sample-btn" onClick={() => loadSample('8.8.8.8')}>
-                8.8.8.8
-              </button>
-              <button className="v4c-sample-btn" onClick={() => loadSample('127.0.0.1')}>
-                127.0.0.1
-              </button>
-              <button className="v4c-sample-btn" onClick={() => loadSample('192.168.1.1')}>
-                192.168.1.1
-              </button>
+              {['8.8.8.8', '127.0.0.1', '192.168.1.1'].map((sample) => (
+                <button
+                  key={sample}
+                  type="button"
+                  className="v4c-sample-btn"
+                  onClick={() => loadSample(sample)}
+                >
+                  {sample}
+                </button>
+              ))}
             </div>
           </div>
           <input
+            id="v4c-input"
             type="text"
-            className="v4c-input"
+            className="tool-input tool-input--mono tool-input--lg"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="IPv4 地址或十进制数字"
+            placeholder="例如 192.168.1.1 或 3232235777"
+            spellCheck={false}
           />
           {isLikelyDecimal && (
-            <div className="v4c-hint">
-              <ArrowLeftRight size={13} />
-              <span>检测到十进制数字，将自动转换为 IPv4 地址</span>
-            </div>
+            <p className="v4c-hint">
+              <ArrowLeftRight size={13} aria-hidden="true" />
+              检测到十进制整数，将自动转换为 IPv4 地址
+            </p>
           )}
         </div>
+      </section>
 
-        {result ? (
+      {result ? (
+        <section className="tool-panel v4c-outputs-panel">
+          <div className="tool-panel-head">
+            <h3 className="tool-panel-title">转换结果</h3>
+            <span className="v4c-output-count">{outputs.length} 种格式</span>
+          </div>
           <div className="v4c-outputs">
-            <span className="v4c-section-label">转换结果</span>
             {outputs.map(({ label, value, key }) => (
               <div key={key} className="v4c-output-row">
                 <span className="v4c-output-label">{label}</span>
-                <div className="v4c-output-value-row">
-                  <code className="v4c-output-value">{value}</code>
-                  <button className="v4c-copy-btn" onClick={() => copyValue(value, key)}>
-                    {copied === key ? <Check size={12} /> : <Copy size={12} />}
-                  </button>
-                </div>
+                <code className="v4c-output-value" title={value}>
+                  {value}
+                </code>
+                <button
+                  type="button"
+                  className="tool-icon-btn v4c-copy-btn"
+                  onClick={() => copyValue(value, key)}
+                  aria-label={`复制 ${label}`}
+                  title={`复制 ${label}`}
+                >
+                  {copied === key ? (
+                    <Check size={12} aria-hidden="true" />
+                  ) : (
+                    <Copy size={12} aria-hidden="true" />
+                  )}
+                </button>
               </div>
             ))}
           </div>
-        ) : (
-          <div className="v4c-empty">
-            <Globe size={32} />
-            <span>输入有效的 IPv4 地址或十进制数字</span>
-          </div>
-        )}
-      </div>
+        </section>
+      ) : (
+        <section className="tool-panel v4c-empty">
+          <Globe size={26} aria-hidden="true" />
+          <span>输入有效的 IPv4 地址或 0–4294967295 之间的整数</span>
+        </section>
+      )}
     </div>
   )
 }

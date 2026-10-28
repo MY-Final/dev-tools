@@ -1,5 +1,14 @@
 import { useState, useCallback } from 'react'
-import { ShieldOff, Send, AlertTriangle, CheckCircle, Info, Copy, Check } from 'lucide-react'
+import {
+  ShieldOff,
+  Send,
+  AlertTriangle,
+  CheckCircle,
+  Info,
+  Copy,
+  Check,
+  RotateCcw
+} from 'lucide-react'
 import '../styles/cors-checker.css'
 
 interface CorsResult {
@@ -50,13 +59,22 @@ function pickCorsHeaders(headers: Record<string, string>): Record<string, string
 }
 
 function formatHeaders(headers: Record<string, string>): string {
-  return Object.entries(headers).map(([key, value]) => `${key}: ${value}`).join(String.fromCharCode(10))
+  return Object.entries(headers)
+    .map(([key, value]) => `${key}: ${value}`)
+    .join(String.fromCharCode(10))
 }
 
-function analyzeCorsHeaders(headers: Record<string, string>, preflightHeaders: Record<string, string> | null): { type: 'success' | 'warning' | 'error'; message: string } {
-  const ao = headers['access-control-allow-origin'] || preflightHeaders?.['access-control-allow-origin']
+function analyzeCorsHeaders(
+  headers: Record<string, string>,
+  preflightHeaders: Record<string, string> | null
+): { type: 'success' | 'warning' | 'error'; message: string } {
+  const ao =
+    headers['access-control-allow-origin'] || preflightHeaders?.['access-control-allow-origin']
   if (!ao) {
-    return { type: 'error', message: '缺少 Access-Control-Allow-Origin 响应头，浏览器将阻止跨域请求。' }
+    return {
+      type: 'error',
+      message: '缺少 Access-Control-Allow-Origin 响应头，浏览器将阻止跨域请求。'
+    }
   }
   if (ao === '*') {
     return { type: 'success', message: '允许所有来源访问（Access-Control-Allow-Origin: *）' }
@@ -162,9 +180,10 @@ export default function CorsChecker(): React.JSX.Element {
         conclusion: analyzeCorsHeaders(rawHeaders, preflightHeaders)
       })
     } catch (err) {
-      const msg = (err as Error).name === 'AbortError'
-        ? '请求超时 (15s)'
-        : `请求失败: ${(err as Error).message}`
+      const msg =
+        (err as Error).name === 'AbortError'
+          ? '请求超时 (15s)'
+          : `请求失败: ${(err as Error).message}`
       setError(msg)
     } finally {
       clearTimeout(timeout)
@@ -174,166 +193,211 @@ export default function CorsChecker(): React.JSX.Element {
 
   const copyResult = useCallback(() => {
     if (!result) return
-    const text = `URL: ${result.url}\nMethod: ${result.method}\nStatus: ${result.status}\n实际请求: ${result.requestSent ? '已发送' : '未发送'}\n\nCORS Headers:\n${Object.entries(result.corsHeaders).map(([k, v]) => `  ${k}: ${v}`).join('\n')}\n\n${result.conclusion.message}`
+    const text = `URL: ${result.url}\nMethod: ${result.method}\nStatus: ${result.status}\n实际请求: ${result.requestSent ? '已发送' : '未发送'}\n\nCORS Headers:\n${Object.entries(
+      result.corsHeaders
+    )
+      .map(([k, v]) => `  ${k}: ${v}`)
+      .join('\n')}\n\n${result.conclusion.message}`
     navigator.clipboard.writeText(text).then(() => {
       setCopied(true)
       setTimeout(() => setCopied(false), 1500)
     })
   }, [result])
 
-  const conIcon = result?.conclusion.type === 'success'
-    ? CheckCircle : result?.conclusion.type === 'warning'
-    ? AlertTriangle : Info
-
-  const conColor = result?.conclusion.type === 'success'
-    ? 'cc-success' : result?.conclusion.type === 'warning'
-    ? 'cc-warning' : 'cc-error'
-
   return (
-    <div className="cc-page" aria-busy={loading}>
-      {/* Input */}
-      <div className="cc-input-row">
-        <input
-          className="cc-url-input"
-          type="text"
-          value={url}
-          onChange={(e) => {
-            setUrl(e.target.value)
-            setAllowMutation(false)
-          }}
-          placeholder="https://api.example.com/data"
-          aria-label="要检查的 URL"
-        />
-        <select
-          className="cc-method-select"
-          value={method}
-          onChange={(e) => {
-            setMethod(e.target.value)
-            setAllowMutation(false)
-          }}
-          aria-label="请求方法"
-        >
-          {METHODS.map((m) => (
-            <option key={m} value={m}>{m}</option>
-          ))}
-        </select>
-        <button className="cc-btn cc-btn-test" onClick={handleTest} disabled={loading}>
-          {loading
-            ? '测试中...'
-            : <><Send size={14} /> {isMutationMethod(method) && !allowMutation ? '仅安全检查' : '测试'}</>}
-        </button>
-      </div>
+    <div className="cors-page tool-page" aria-busy={loading}>
+      <header className="tool-page-header">
+        <div className="tool-page-heading">
+          <h2 className="tool-page-title">CORS Checker</h2>
+          <p className="tool-page-desc">
+            检查目标 URL 的跨域响应头与 OPTIONS 预检结果，判断浏览器能否正常访问。
+          </p>
+        </div>
+        <div className="tool-page-actions">
+          <button
+            type="button"
+            className="tool-btn tool-btn--outline"
+            onClick={() => {
+              setUrl('')
+              setResult(null)
+              setError('')
+            }}
+            disabled={!url && !result && !error}
+          >
+            <RotateCcw size={14} aria-hidden="true" />
+            清空
+          </button>
+        </div>
+      </header>
+
+      <section className="tool-panel cors-request">
+        <div className="tool-panel-head">
+          <h3 className="tool-panel-title">请求</h3>
+          <span className="cors-request-hint">GET / HEAD 发送实际请求，写操作默认只做预检</span>
+        </div>
+        <div className="cors-request-body">
+          <input
+            className="tool-input tool-input--lg cors-url-input"
+            type="text"
+            value={url}
+            onChange={(e) => {
+              setUrl(e.target.value)
+              setAllowMutation(false)
+            }}
+            placeholder="https://api.example.com/data"
+            aria-label="要检查的 URL"
+            spellCheck={false}
+          />
+          <select
+            className="tool-select cors-method-select"
+            value={method}
+            onChange={(e) => {
+              setMethod(e.target.value)
+              setAllowMutation(false)
+            }}
+            aria-label="请求方法"
+          >
+            {METHODS.map((m) => (
+              <option key={m} value={m}>
+                {m}
+              </option>
+            ))}
+          </select>
+          <button
+            type="button"
+            className="tool-btn tool-btn--primary cors-test-btn"
+            onClick={handleTest}
+            disabled={loading}
+          >
+            <Send size={14} aria-hidden="true" />
+            {loading
+              ? '测试中…'
+              : isMutationMethod(method) && !allowMutation
+                ? '仅安全检查'
+                : '测试'}
+          </button>
+        </div>
+
+        {isMutationMethod(method) && (
+          <label className="cors-mutation">
+            <input
+              type="checkbox"
+              checked={allowMutation}
+              onChange={(e) => setAllowMutation(e.target.checked)}
+              disabled={loading}
+            />
+            我确认发送实际 {method} 请求，可能修改目标数据
+          </label>
+        )}
+
+        {error && (
+          <p className="cors-error" role="alert">
+            <AlertTriangle size={14} aria-hidden="true" />
+            {error}
+          </p>
+        )}
+      </section>
 
       {loading && (
-        <div className="cc-empty-hint" role="status" aria-live="polite">
+        <div className="cors-scanning" role="status" aria-live="polite">
           正在执行 CORS 检查…
         </div>
       )}
 
-      {isMutationMethod(method) && (
-        <label className="cc-empty-hint">
-          <input
-            type="checkbox"
-            checked={allowMutation}
-            onChange={(e) => setAllowMutation(e.target.checked)}
-            disabled={loading}
-          />{' '}
-          我确认发送实际 {method} 请求，可能修改目标数据
-        </label>
-      )}
-
-      {/* Error */}
-      {error && (
-        <div className="cc-error" role="alert">
-          <AlertTriangle size={14} />
-          <span>{error}</span>
-        </div>
-      )}
-
-      {/* Result */}
-      {result && (
-        <div className="cc-result" aria-live="polite">
-          {/* Conclusion */}
-          <div className={`cc-conclusion cc-${conColor}`}>
-            {conIcon === CheckCircle
-              ? <CheckCircle size={16} />
-              : conIcon === AlertTriangle
-              ? <AlertTriangle size={16} />
-              : <Info size={16} />}
+      {result ? (
+        <section className="tool-panel cors-result" aria-live="polite">
+          <div className={`cors-conclusion cors-conclusion--${result.conclusion.type}`}>
+            {result.conclusion.type === 'success' ? (
+              <CheckCircle size={15} aria-hidden="true" />
+            ) : result.conclusion.type === 'warning' ? (
+              <AlertTriangle size={15} aria-hidden="true" />
+            ) : (
+              <Info size={15} aria-hidden="true" />
+            )}
             <span>{result.conclusion.message}</span>
-            <button className="cc-copy-btn" onClick={copyResult} title="复制结果">
-              {copied ? <Check size={12} /> : <Copy size={12} />} 复制
+            <button type="button" className="tool-btn" onClick={copyResult}>
+              {copied ? (
+                <Check size={13} aria-hidden="true" />
+              ) : (
+                <Copy size={13} aria-hidden="true" />
+              )}
+              {copied ? '已复制' : '复制'}
             </button>
           </div>
 
-          {/* Summary */}
-          <div className="cc-summary">
-            <div className="cc-summary-item">
-              <span className="cc-summary-label">请求 URL</span>
-              <span className="cc-summary-value">{result.url}</span>
+          <div className="cors-summary">
+            <div className="cors-summary-item">
+              <span className="cors-summary-label">请求 URL</span>
+              <span className="cors-summary-value cors-summary-url">{result.url}</span>
             </div>
-            <div className="cc-summary-item">
-              <span className="cc-summary-label">请求方法</span>
-              <span className="cc-summary-value">{result.method}</span>
+            <div className="cors-summary-item">
+              <span className="cors-summary-label">方法</span>
+              <span className="cors-summary-value">{result.method}</span>
             </div>
-            <div className="cc-summary-item">
-              <span className="cc-summary-label">响应状态</span>
-              <span className="cc-summary-value">{result.status} {result.statusText}</span>
+            <div className="cors-summary-item">
+              <span className="cors-summary-label">状态</span>
+              <span className="cors-summary-value">
+                {result.status} {result.statusText}
+              </span>
             </div>
-            <div className="cc-summary-item">
-              <span className="cc-summary-label">实际请求</span>
-              <span className="cc-summary-value">{result.requestSent ? '已发送' : '未发送'}</span>
+            <div className="cors-summary-item">
+              <span className="cors-summary-label">实际请求</span>
+              <span className="cors-summary-value">{result.requestSent ? '已发送' : '未发送'}</span>
             </div>
           </div>
 
-          {/* CORS Headers */}
-          <div className="cc-section">
-            <div className="cc-section-title">CORS 响应头</div>
+          <div className="cors-section">
+            <div className="cors-section-head">
+              <h4 className="cors-section-title">CORS 响应头</h4>
+              <span className="cors-section-count">{Object.keys(result.corsHeaders).length}</span>
+            </div>
             {Object.keys(result.corsHeaders).length === 0 ? (
-              <div className="cc-section-empty">未检测到 CORS 相关响应头</div>
+              <div className="cors-section-empty">未检测到 CORS 相关响应头</div>
             ) : (
-              <div className="cc-header-list">
+              <div className="cors-header-list">
                 {Object.entries(result.corsHeaders).map(([key, val]) => (
-                  <div key={key} className="cc-header-item">
-                    <span className="cc-header-key">{key}:</span>
-                    <span className="cc-header-val">{val}</span>
+                  <div key={key} className="cors-header-item">
+                    <span className="cors-header-key">{key}</span>
+                    <span className="cors-header-val">{val}</span>
                   </div>
                 ))}
               </div>
             )}
           </div>
 
-          {/* Preflight */}
           {result.preflight && result.preflightHeaders && (
-            <div className="cc-section">
-              <div className="cc-section-title">OPTIONS 预检响应 (Status: {result.preflightStatus})</div>
-              <div className="cc-header-list">
+            <div className="cors-section">
+              <div className="cors-section-head">
+                <h4 className="cors-section-title">OPTIONS 预检</h4>
+                <span className="cors-section-count">{result.preflightStatus}</span>
+              </div>
+              <div className="cors-header-list">
                 {Object.entries(result.preflightHeaders).map(([key, val]) => (
-                  <div key={key} className="cc-header-item">
-                    <span className="cc-header-key">{key}:</span>
-                    <span className="cc-header-val">{val}</span>
+                  <div key={key} className="cors-header-item">
+                    <span className="cors-header-key">{key}</span>
+                    <span className="cors-header-val">{val}</span>
                   </div>
                 ))}
               </div>
             </div>
           )}
 
-          {/* All Headers */}
-          <details className="cc-details">
-            <summary className="cc-details-summary">全部响应头</summary>
-            <pre className="cc-all-headers">{result.allHeaders}</pre>
+          <details className="cors-details">
+            <summary className="cors-details-summary">全部响应头</summary>
+            <pre className="cors-all-headers">{result.allHeaders}</pre>
           </details>
-        </div>
-      )}
-
-      {!result && !error && (
-        <div className="cc-empty">
-          <ShieldOff size={32} className="cc-empty-icon" />
-          <span className="cc-empty-text">输入 URL 并点击测试开始检查 CORS</span>
-          <span className="cc-empty-hint">
-            GET/HEAD 会发送实际请求；POST/PUT/PATCH/DELETE 默认只执行 OPTIONS 安全检查
-          </span>
-        </div>
+        </section>
+      ) : (
+        !error &&
+        !loading && (
+          <div className="cors-empty">
+            <ShieldOff size={28} className="cors-empty-icon" aria-hidden="true" />
+            <span className="cors-empty-text">输入 URL 并点击测试开始检查 CORS</span>
+            <span className="cors-empty-hint">
+              POST / PUT / PATCH / DELETE 默认只执行 OPTIONS 安全检查，勾选确认后才会发送实际请求。
+            </span>
+          </div>
+        )
       )}
     </div>
   )

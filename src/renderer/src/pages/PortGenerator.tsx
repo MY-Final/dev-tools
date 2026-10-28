@@ -106,142 +106,173 @@ export default function PortGenerator(): React.JSX.Element {
   const selectedRange = RANGES.find((r) => r.id === rangeType)!
 
   return (
-    <div className="pg2-page">
-      <div className="pg2-card">
-        <div className="pg2-header">
-          <h2 className="pg2-title">Random Port Generator</h2>
-          <p className="pg2-subtitle">生成随机网络端口号，适用于本地开发和测试</p>
+    <div className="pg2-page tool-page">
+      <header className="tool-page-header">
+        <div className="tool-page-heading">
+          <h2 className="tool-page-title">Random Port Generator</h2>
+          <p className="tool-page-desc">
+            按端口区间生成随机端口号，可排除常用服务端口，点击结果即可复制。
+          </p>
         </div>
+      </header>
 
-        <div className="pg2-section">
-          <span className="pg2-section-label">端口范围</span>
-          <div className="pg2-ranges">
-            {RANGES.map((range) => (
-              <label
-                key={range.id}
-                className={`pg2-range ${rangeType === range.id ? 'active' : ''}`}
-              >
-                <input
-                  type="radio"
-                  name="range"
-                  checked={rangeType === range.id}
-                  onChange={() => setRangeType(range.id)}
-                />
-                <div className="pg2-range-content">
-                  <span className="pg2-range-label">{range.label}</span>
-                  <span className="pg2-range-desc">{range.desc}</span>
-                </div>
-              </label>
-            ))}
+      <div className="tool-split pg2-layout">
+        <section className="tool-panel pg2-settings">
+          <div className="tool-panel-head">
+            <h3 className="tool-panel-title">生成设置</h3>
           </div>
 
-          {selectedRange.warning && (
-            <div className="pg2-warning">
-              <AlertTriangle size={14} />
-              <span>Well Known 端口可能需要管理员权限</span>
-            </div>
-          )}
-
-          {rangeType === 'custom' && (
-            <div className="pg2-custom-range">
-              <div className="pg2-custom-input">
-                <label>起始端口</label>
-                <input
-                  type="number"
-                  value={customMin}
-                  onChange={(e) => setCustomMin(e.target.value)}
-                  min={0}
-                  max={65535}
-                />
-              </div>
-              <span className="pg2-custom-sep">-</span>
-              <div className="pg2-custom-input">
-                <label>结束端口</label>
-                <input
-                  type="number"
-                  value={customMax}
-                  onChange={(e) => setCustomMax(e.target.value)}
-                  min={0}
-                  max={65535}
-                />
-              </div>
-            </div>
-          )}
-        </div>
-
-        <div className="pg2-section">
-          <div className="pg2-options-row">
-            <label className="pg2-checkbox">
-              <input
-                type="checkbox"
-                checked={excludeCommon}
-                onChange={(e) => setExcludeCommon(e.target.checked)}
-              />
-              <span className="pg2-check-mark" />
-              <span>排除常用端口</span>
-            </label>
-            <span className="pg2-common-hint">21, 22, 80, 443, 3306, 6379, 8080...</span>
-          </div>
-        </div>
-
-        <div className="pg2-section">
-          <span className="pg2-section-label">生成数量</span>
-          <div className="pg2-count-presets">
-            {COUNT_PRESETS.map((c) => (
-              <button
-                key={c}
-                className={`pg2-count-btn ${count === c ? 'active' : ''}`}
-                onClick={() => setCount(c)}
-              >
-                {c}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="pg2-actions">
-          <button className="pg2-generate-btn" onClick={generate}>
-            <RefreshCw size={15} />
-            生成端口
-          </button>
-          {ports.length > 0 && (
-            <button className="pg2-copy-all-btn" onClick={copyAll}>
-              {copiedAll ? <Check size={15} /> : <Copy size={15} />}
-              {copiedAll ? '已复制' : '复制全部'}
-            </button>
-          )}
-        </div>
-
-        {ports.length > 0 && (
-          <div className="pg2-results">
-            <div className="pg2-results-grid">
-              {ports.map((port, i) => (
-                <div key={i} className="pg2-port-item" onClick={() => copyPort(port, i)}>
-                  <span className="pg2-port-number">{port}</span>
-                  <span className="pg2-port-class">{getPortClassification(port)}</span>
-                  {copiedIndex === i && (
-                    <span className="pg2-copied-badge">
-                      <Check size={12} />
+          <div className="pg2-body">
+            <div className="pg2-field">
+              <span className="pg2-field-label">端口范围</span>
+              <div className="pg2-ranges">
+                {RANGES.map((range) => (
+                  <label
+                    key={range.id}
+                    className={`pg2-range ${rangeType === range.id ? 'active' : ''}`}
+                  >
+                    <input
+                      type="radio"
+                      name="range"
+                      checked={rangeType === range.id}
+                      onChange={() => setRangeType(range.id)}
+                    />
+                    <span className="pg2-range-content">
+                      <span className="pg2-range-label">{range.label}</span>
+                      <span className="pg2-range-desc">{range.desc}</span>
                     </span>
-                  )}
+                  </label>
+                ))}
+              </div>
+
+              {selectedRange.warning && (
+                <div className="pg2-warning">
+                  <AlertTriangle size={14} aria-hidden="true" />
+                  <span>Well Known 端口可能需要管理员权限</span>
                 </div>
-              ))}
+              )}
+
+              {rangeType === 'custom' && (
+                <div className="pg2-custom-range">
+                  <label className="pg2-custom-input">
+                    <span>起始端口</span>
+                    <input
+                      className="tool-input tool-input--mono"
+                      type="number"
+                      value={customMin}
+                      onChange={(e) => setCustomMin(e.target.value)}
+                      min={0}
+                      max={65535}
+                    />
+                  </label>
+                  <span className="pg2-custom-sep">–</span>
+                  <label className="pg2-custom-input">
+                    <span>结束端口</span>
+                    <input
+                      className="tool-input tool-input--mono"
+                      type="number"
+                      value={customMax}
+                      onChange={(e) => setCustomMax(e.target.value)}
+                      min={0}
+                      max={65535}
+                    />
+                  </label>
+                </div>
+              )}
             </div>
 
-            {count === 1 && ports.length === 1 && (
-              <div className="pg2-port-info">
-                <div className="pg2-info-row">
-                  <span className="pg2-info-label">分类</span>
-                  <span className="pg2-info-value">{getPortClassification(ports[0])}</span>
-                </div>
-                <div className="pg2-info-row">
-                  <span className="pg2-info-label">状态</span>
-                  <span className="pg2-info-value">{getPortStatus(ports[0])}</span>
-                </div>
+            <div className="pg2-field">
+              <label className="pg2-checkbox">
+                <input
+                  type="checkbox"
+                  checked={excludeCommon}
+                  onChange={(e) => setExcludeCommon(e.target.checked)}
+                />
+                <span>排除常用端口</span>
+              </label>
+              <span className="pg2-common-hint">21, 22, 80, 443, 3306, 6379, 8080…</span>
+            </div>
+
+            <div className="pg2-field pg2-field-row">
+              <span className="pg2-field-label">生成数量</span>
+              <div className="tool-segmented">
+                {COUNT_PRESETS.map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    className={`tool-seg ${count === c ? 'active' : ''}`}
+                    aria-pressed={count === c}
+                    onClick={() => setCount(c)}
+                  >
+                    {c}
+                  </button>
+                ))}
               </div>
+            </div>
+          </div>
+
+          <div className="pg2-actions">
+            <button type="button" className="tool-btn tool-btn--primary" onClick={generate}>
+              <RefreshCw size={15} aria-hidden="true" />
+              生成端口
+            </button>
+          </div>
+        </section>
+
+        <section className="tool-panel pg2-results">
+          <div className="tool-panel-head">
+            <h3 className="tool-panel-title">生成结果</h3>
+            {ports.length > 0 && (
+              <button type="button" className="tool-btn pg2-copy-all" onClick={copyAll}>
+                {copiedAll ? (
+                  <Check size={14} aria-hidden="true" />
+                ) : (
+                  <Copy size={14} aria-hidden="true" />
+                )}
+                {copiedAll ? '已复制' : '复制全部'}
+              </button>
             )}
           </div>
-        )}
+
+          {ports.length === 0 ? (
+            <div className="pg2-empty">设置端口范围与数量后，点击“生成端口”开始。</div>
+          ) : (
+            <>
+              <div className="pg2-results-grid">
+                {ports.map((port, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    className="pg2-port-item"
+                    onClick={() => copyPort(port, i)}
+                    title={`复制端口 ${port}`}
+                  >
+                    <span className="pg2-port-number">{port}</span>
+                    <span className="pg2-port-class">{getPortClassification(port)}</span>
+                    {copiedIndex === i && (
+                      <span className="pg2-copied-badge">
+                        <Check size={12} aria-hidden="true" />
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
+
+              {count === 1 && ports.length === 1 && (
+                <div className="pg2-port-info">
+                  <div className="pg2-info-row">
+                    <span className="pg2-info-label">分类</span>
+                    <span className="pg2-info-value">{getPortClassification(ports[0])}</span>
+                  </div>
+                  <div className="pg2-info-row">
+                    <span className="pg2-info-label">状态</span>
+                    <span className="pg2-info-value">{getPortStatus(ports[0])}</span>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </section>
       </div>
     </div>
   )

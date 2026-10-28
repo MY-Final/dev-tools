@@ -1,310 +1,108 @@
 /* ========================================
-   MyIp 页面 - Soft Minimalism
+   My IP
+   页头操作 + 地址列表
    ======================================== */
 
-.myip-page {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  padding: 40px 24px;
-  overflow-y: auto;
-  position: relative;
+.myip-panel {
+  overflow: hidden;
 }
 
-.myip-bg-decoration {
-  position: fixed;
-  top: -200px;
-  left: -200px;
-  width: 500px;
-  height: 500px;
-  background: radial-gradient(circle, var(--color-accent-soft-subtle) 0%, transparent 70%);
-  pointer-events: none;
-  z-index: 0;
-}
-
-.myip-card {
-  position: relative;
-  z-index: 1;
-  width: 100%;
-  max-width: 480px;
-  background: var(--glass-bg);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--glass-border);
-  border-radius: 20px;
-  padding: 32px;
-  box-shadow: var(--shadow-xl);
-}
-
-.myip-header {
-  text-align: center;
-  margin-bottom: 28px;
-}
-
-.myip-title {
-  font-size: 24px;
-  font-weight: 700;
-  color: var(--color-text);
-  font-family: 'JetBrains Mono', monospace;
-  letter-spacing: -0.5px;
-  margin-bottom: 6px;
-}
-
-.myip-subtitle {
-  font-size: 14px;
+.myip-count {
+  margin-left: auto;
   color: var(--color-text-muted);
-}
-
-.myip-address-section {
-  margin-bottom: 24px;
-}
-
-.myip-address-label {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--color-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 10px;
-}
-
-.myip-address-value {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 14px;
-  padding: 20px;
-  min-height: 70px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.myip-loading {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  color: var(--color-text-muted);
-  font-size: 14px;
-}
-
-.myip-loading-icon {
-  animation: spin 1s linear infinite;
-}
-
-.myip-error {
-  color: var(--color-danger);
-  font-size: 14px;
-}
-
-.myip-placeholder {
-  color: var(--color-text-muted);
-  font-size: 14px;
-}
-
-.myip-address-content {
-  display: flex;
-  align-items: center;
-  gap: 16px;
+  font-size: var(--text-2xs);
+  font-variant-numeric: tabular-nums;
 }
 
 .myip-ips-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  width: 100%;
 }
 
 .myip-ip-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 14px;
-  background: var(--color-editor-bg);
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  transition: all 0.2s ease;
+  gap: 12px;
+  min-height: 54px;
+  padding: 8px 14px;
+  border: 0;
+  border-top: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: inherit;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.12s ease;
+}
+
+.myip-ip-item:first-child {
+  border-top: 0;
 }
 
 .myip-ip-item:hover {
-  border-color: var(--color-accent-soft);
+  background: var(--color-surface-hover);
 }
 
-.myip-ip-info {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.myip-ip-icon {
-  color: var(--color-accent-soft);
+.myip-ip-item:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: -2px;
 }
 
 .myip-ip {
-  font-size: 18px;
-  font-weight: 600;
-  font-family: 'JetBrains Mono', monospace;
-  color: var(--color-text);
-  letter-spacing: -0.3px;
-}
-
-.myip-copy-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border: 1px solid var(--color-border);
-  background: var(--color-surface);
-  border-radius: 10px;
-  color: var(--color-text-muted);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.myip-copy-btn:hover {
-  border-color: var(--color-accent-soft);
-  color: var(--color-accent-soft);
-  background: var(--color-accent-soft-subtle);
-}
-
-.myip-details {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  margin-bottom: 24px;
-  padding: 16px;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 14px;
-}
-
-.myip-detail-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-}
-
-.myip-detail-icon {
-  color: var(--color-accent-soft);
-  flex-shrink: 0;
-  margin-top: 2px;
-}
-
-.myip-detail-content {
-  flex: 1;
-}
-
-.myip-detail-label {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--color-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 2px;
-}
-
-.myip-detail-value {
-  font-size: 13px;
   color: var(--color-text);
   font-family: 'JetBrains Mono', monospace;
+  font-size: var(--text-xl);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
 }
 
-.myip-actions {
+.myip-copy-icon {
   display: flex;
-  gap: 10px;
+  color: var(--color-text-muted);
 }
 
-.myip-refresh-btn {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 12px 16px;
-  background: var(--color-accent-soft);
-  color: var(--color-text-inverse);
-  border: none;
-  border-radius: 12px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.myip-refresh-btn:hover:not(:disabled) {
-  background: var(--color-accent-soft-hover);
-}
-
-.myip-refresh-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.myip-refresh-btn .spinning {
-  animation: spin 1s linear infinite;
-}
-
-.myip-copy-all-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 12px 16px;
-  background: var(--color-surface);
+.myip-ip-item:hover .myip-copy-icon {
   color: var(--color-text-secondary);
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
 }
 
-.myip-copy-all-btn:hover {
-  border-color: var(--color-border-hover);
-  color: var(--color-text);
-  background: var(--color-surface-hover);
+.myip-state {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 40px 14px;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  justify-content: center;
+  text-align: center;
+}
+
+.myip-state--error {
+  color: var(--color-danger);
+}
+
+.myip-loading-icon {
+  animation: spin 1s linear infinite;
 }
 
 .myip-toast {
   position: fixed;
-  top: 20px;
   right: 20px;
+  bottom: 20px;
+  z-index: 1000;
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 12px 18px;
-  background: var(--glass-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid var(--glass-border);
-  border-radius: 12px;
+  padding: 8px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
   box-shadow: var(--shadow-lg);
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--color-success);
-  z-index: 1000;
+  color: var(--color-text-secondary);
+  font-size: var(--text-xs);
   animation: toast-slide-in 0.2s ease;
 }
 
-@media (max-width: 600px) {
-  .myip-page {
-    padding: 24px 16px;
-  }
-
-  .myip-card {
-    padding: 24px 20px;
-    border-radius: 16px;
-  }
-
-  .myip-title {
-    font-size: 20px;
-  }
-
-  .myip-ip {
-    font-size: 22px;
-  }
+.spinning {
+  animation: spin 1s linear infinite;
 }
