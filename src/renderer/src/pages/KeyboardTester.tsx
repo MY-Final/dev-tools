@@ -1,5 +1,5 @@
-import { useState, useCallback, useRef, useEffect } from 'react'
-import { Keyboard, Trash2 } from 'lucide-react'
+import { useState, useCallback, useRef } from 'react'
+import { Keyboard, Trash2, Copy, Check } from 'lucide-react'
 
 interface KeyEvent {
   key: string
@@ -66,9 +66,11 @@ export default function KeyboardTester(): React.JSX.Element {
   const [currentKey, setCurrentKey] = useState<KeyEvent | null>(null)
   const [history, setHistory] = useState<KeyEvent[]>([])
   const [focused, setFocused] = useState(false)
+  const [copied, setCopied] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
 
-  const handleKeyDown = useCallback((e: globalThis.KeyboardEvent) => {
+  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === 'Tab') return
     e.preventDefault()
 
     const keyEvent: KeyEvent = {
@@ -88,11 +90,6 @@ export default function KeyboardTester(): React.JSX.Element {
     setHistory((prev) => [keyEvent, ...prev].slice(0, 20))
   }, [])
 
-  useEffect(() => {
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [handleKeyDown])
-
   const focusArea = useCallback(() => {
     containerRef.current?.focus()
     setFocused(true)
@@ -103,132 +100,161 @@ export default function KeyboardTester(): React.JSX.Element {
     setCurrentKey(null)
   }, [])
 
+  const copyJson = useCallback(async () => {
+    if (!currentKey) return
+    try {
+      await navigator.clipboard.writeText(JSON.stringify(currentKey, null, 2))
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1500)
+    } catch {
+      /* ignore */
+    }
+  }, [currentKey])
+
   const displayKey = currentKey ? SPECIAL_KEYS[currentKey.key] || currentKey.key : ''
 
   return (
-    <div className="kt-page">
-      <div className="kt-card">
-        <div className="kt-header">
-          <h2 className="kt-title">Keyboard Event Tester</h2>
-          <p className="kt-subtitle">实时查看键盘按键的 JavaScript KeyboardEvent 信息</p>
+    <div className="kt-page tool-page">
+      <header className="tool-page-header">
+        <div className="tool-page-heading">
+          <h2 className="tool-page-title">Keyboard Event Tester</h2>
+          <p className="tool-page-desc">
+            聚焦按键区域后按下任意键，查看 KeyboardEvent 属性与组合键。
+          </p>
         </div>
+      </header>
 
-        <div
-          ref={containerRef}
-          className={`kt-press-area ${focused ? 'focused' : ''}`}
-          tabIndex={0}
-          onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
-          onClick={focusArea}
-        >
-          {currentKey ? (
-            <div className="kt-current-key">
-              <span className="kt-key-display">{displayKey}</span>
-              <span className="kt-key-name">{formatCombination(currentKey)}</span>
-            </div>
-          ) : (
-            <div className="kt-placeholder">
-              <Keyboard size={32} />
-              <span>按下任意键...</span>
-            </div>
-          )}
-        </div>
-
-        {currentKey && (
-          <>
-            <div className="kt-section">
-              <span className="kt-section-label">KeyboardEvent</span>
-              <div className="kt-props">
-                <div className="kt-prop">
-                  <span className="kt-prop-name">key</span>
-                  <code className="kt-prop-value">{currentKey.key}</code>
-                </div>
-                <div className="kt-prop">
-                  <span className="kt-prop-name">code</span>
-                  <code className="kt-prop-value">{currentKey.code}</code>
-                </div>
-                <div className="kt-prop">
-                  <span className="kt-prop-name">keyCode</span>
-                  <code className="kt-prop-value">{currentKey.keyCode}</code>
-                </div>
-                <div className="kt-prop">
-                  <span className="kt-prop-name">which</span>
-                  <code className="kt-prop-value">{currentKey.which}</code>
-                </div>
-                <div className="kt-prop">
-                  <span className="kt-prop-name">location</span>
-                  <code className="kt-prop-value">
-                    {currentKey.location} ({LOCATION_LABELS[currentKey.location] || 'Unknown'})
-                  </code>
-                </div>
+      <div className="tool-split kt-layout">
+        <section className="tool-panel kt-main">
+          <div
+            ref={containerRef}
+            className={`kt-press-area ${focused ? 'focused' : ''}`}
+            tabIndex={0}
+            onFocus={() => setFocused(true)}
+            onBlur={() => setFocused(false)}
+            onClick={focusArea}
+            onKeyDown={handleKeyDown}
+            aria-label="按键测试区域，聚焦后按任意键"
+          >
+            {currentKey ? (
+              <div className="kt-current-key">
+                <span className="kt-key-display">{displayKey}</span>
+                <span className="kt-key-name">{formatCombination(currentKey)}</span>
               </div>
-            </div>
-
-            <div className="kt-section">
-              <span className="kt-section-label">Modifier Keys</span>
-              <div className="kt-modifiers">
-                <div className={`kt-mod ${currentKey.ctrlKey ? 'active' : ''}`}>
-                  <span className="kt-mod-name">Ctrl</span>
-                  <span className="kt-mod-status">{currentKey.ctrlKey ? '✓' : '✗'}</span>
-                </div>
-                <div className={`kt-mod ${currentKey.shiftKey ? 'active' : ''}`}>
-                  <span className="kt-mod-name">Shift</span>
-                  <span className="kt-mod-status">{currentKey.shiftKey ? '✓' : '✗'}</span>
-                </div>
-                <div className={`kt-mod ${currentKey.altKey ? 'active' : ''}`}>
-                  <span className="kt-mod-name">Alt</span>
-                  <span className="kt-mod-status">{currentKey.altKey ? '✓' : '✗'}</span>
-                </div>
-                <div className={`kt-mod ${currentKey.metaKey ? 'active' : ''}`}>
-                  <span className="kt-mod-name">Meta</span>
-                  <span className="kt-mod-status">{currentKey.metaKey ? '✓' : '✗'}</span>
-                </div>
+            ) : (
+              <div className="kt-placeholder">
+                <Keyboard size={30} aria-hidden="true" />
+                <span>按下任意键开始</span>
               </div>
-            </div>
+            )}
+            <span className="kt-stage-hint">
+              {focused ? '已聚焦 · Tab 可切换焦点' : '点击此处获取键盘焦点'}
+            </span>
+          </div>
 
-            <div className="kt-section">
-              <span className="kt-section-label">JSON</span>
-              <pre className="kt-json">
-                {JSON.stringify(
-                  {
-                    key: currentKey.key,
-                    code: currentKey.code,
-                    keyCode: currentKey.keyCode,
-                    which: currentKey.which,
-                    location: currentKey.location,
-                    ctrlKey: currentKey.ctrlKey,
-                    shiftKey: currentKey.shiftKey,
-                    altKey: currentKey.altKey,
-                    metaKey: currentKey.metaKey
-                  },
-                  null,
-                  2
-                )}
-              </pre>
-            </div>
-          </>
-        )}
+          <div className="kt-modifiers">
+            {(
+              [
+                ['Ctrl', currentKey?.ctrlKey],
+                ['Shift', currentKey?.shiftKey],
+                ['Alt', currentKey?.altKey],
+                ['Meta', currentKey?.metaKey]
+              ] as const
+            ).map(([name, active]) => (
+              <div key={name} className={`kt-mod ${active ? 'active' : ''}`}>
+                <span className="kt-mod-name">{name}</span>
+                <span className="kt-mod-status">{active ? 'on' : '—'}</span>
+              </div>
+            ))}
+          </div>
 
-        {history.length > 0 && (
-          <div className="kt-section">
-            <div className="kt-history-header">
-              <span className="kt-section-label">历史记录</span>
-              <button className="kt-clear-btn" onClick={clearHistory}>
-                <Trash2 size={13} />
-                清空
-              </button>
+          <div className="kt-props">
+            <div className="kt-prop">
+              <span className="kt-prop-name">key</span>
+              <code className="kt-prop-value">{currentKey ? currentKey.key : '—'}</code>
             </div>
-            <div className="kt-history">
-              {history.map((e, i) => (
-                <div key={e.timestamp + i} className="kt-history-item">
-                  <span className="kt-history-time">{formatTime(e.timestamp)}</span>
-                  <span className="kt-history-key">{formatCombination(e)}</span>
-                  <span className="kt-history-code">{e.code}</span>
-                </div>
-              ))}
+            <div className="kt-prop">
+              <span className="kt-prop-name">code</span>
+              <code className="kt-prop-value">{currentKey ? currentKey.code : '—'}</code>
+            </div>
+            <div className="kt-prop">
+              <span className="kt-prop-name">keyCode</span>
+              <code className="kt-prop-value">{currentKey ? currentKey.keyCode : '—'}</code>
+            </div>
+            <div className="kt-prop">
+              <span className="kt-prop-name">which</span>
+              <code className="kt-prop-value">{currentKey ? currentKey.which : '—'}</code>
+            </div>
+            <div className="kt-prop">
+              <span className="kt-prop-name">location</span>
+              <code className="kt-prop-value">
+                {currentKey
+                  ? `${currentKey.location} (${LOCATION_LABELS[currentKey.location] || 'Unknown'})`
+                  : '—'}
+              </code>
             </div>
           </div>
-        )}
+        </section>
+
+        <div className="kt-side">
+          <section className="tool-panel kt-json-panel">
+            <div className="tool-panel-head">
+              <h3 className="tool-panel-title">JSON</h3>
+              <button type="button" className="tool-btn" onClick={copyJson} disabled={!currentKey}>
+                {copied ? (
+                  <Check size={13} aria-hidden="true" />
+                ) : (
+                  <Copy size={13} aria-hidden="true" />
+                )}
+                {copied ? '已复制' : '复制'}
+              </button>
+            </div>
+            <pre className="kt-json">
+              {currentKey
+                ? JSON.stringify(
+                    {
+                      key: currentKey.key,
+                      code: currentKey.code,
+                      keyCode: currentKey.keyCode,
+                      which: currentKey.which,
+                      location: currentKey.location,
+                      ctrlKey: currentKey.ctrlKey,
+                      shiftKey: currentKey.shiftKey,
+                      altKey: currentKey.altKey,
+                      metaKey: currentKey.metaKey
+                    },
+                    null,
+                    2
+                  )
+                : '// 按键后显示事件 JSON'}
+            </pre>
+          </section>
+
+          <section className="tool-panel kt-history-panel">
+            <div className="tool-panel-head">
+              <h3 className="tool-panel-title">历史记录</h3>
+              {history.length > 0 && (
+                <button type="button" className="tool-btn" onClick={clearHistory}>
+                  <Trash2 size={13} aria-hidden="true" />
+                  清空
+                </button>
+              )}
+            </div>
+            {history.length > 0 ? (
+              <div className="kt-history">
+                {history.map((e, i) => (
+                  <div key={e.timestamp + i} className="kt-history-item">
+                    <span className="kt-history-time">{formatTime(e.timestamp)}</span>
+                    <span className="kt-history-key">{formatCombination(e)}</span>
+                    <span className="kt-history-code">{e.code}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="kt-empty">最近 20 次按键会显示在这里。</div>
+            )}
+          </section>
+        </div>
       </div>
     </div>
   )

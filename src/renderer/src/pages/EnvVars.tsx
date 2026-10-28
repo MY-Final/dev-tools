@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
-import { Search, Copy, Check, RefreshCw, Eye, EyeOff, Settings } from 'lucide-react'
+import { Search, Copy, Check, RefreshCw, Eye, EyeOff } from 'lucide-react'
 
 export default function EnvVars(): React.JSX.Element {
   const [vars, setVars] = useState<Record<string, string>>({})
@@ -105,48 +105,57 @@ export default function EnvVars(): React.JSX.Element {
   }, [sortedEntries])
 
   return (
-    <div className="ev-page">
-      <div className="ev-card">
-        <div className="ev-header">
-          <h2 className="ev-title">Environment Variables</h2>
-          <p className="ev-subtitle">查看当前系统环境变量</p>
+    <div className="ev-page tool-page">
+      <header className="tool-page-header">
+        <div className="tool-page-heading">
+          <h2 className="tool-page-title">Environment Variables</h2>
+          <p className="tool-page-desc">查看当前系统环境变量，敏感值默认遮挡，可随时复制原始值。</p>
         </div>
+        <div className="tool-page-actions">
+          <button
+            type="button"
+            className="tool-btn"
+            onClick={() => setMaskSensitive(!maskSensitive)}
+            aria-pressed={maskSensitive}
+            title={maskSensitive ? '显示敏感值' : '隐藏敏感值'}
+          >
+            {maskSensitive ? (
+              <EyeOff size={14} aria-hidden="true" />
+            ) : (
+              <Eye size={14} aria-hidden="true" />
+            )}
+            {maskSensitive ? '隐藏敏感' : '显示敏感'}
+          </button>
+          <button type="button" className="tool-btn tool-btn--outline" onClick={handleRefresh}>
+            <RefreshCw size={14} aria-hidden="true" />
+            刷新
+          </button>
+          <button type="button" className="tool-btn tool-btn--outline" onClick={copyAll}>
+            {copiedKey === '__all__' ? (
+              <Check size={14} aria-hidden="true" />
+            ) : (
+              <Copy size={14} aria-hidden="true" />
+            )}
+            {copiedKey === '__all__' ? '已复制' : '复制全部'}
+          </button>
+        </div>
+      </header>
 
+      <section className="tool-panel ev-panel">
         <div className="ev-toolbar">
           <div className="ev-search">
-            <Search size={14} className="ev-search-icon" />
+            <Search size={14} className="ev-search-icon" aria-hidden="true" />
             <input
-              className="ev-search-input"
-              type="text"
-              placeholder="$ search variables..."
+              className="tool-input ev-search-input"
+              type="search"
+              placeholder="搜索变量名或值"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
+              aria-label="搜索环境变量"
             />
           </div>
-
-          <div className="ev-toolbar-actions">
-            <button
-              className={`ev-toggle-btn ${maskSensitive ? 'active' : ''}`}
-              onClick={() => setMaskSensitive(!maskSensitive)}
-              title={maskSensitive ? '显示敏感值' : '隐藏敏感值'}
-            >
-              {maskSensitive ? <EyeOff size={14} /> : <Eye size={14} />}
-              {maskSensitive ? '隐藏敏感' : '显示全部'}
-            </button>
-            <button className="ev-toggle-btn" onClick={handleRefresh} title="刷新">
-              <RefreshCw size={14} />
-              刷新
-            </button>
-            <button className="ev-toggle-btn" onClick={copyAll} title="复制全部">
-              {copiedKey === '__all__' ? <Check size={14} /> : <Copy size={14} />}
-              {copiedKey === '__all__' ? '已复制' : '复制全部'}
-            </button>
-          </div>
-        </div>
-
-        <div className="ev-stats">
           <span className="ev-stat">
-            <Settings size={12} />共 {totalCount} 个变量
+            共 {totalCount} 个变量
             {search && ` · 匹配 ${sortedEntries.length} 个`}
           </span>
         </div>
@@ -162,9 +171,13 @@ export default function EnvVars(): React.JSX.Element {
             <table className="ev-table">
               <thead>
                 <tr>
-                  <th className="ev-th ev-th-key">变量名</th>
-                  <th className="ev-th ev-th-value">值</th>
-                  <th className="ev-th ev-th-action">操作</th>
+                  <th className="ev-th ev-th-key" scope="col">
+                    变量名
+                  </th>
+                  <th className="ev-th ev-th-value" scope="col">
+                    值
+                  </th>
+                  <th className="ev-th ev-th-action" scope="col" aria-label="操作" />
                 </tr>
               </thead>
               <tbody>
@@ -174,15 +187,23 @@ export default function EnvVars(): React.JSX.Element {
                       <span className={`ev-key ${isSensitive(key) ? 'sensitive' : ''}`}>{key}</span>
                     </td>
                     <td className="ev-td ev-td-value">
-                      <code className="ev-value">{maskValue(key, value)}</code>
+                      <code className="ev-value" title={value}>
+                        {maskValue(key, value)}
+                      </code>
                     </td>
                     <td className="ev-td ev-td-action">
                       <button
-                        className="ev-copy-btn"
+                        type="button"
+                        className="tool-icon-btn ev-copy-btn"
                         onClick={() => copyToClipboard(key)}
+                        aria-label={`复制 ${key} 的值`}
                         title="复制值"
                       >
-                        {copiedKey === key ? <Check size={12} /> : <Copy size={12} />}
+                        {copiedKey === key ? (
+                          <Check size={12} aria-hidden="true" />
+                        ) : (
+                          <Copy size={12} aria-hidden="true" />
+                        )}
                       </button>
                     </td>
                   </tr>
@@ -191,7 +212,7 @@ export default function EnvVars(): React.JSX.Element {
             </table>
           </div>
         )}
-      </div>
+      </section>
     </div>
   )
 }

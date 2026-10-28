@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
-import { Clipboard, Copy, Check, Trash2, Download, Clock, FileText, Image, X } from 'lucide-react'
+import { Clipboard, Copy, Check, Trash2, Download, Clock, X } from 'lucide-react'
 import Dialog from '../components/ui/dialog'
 import '../styles/clipboard-manager.css'
 
@@ -180,32 +180,31 @@ export default function ClipboardManager(): React.JSX.Element {
   }, [history])
 
   return (
-    <div className="clm-page">
-      <div className="clm-card">
-        <div className="clm-header">
-          <h2 className="clm-title">Clipboard Manager</h2>
-          <p className="clm-subtitle">剪贴板历史记录</p>
+    <div className="clm-page tool-page">
+      <header className="tool-page-header">
+        <div className="tool-page-heading">
+          <h2 className="tool-page-title">Clipboard Manager</h2>
+          <p className="tool-page-desc">收集剪贴板中的文本与图片，最多保留最近 50 条。</p>
         </div>
-
-        <div className="clm-toolbar">
+        <div className="tool-page-actions">
           <button
             type="button"
-            className="clm-read-btn"
+            className="tool-btn tool-btn--primary"
             onClick={readClipboard}
             disabled={isReading}
             aria-busy={isReading}
           >
             <Clipboard size={14} aria-hidden="true" />
-            {isReading ? '读取中...' : '读取剪贴板'}
+            {isReading ? '读取中…' : '读取剪贴板'}
           </button>
-          <span className="clm-hint">Ctrl+Shift+V</span>
+          <kbd className="clm-kbd">Ctrl+Shift+V</kbd>
           {history.length > 0 && (
             <>
               <button
                 type="button"
-                className="clm-export-btn"
+                className="tool-icon-btn"
                 onClick={exportHistory}
-                title="导出历史"
+                title="导出文本历史"
                 aria-label="导出文本历史"
               >
                 <Download size={14} aria-hidden="true" />
@@ -213,7 +212,7 @@ export default function ClipboardManager(): React.JSX.Element {
               <button
                 type="button"
                 ref={clearButtonRef}
-                className="clm-clear-btn"
+                className="tool-icon-btn clm-clear-btn"
                 onClick={() => setConfirmClearOpen(true)}
                 title="清空全部"
                 aria-label="清空全部剪贴板历史"
@@ -223,78 +222,52 @@ export default function ClipboardManager(): React.JSX.Element {
             </>
           )}
         </div>
+      </header>
 
-        {readError && (
-          <div className="clm-error" role="alert" aria-live="assertive">
-            {readError}
-          </div>
-        )}
+      {readError && (
+        <div className="clm-error" role="alert" aria-live="assertive">
+          {readError}
+        </div>
+      )}
 
-        {copyFeedback && (
-          <div
-            className={`clm-copy-feedback clm-copy-feedback--${copyFeedback.kind}`}
-            role={copyFeedback.kind === 'error' ? 'alert' : 'status'}
-            aria-live={copyFeedback.kind === 'error' ? 'assertive' : 'polite'}
-            aria-atomic="true"
-          >
-            {copyFeedback.message}
-          </div>
-        )}
+      {copyFeedback && (
+        <div
+          className={`clm-copy-feedback clm-copy-feedback--${copyFeedback.kind}`}
+          role={copyFeedback.kind === 'error' ? 'alert' : 'status'}
+          aria-live={copyFeedback.kind === 'error' ? 'assertive' : 'polite'}
+          aria-atomic="true"
+        >
+          {copyFeedback.message}
+        </div>
+      )}
 
-        {history.length === 0 && !readError && (
+      <section className="tool-panel clm-panel">
+        <div className="tool-panel-head">
+          <h3 className="tool-panel-title">历史记录</h3>
+          {history.length > 0 && (
+            <span className="clm-list-count" role="status" aria-live="polite">
+              {history.length} 条
+            </span>
+          )}
+        </div>
+
+        {history.length === 0 ? (
           <div className="clm-empty">
-            <Clipboard size={48} className="clm-empty-icon" />
+            <Clipboard size={28} className="clm-empty-icon" aria-hidden="true" />
             <p className="clm-empty-text">暂无历史记录</p>
             <p className="clm-empty-hint">点击「读取剪贴板」或按 Ctrl+Shift+V 开始收集</p>
           </div>
-        )}
-
-        {history.length > 0 && (
+        ) : (
           <div className="clm-list">
-            <div className="clm-list-header">
-              <span className="clm-list-count" role="status" aria-live="polite">
-                {history.length} 条记录
-              </span>
-            </div>
             {history.map((item) => (
               <div key={item.id} className="clm-item">
-                <div className="clm-item-header">
-                  <div className="clm-item-time">
-                    <Clock size={12} />
+                <div className="clm-item-main">
+                  <div className="clm-item-meta">
+                    <Clock size={11} aria-hidden="true" />
                     <span>{new Date(item.timestamp).toLocaleString()}</span>
+                    <span className="clm-item-kind">{item.isImage ? '图片' : '文本'}</span>
                   </div>
-                  <div className="clm-item-actions">
-                    <button
-                      type="button"
-                      className="clm-item-copy"
-                      onClick={() => copyItem(item)}
-                      title={copyFeedback?.itemId === item.id ? copyFeedback.message : '复制'}
-                      aria-label={
-                        copyFeedback?.itemId === item.id ? copyFeedback.message : '复制这条记录'
-                      }
-                    >
-                      {copyFeedback?.itemId === item.id && copyFeedback.kind === 'success' ? (
-                        <Check size={12} aria-hidden="true" />
-                      ) : copyFeedback?.itemId === item.id && copyFeedback.kind === 'error' ? (
-                        <X size={12} aria-hidden="true" />
-                      ) : (
-                        <Copy size={12} aria-hidden="true" />
-                      )}
-                    </button>
-                    <button
-                      type="button"
-                      className="clm-item-delete"
-                      onClick={() => deleteItem(item.id)}
-                      title="删除"
-                      aria-label="删除这条记录"
-                    >
-                      <Trash2 size={12} aria-hidden="true" />
-                    </button>
-                  </div>
-                </div>
-                {item.isImage ? (
-                  <div className="clm-item-image-wrap">
-                    <Image size={14} className="clm-item-icon" />
+                  {item.isImage ? (
                     <button
                       type="button"
                       className="clm-image-button"
@@ -306,18 +279,45 @@ export default function ClipboardManager(): React.JSX.Element {
                     >
                       <img src={item.imageDataUrl} alt="剪贴板图片" className="clm-item-image" />
                     </button>
-                  </div>
-                ) : (
-                  <div className="clm-item-content">
-                    <FileText size={14} className="clm-item-icon" />
-                    <pre className="clm-item-text">{item.text}</pre>
-                  </div>
-                )}
+                  ) : (
+                    <pre className="clm-item-text" title={item.text}>
+                      {item.text}
+                    </pre>
+                  )}
+                </div>
+                <div className="clm-item-actions">
+                  <button
+                    type="button"
+                    className="tool-icon-btn clm-item-copy"
+                    onClick={() => copyItem(item)}
+                    title={copyFeedback?.itemId === item.id ? copyFeedback.message : '复制'}
+                    aria-label={
+                      copyFeedback?.itemId === item.id ? copyFeedback.message : '复制这条记录'
+                    }
+                  >
+                    {copyFeedback?.itemId === item.id && copyFeedback.kind === 'success' ? (
+                      <Check size={13} aria-hidden="true" />
+                    ) : copyFeedback?.itemId === item.id && copyFeedback.kind === 'error' ? (
+                      <X size={13} aria-hidden="true" />
+                    ) : (
+                      <Copy size={13} aria-hidden="true" />
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    className="tool-icon-btn clm-item-delete"
+                    onClick={() => deleteItem(item.id)}
+                    title="删除"
+                    aria-label="删除这条记录"
+                  >
+                    <Trash2 size={13} aria-hidden="true" />
+                  </button>
+                </div>
               </div>
             ))}
           </div>
         )}
-      </div>
+      </section>
 
       <Dialog
         open={confirmClearOpen}
