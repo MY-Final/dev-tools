@@ -96,6 +96,35 @@ export interface TodosAPI {
   clearCompleted: (date?: string) => Promise<number>
 }
 
+export interface OpenedFile {
+  path: string
+  name: string
+  content: string
+  bytes: number
+  truncated: boolean
+}
+
+export interface SaveFileOptions {
+  content: string
+  suggestedName?: string
+  filePath?: string
+}
+
+export interface SaveFileResult {
+  path: string
+  name: string
+  bytes: number
+  canceled: boolean
+}
+
+export interface FileAPI {
+  open: () => Promise<OpenedFile | null>
+  read: (filePath: string) => Promise<OpenedFile>
+  save: (options: SaveFileOptions) => Promise<SaveFileResult>
+  recent: () => Promise<string[]>
+  reveal: (filePath: string) => Promise<boolean>
+}
+
 export type UpdateStatus =
   | { type: 'idle' }
   | { type: 'checking' }

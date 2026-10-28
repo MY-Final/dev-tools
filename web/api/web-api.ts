@@ -21,7 +21,10 @@ import {
   type TodosAPI,
   type UpdateStatus,
   type UpdateTodoInput,
-  type UpdaterAPI
+  type UpdaterAPI,
+  type OpenedFile,
+  type SaveFileOptions,
+  type SaveFileResult
 } from '../../src/shared/contracts'
 
 // ── Helpers ──────────────────────────────────────────────────────
@@ -302,12 +305,16 @@ const webEnvAPI = {
 
 // ── 5. Translator API (direct fetch) ─────────────────────────────
 
+// Mirrors the main-process cancellation contract so the page can call
+// window.translator.cancel() in both builds.
+let webTranslatorController: AbortController | null = null
+
 const webTranslatorAPI = {
   async translate(
     text: string,
     sourceLang: string,
     targetLang: string
-  ): Promise<{ translation?: string; error?: string }> {
+  ): Promise<{ translation?: string; error?: string; truncated?: boolean; cancelled?: boolean }> {
     try {
       const stored = loadSettings()
       const config = stored.translator
@@ -323,6 +330,7 @@ const webTranslatorAPI = {
       const maxTokens = config.maxTokens ?? 4096
 
       const controller = new AbortController()
+      webTranslatorController = controller
       const timeout = setTimeout(() => controller.abort(), 30000)
 
       const res = await fetch(`${baseUrl}/chat/completions`, {
@@ -354,17 +362,27 @@ const webTranslatorAPI = {
       }
 
       const data = await res.json()
-      const content = data?.choices?.[0]?.message?.content
+      const choice = data?.choices?.[0]
+      const content = choice?.message?.content
       if (!content) {
         return { error: 'API 响应格式异常，未获取到翻译结果' }
+      }
+      if (choice.finish_reason === 'length') {
+        return { translation: content.trim(), truncated: true }
       }
       return { translation: content.trim() }
     } catch (err) {
       if ((err as Error).name === 'AbortError') {
-        return { error: '请求超时 (30s)，请检查网络或 Base URL' }
+        return { error: '请求超时或已取消 (30s)，请检查网络或 Base URL' }
       }
       return { error: `网络请求失败: ${(err as Error).message}` }
+    } finally {
+      webTranslatorController = null
     }
+  },
+
+  async cancel(): Promise<void> {
+    webTranslatorController?.abort()
   },
 
   async testConnection(): Promise<{ success?: boolean; models?: string[]; error?: string }> {
@@ -403,7 +421,65 @@ const webTranslatorAPI = {
   }
 }
 
-// ── 6. npm API (direct fetch with mirrors) ───────────────────────
+// ── 6. File API (browser fallback) ──────────────────────────────
+// The web build has no filesystem access, so the pickers are emulated with an
+// <input type=file> and a Blob download. Callers get the same shape as the
+// Electron bridge so tool pages do not need two code paths.
+
+function pickBrowserFile(accept: string): Promise<File | null> {
+  return new Promise((resolve) => {
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = accept
+    input.style.display = 'none'
+    let settled = false
+    const finish = (file: File | null): void => {
+      if (settled) return
+      settled = true
+      input.remove()
+      resolve(file)
+    }
+    input.addEventListener('change', () => finish(input.files?.[0] ?? null))
+    input.addEventListener('cancel', () => finish(null))
+    document.body.appendChild(input)
+    input.click()
+  })
+}
+
+const webFileAPI = {
+  async open(): Promise<OpenedFile | null> {
+    const file = await pickBrowserFile('.txt,.md,.markdown,.json,.yaml,.yml,.toml,.xml,.csv,.tsv,.log,.html,.css,.js,.ts,.jsx,.tsx')
+    if (!file) return null
+    const content = await file.text()
+    return { path: '', name: file.name, content, bytes: file.size, truncated: false }
+  },
+
+  async read(): Promise<OpenedFile> {
+    throw new Error('Web 版不支持按路径读取文件，请使用「打开文件」')
+  },
+
+  async save(options: SaveFileOptions): Promise<SaveFileResult> {
+    const name = options.suggestedName || 'untitled.txt'
+    const blob = new Blob([options.content], { type: 'text/plain;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = name
+    link.click()
+    URL.revokeObjectURL(url)
+    return { path: '', name, bytes: blob.size, canceled: false }
+  },
+
+  async recent(): Promise<string[]> {
+    return []
+  },
+
+  async reveal(): Promise<boolean> {
+    return false
+  }
+}
+
+// ── 7. npm API (direct fetch with mirrors) ───────────────────────
 
 const DEFAULT_REGISTRIES = ['https://registry.npmjs.org', 'https://registry.npmmirror.com']
 
@@ -925,4 +1001,5 @@ export function injectWebAPI(): void {
   w.docker = webDockerAPI
   w.wsProxy = webWsProxyAPI
   w.todos = webTodosAPI
+  w.file = webFileAPI
 }

@@ -12,6 +12,7 @@ import { registerNpmHandlers } from './npm-ipc'
 import { registerDockerHandlers } from './docker-ipc'
 import { registerWsProxyHandlers, cleanupWsProxyConnections } from './ws-proxy-ipc'
 import { registerTodoHandlers } from './todos-ipc'
+import { registerFileHandlers } from './file-ipc'
 import { settingsStore } from './settings'
 import { configureIpcSecurity, isTrustedRendererUrl } from './ipc-security'
 
@@ -286,6 +287,9 @@ app.whenReady().then(() => {
 
   // Register todo handlers
   registerTodoHandlers()
+
+  // Register file access handlers for text tools
+  registerFileHandlers()
 
   createWindow()
 

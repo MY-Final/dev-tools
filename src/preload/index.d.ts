@@ -138,8 +138,16 @@ export interface EnvAPI {
   getEnvVars: () => Promise<Record<string, string>>
 }
 
+export type { OpenedFile, SaveFileOptions, SaveFileResult, FileAPI } from '../shared/contracts'
+import type { FileAPI } from '../shared/contracts'
+
 export interface TranslatorAPI {
-  translate: (text: string, sourceLang: string, targetLang: string) => Promise<{ translation?: string; error?: string }>
+  translate: (
+    text: string,
+    sourceLang: string,
+    targetLang: string
+  ) => Promise<{ translation?: string; error?: string; truncated?: boolean; cancelled?: boolean }>
+  cancel: () => Promise<void>
   testConnection: () => Promise<{ success?: boolean; models?: string[]; error?: string }>
 }
 
@@ -185,7 +193,11 @@ export interface DockerAPI {
 }
 
 export interface WsProxyAPI {
-  connect: (opts: { url: string; headers?: Record<string, string>; protocols?: string[] }) => Promise<{ id: number; error?: string }>
+  connect: (opts: {
+    url: string
+    headers?: Record<string, string>
+    protocols?: string[]
+  }) => Promise<{ id: number; error?: string }>
   send: (opts: { id: number; message: string }) => Promise<{ ok?: boolean; error?: string }>
   disconnect: (id: number) => Promise<{ ok: boolean }>
   onOpen: (callback: (data: { id: number }) => void) => () => void
@@ -217,5 +229,6 @@ declare global {
     docker: DockerAPI
     wsProxy: WsProxyAPI
     todos: TodosAPI
+    file: FileAPI
   }
 }
