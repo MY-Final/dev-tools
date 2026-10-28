@@ -17,10 +17,8 @@
   width: 100%;
   max-width: 700px;
   background: var(--glass-bg);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--glass-border);
-  border-radius: 20px;
+  border-radius: 16px;
   padding: 32px;
   box-shadow: var(--shadow-xl);
 }
@@ -31,7 +29,7 @@
 }
 
 .xp-title {
-  font-size: 24px;
+  font-size: 1.5rem;
   font-weight: 700;
   font-family: 'JetBrains Mono', monospace;
   color: var(--color-text);
@@ -39,7 +37,7 @@
 }
 
 .xp-subtitle {
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--color-text-muted);
 }
 
@@ -65,7 +63,7 @@
   padding: 5px 16px;
   background: transparent;
   border: none;
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--color-text-secondary);
   cursor: pointer;
@@ -74,7 +72,7 @@
 
 .xp-mode-btn.active {
   background: var(--color-accent-soft);
-  color: #fff;
+  color: var(--color-text-inverse);
 }
 
 .xp-btn {
@@ -83,7 +81,7 @@
   gap: 5px;
   padding: 6px 12px;
   border-radius: 8px;
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 600;
   cursor: pointer;
   border: 1.5px solid transparent;
@@ -109,10 +107,9 @@
 
 .xp-label {
   display: block;
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 600;
   color: var(--color-text-muted);
-  text-transform: uppercase;
   letter-spacing: 0.05em;
   margin-bottom: 6px;
 }
@@ -122,9 +119,9 @@
   padding: 10px 14px;
   background: var(--color-editor-bg);
   border: 1px solid var(--color-border);
-  border-radius: 10px;
+  border-radius: 8px;
   color: var(--color-text);
-  font-size: 14px;
+  font-size: 0.875rem;
   font-family: 'JetBrains Mono', monospace;
   outline: none;
   box-sizing: border-box;
@@ -133,7 +130,7 @@
 
 .xp-xpath-input:focus {
   border-color: var(--color-accent-soft);
-  box-shadow: 0 0 0 3px var(--color-accent-soft-subtle);
+  box-shadow: 0 0 0 2px var(--color-accent-soft-subtle);
 }
 
 /* Quick xpaths */
@@ -148,8 +145,8 @@
   padding: 3px 8px;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: 5px;
-  font-size: 10px;
+  border-radius: 4px;
+  font-size: 0.625rem;
   font-family: 'JetBrains Mono', monospace;
   color: var(--color-text-secondary);
   cursor: pointer;
@@ -176,9 +173,9 @@
   padding: 12px 14px;
   background: var(--color-editor-bg);
   border: 1px solid var(--color-border);
-  border-radius: 10px;
+  border-radius: 8px;
   color: var(--color-text);
-  font-size: 12px;
+  font-size: 0.75rem;
   font-family: 'JetBrains Mono', monospace;
   resize: vertical;
   outline: none;
@@ -189,7 +186,7 @@
 
 .xp-textarea:focus {
   border-color: var(--color-accent-soft);
-  box-shadow: 0 0 0 3px var(--color-accent-soft-subtle);
+  box-shadow: 0 0 0 2px var(--color-accent-soft-subtle);
 }
 
 /* ── Actions ───────────────────────────── */
@@ -208,7 +205,7 @@
   border: 1px solid rgba(229, 62, 62, 0.2);
   border-radius: 8px;
   color: var(--color-danger, #e53e3e);
-  font-size: 12px;
+  font-size: 0.75rem;
   font-family: 'JetBrains Mono', monospace;
   margin-bottom: 14px;
 }
@@ -226,7 +223,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--color-text-muted);
 }
@@ -235,7 +232,7 @@
   text-align: center;
   padding: 20px;
   color: var(--color-text-muted);
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
 .xp-match-list {
@@ -250,7 +247,7 @@
   padding: 12px 14px;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: 10px;
+  border-radius: 8px;
 }
 
 .xp-match-header {
@@ -261,16 +258,15 @@
 }
 
 .xp-match-index {
-  font-size: 10px;
+  font-size: 0.625rem;
   font-weight: 700;
   color: var(--color-text-muted);
   font-family: 'JetBrains Mono', monospace;
 }
 
 .xp-match-type {
-  font-size: 9px;
+  font-size: 0.625rem;
   font-weight: 700;
-  text-transform: uppercase;
   padding: 1px 6px;
   border-radius: 4px;
   font-family: 'JetBrains Mono', monospace;
@@ -284,14 +280,14 @@
 .xp-type-boolean { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
 
 .xp-match-name {
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--color-text);
   font-family: 'JetBrains Mono', monospace;
 }
 
 .xp-match-text {
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--color-text-secondary);
   margin-bottom: 6px;
   line-height: 1.4;
@@ -305,7 +301,7 @@
 
 .xp-match-xml {
   flex: 1;
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-family: 'JetBrains Mono', monospace;
   color: var(--color-accent-soft);
   background: var(--color-editor-bg);

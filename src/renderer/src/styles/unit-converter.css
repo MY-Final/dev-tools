@@ -1,289 +1,172 @@
 /* ========================================
-   Unit Converter 页面
+   Unit Converter
+   类别条 + 单个输入行 + 双列结果网格
    ======================================== */
 
-.uc-page {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  padding: 40px 24px;
-  overflow-y: auto;
+.uc-input-panel {
+  overflow: hidden;
 }
-
-.uc-card {
-  width: 100%;
-  max-width: 680px;
-  background: var(--glass-bg);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--glass-border);
-  border-radius: 20px;
-  padding: 32px;
-  box-shadow: var(--shadow-xl);
-}
-
-.uc-header {
-  text-align: center;
-  margin-bottom: 20px;
-}
-
-.uc-title {
-  font-size: 24px;
-  font-weight: 700;
-  color: var(--color-text);
-  margin: 0 0 4px;
-  font-family: 'JetBrains Mono', monospace;
-}
-
-.uc-subtitle {
-  font-size: 12px;
-  color: var(--color-text-muted);
-  margin: 0;
-  line-height: 1.5;
-}
-
-/* ── Tabs ───────────────────────────────── */
 
 .uc-tabs {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
-  margin-bottom: 20px;
-  padding: 4px;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
+  gap: 2px;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .uc-tab {
-  padding: 6px 12px;
+  height: 28px;
+  padding: 0 11px;
+  border: 0;
+  border-radius: var(--radius-sm);
   background: transparent;
-  border: none;
-  border-radius: 9px;
-  font-size: 12px;
-  font-weight: 500;
   color: var(--color-text-secondary);
+  font-family: inherit;
+  font-size: var(--text-sm);
   cursor: pointer;
-  transition: all 0.2s ease;
-  white-space: nowrap;
+  transition:
+    background-color 0.12s ease,
+    color 0.12s ease,
+    box-shadow 0.12s ease;
 }
 
 .uc-tab:hover:not(.active) {
-  color: var(--color-text);
-}
-
-.uc-tab.active {
-  background: var(--color-accent-soft);
-  color: #fff;
-  font-weight: 600;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-/* ── Input ──────────────────────────────── */
-
-.uc-input-area {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 20px;
-}
-
-.uc-input-row {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  background: var(--color-editor-bg);
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
-  overflow: hidden;
-  transition: border-color 0.2s ease;
-}
-
-.uc-input-row:focus-within {
-  border-color: var(--color-accent-soft);
-  box-shadow: 0 0 0 3px var(--color-accent-soft-subtle);
-}
-
-.uc-input {
-  flex: 1;
-  padding: 12px 16px;
-  background: transparent;
-  border: none;
-  color: var(--color-text);
-  font-size: 18px;
-  font-family: 'JetBrains Mono', monospace;
-  outline: none;
-  min-width: 0;
-}
-
-.uc-input-unit {
-  padding: 0 16px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--color-text-muted);
-  font-family: 'JetBrains Mono', monospace;
-  background: var(--color-surface);
-  height: 100%;
-  display: flex;
-  align-items: center;
-  border-left: 1px solid var(--color-border);
-}
-
-.uc-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 8px 14px;
-  border-radius: 10px;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  border: 1.5px solid transparent;
-  user-select: none;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-.uc-btn-ghost {
-  background: transparent;
-  border-color: var(--color-border);
-  color: var(--color-text-secondary);
-}
-
-.uc-btn-ghost:hover {
   background: var(--color-surface-hover);
   color: var(--color-text);
 }
 
-/* ── Results ────────────────────────────── */
+.uc-tab.active {
+  background: var(--color-surface-active);
+  color: var(--color-text);
+  box-shadow: inset 0 0 0 1px var(--color-border-active);
+  font-weight: 500;
+}
 
-.uc-result-label {
-  display: block;
-  font-size: 11px;
-  font-weight: 600;
+.uc-tab:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+.uc-input-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px;
+}
+
+.uc-input-label {
+  flex-shrink: 0;
   color: var(--color-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 12px;
+  font-size: var(--text-sm);
+}
+
+.uc-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.uc-input-unit {
+  flex-shrink: 0;
+  min-width: 34px;
+  color: var(--color-text-secondary);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: var(--text-sm);
+}
+
+/* ── 结果网格：1px 间隙形成发丝线，不再一张结果一张卡片 ── */
+
+.uc-results {
+  overflow: hidden;
+}
+
+.uc-result-base {
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
 }
 
 .uc-result-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 6px;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1px;
+  background: var(--color-border);
 }
 
 .uc-result-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 9px 10px 9px 14px;
-  background: var(--color-editor-bg);
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  gap: 8px;
-  transition: border-color 0.15s ease;
+  gap: 10px;
+  min-width: 0;
+  min-height: 46px;
+  padding: 8px 14px;
+  background: var(--color-surface);
+  transition: background-color 0.12s ease;
 }
 
 .uc-result-item:hover {
-  border-color: var(--color-border-hover);
+  background: var(--color-surface-hover);
 }
 
 .uc-result-info {
   display: flex;
-  flex-direction: column;
-  gap: 1px;
-  flex: 0 0 52px;
+  align-items: baseline;
+  gap: 6px;
   min-width: 0;
 }
 
 .uc-result-symbol {
-  font-size: 14px;
-  font-weight: 700;
+  flex-shrink: 0;
+  color: var(--color-text);
   font-family: 'JetBrains Mono', monospace;
-  color: var(--color-accent-soft);
+  font-size: var(--text-sm);
+  font-weight: 600;
 }
 
 .uc-result-name {
-  font-size: 10px;
+  overflow: hidden;
   color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .uc-result-right {
   display: flex;
   align-items: center;
-  gap: 10px;
-  text-align: right;
-  flex: 1;
+  gap: 2px;
   min-width: 0;
 }
 
 .uc-result-value {
-  flex: 1;
   min-width: 0;
-  font-size: 13px;
-  font-family: 'JetBrains Mono', monospace;
-  color: var(--color-text);
-  white-space: nowrap;
   overflow: hidden;
+  color: var(--color-text);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.uc-copy-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  background: transparent;
-  color: var(--color-text-secondary);
-  cursor: pointer;
-  transition: all 0.15s ease;
+.uc-result-right .tool-icon-btn {
+  width: 24px;
+  height: 24px;
   flex-shrink: 0;
 }
 
-.uc-copy-btn svg {
-  width: 16px;
-  height: 16px;
-  stroke-width: 2;
+.uc-hint {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
 }
 
-.uc-copy-btn:hover {
-  border-color: var(--color-accent-soft);
-  background: var(--color-accent-soft-subtle);
-  color: var(--color-accent-soft);
-}
-
-.uc-copy-btn.copied {
-  border-color: var(--color-success);
-  background: var(--color-success-subtle);
-  color: var(--color-success);
-}
-
-/* ── Responsive ─────────────────────────── */
-
-@media (max-width: 600px) {
-  .uc-page {
-    padding: 24px 16px;
+@container tool (max-width: 560px) {
+  .uc-input-row {
+    flex-wrap: wrap;
   }
 
-  .uc-card {
-    padding: 24px 18px;
-    border-radius: 16px;
-  }
-
-  .uc-result-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .uc-tab {
-    font-size: 11px;
-    padding: 5px 8px;
+  .uc-input {
+    flex-basis: calc(100% - 44px);
   }
 }

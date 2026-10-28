@@ -4,9 +4,26 @@ import '../styles/html-to-jsx.css'
 
 // ── HTML to JSX conversion ─────────────────────────────────────
 
-const SELF_CLOSING = new Set(['area','base','br','col','embed','hr','img','input','link','meta','param','source','track','wbr'])
+const SELF_CLOSING = new Set([
+  'area',
+  'base',
+  'br',
+  'col',
+  'embed',
+  'hr',
+  'img',
+  'input',
+  'link',
+  'meta',
+  'param',
+  'source',
+  'track',
+  'wbr'
+])
 
-interface AttrMap { [html: string]: string }
+interface AttrMap {
+  [html: string]: string
+}
 
 const ATTR_MAP: AttrMap = {
   class: 'className',
@@ -51,12 +68,12 @@ const ATTR_MAP: AttrMap = {
   srcset: 'srcSet',
   tabindex: 'tabIndex',
   usemap: 'useMap',
-  volumelock: 'volumeLock',
+  volumelock: 'volumeLock'
 }
 
 function htmlToJsx(html: string): string {
   // Normalize
-  let out = html.trim()
+  const out = html.trim()
   if (!out) return ''
 
   try {
@@ -133,7 +150,10 @@ function convertAttrs(el: Element): string {
     }
 
     const val = attr.value
-    if (val === '' && ['disabled', 'checked', 'selected', 'required', 'multiple', 'readOnly'].includes(name)) {
+    if (
+      val === '' &&
+      ['disabled', 'checked', 'selected', 'required', 'multiple', 'readOnly'].includes(name)
+    ) {
       attrs.push(name)
     } else {
       attrs.push(`${name}="${val}"`)
@@ -174,7 +194,9 @@ function parseStyleToObject(style: string): string {
 
 function escapeJSXText(text: string): string {
   // Basic escaping for JSX text
-  return text.replace(/{/g, '{`{`}').replace(/}/g, '{`}`}')
+  return text
+    .replace(/{/g, '{`{`}')
+    .replace(/}/g, '{`}`}')
     .replace(/\u00A0/g, '\u00A0') // keep &nbsp;
 }
 
@@ -182,7 +204,7 @@ const SAMPLES = [
   '<div class="container" id="app"><h1>Hello World</h1><p>Welcome</p></div>',
   '<input type="text" class="form-input" disabled placeholder="Enter name...">',
   '<div style="font-size: 16px; color: #333; background-color: #f5f5f5; padding: 20px;">Styled Content</div>',
-  '<a href="/page" target="_blank" rel="noopener noreferrer" class="link">Visit <strong>Now</strong></a>',
+  '<a href="/page" target="_blank" rel="noopener noreferrer" class="link">Visit <strong>Now</strong></a>'
 ]
 
 export default function HtmlToJsx(): React.JSX.Element {
@@ -193,7 +215,13 @@ export default function HtmlToJsx(): React.JSX.Element {
 
   const copy = useCallback(async () => {
     if (!output) return
-    try { await navigator.clipboard.writeText(output); setCopied(true); setTimeout(() => setCopied(false), 1500) } catch { /* ignore */ }
+    try {
+      await navigator.clipboard.writeText(output)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1500)
+    } catch {
+      /* ignore */
+    }
   }, [output])
 
   return (
@@ -205,19 +233,37 @@ export default function HtmlToJsx(): React.JSX.Element {
         </div>
 
         <div className="hj-toolbar">
-          <button className="hj-btn hj-btn-ghost" onClick={() => setInput(SAMPLES[0])}>示例 1</button>
-          <button className="hj-btn hj-btn-ghost" onClick={() => setInput(SAMPLES[1])}>示例 2</button>
-          <button className="hj-btn hj-btn-ghost" onClick={() => setInput(SAMPLES[2])}>示例 3</button>
-          <button className="hj-btn hj-btn-ghost" onClick={() => setInput(SAMPLES[3])}>示例 4</button>
+          <button className="hj-btn hj-btn-ghost" onClick={() => setInput(SAMPLES[0])}>
+            示例 1
+          </button>
+          <button className="hj-btn hj-btn-ghost" onClick={() => setInput(SAMPLES[1])}>
+            示例 2
+          </button>
+          <button className="hj-btn hj-btn-ghost" onClick={() => setInput(SAMPLES[2])}>
+            示例 3
+          </button>
+          <button className="hj-btn hj-btn-ghost" onClick={() => setInput(SAMPLES[3])}>
+            示例 4
+          </button>
         </div>
 
         <div className="hj-panes">
           <div className="hj-pane">
             <div className="hj-pane-header">
               <span className="hj-pane-label">HTML</span>
-              <button className="hj-btn hj-btn-ghost" onClick={() => setInput('')}><RotateCcw size={13} />清空</button>
+              <button className="hj-btn hj-btn-ghost" onClick={() => setInput('')}>
+                <RotateCcw size={13} />
+                清空
+              </button>
             </div>
-            <textarea className="hj-textarea" value={input} onChange={(e) => setInput(e.target.value)} placeholder="粘贴 HTML..." rows={10} spellCheck={false} />
+            <textarea
+              className="hj-textarea"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="粘贴 HTML..."
+              rows={10}
+              spellCheck={false}
+            />
           </div>
 
           <div className="hj-arrow">→</div>
@@ -226,10 +272,15 @@ export default function HtmlToJsx(): React.JSX.Element {
             <div className="hj-pane-header">
               <span className="hj-pane-label">JSX</span>
               {output && (
-                <button className="hj-btn hj-btn-ghost" onClick={copy}>{copied ? <Check size={13} /> : <Copy size={13} />}{copied ? '已复制' : '复制'}</button>
+                <button className="hj-btn hj-btn-ghost" onClick={copy}>
+                  {copied ? <Check size={13} /> : <Copy size={13} />}
+                  {copied ? '已复制' : '复制'}
+                </button>
               )}
             </div>
-            <pre className="hj-output">{output || <span className="hj-placeholder">等待输入...</span>}</pre>
+            <pre className="hj-output">
+              {output || <span className="hj-placeholder">等待输入...</span>}
+            </pre>
           </div>
         </div>
       </div>

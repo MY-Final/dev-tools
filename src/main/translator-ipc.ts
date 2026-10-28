@@ -1,8 +1,16 @@
-import { ipcMain } from 'electron'
 import { settingsStore } from './settings'
+import { registerGuardedHandler } from './ipc-security'
+
+interface ActiveTranslation {
+  controller: AbortController
+  cancelled: boolean
+}
+
+// In-flight translation requests. translator:cancel aborts all of them.
+const activeTranslations = new Set<ActiveTranslation>()
 
 export function registerTranslatorHandlers(): void {
-  ipcMain.handle(
+  registerGuardedHandler(
     'translator:translate',
     async (_event, text: string, sourceLang: string, targetLang: string) => {
       const config = settingsStore.getTranslator()
@@ -17,10 +25,11 @@ export function registerTranslatorHandlers(): void {
       const temperature = config.temperature ?? 0.3
       const maxTokens = config.maxTokens ?? 4096
 
-      try {
-        const controller = new AbortController()
-        const timeout = setTimeout(() => controller.abort(), 30000)
+      const active: ActiveTranslation = { controller: new AbortController(), cancelled: false }
+      activeTranslations.add(active)
+      const timeout = setTimeout(() => active.controller.abort(), 30000)
 
+      try {
         const res = await fetch(`${baseUrl}/chat/completions`, {
           method: 'POST',
           headers: {
@@ -36,7 +45,7 @@ export function registerTranslatorHandlers(): void {
             temperature,
             max_tokens: maxTokens
           }),
-          signal: controller.signal
+          signal: active.controller.signal
         })
 
         clearTimeout(timeout)
@@ -50,21 +59,41 @@ export function registerTranslatorHandlers(): void {
         }
 
         const data = await res.json()
-        const content = data?.choices?.[0]?.message?.content
+        const choice = data?.choices?.[0]
+        const content = choice?.message?.content
         if (!content) {
           return { error: 'API 响应格式异常，未获取到翻译结果' }
         }
-        return { translation: content.trim() }
+        const translation: string = content.trim()
+        // OpenAI-compatible APIs set finish_reason to 'length' when max_tokens cut the output short.
+        if (choice.finish_reason === 'length') {
+          return { translation, truncated: true }
+        }
+        return { translation }
       } catch (err) {
+        if (active.cancelled) {
+          return { cancelled: true }
+        }
         if ((err as Error).name === 'AbortError') {
           return { error: '请求超时 (30s)，请检查网络或 Base URL' }
         }
         return { error: `网络请求失败: ${(err as Error).message}` }
+      } finally {
+        clearTimeout(timeout)
+        activeTranslations.delete(active)
       }
     }
   )
 
-  ipcMain.handle('translator:test-connection', async () => {
+  registerGuardedHandler('translator:cancel', () => {
+    for (const active of activeTranslations) {
+      active.cancelled = true
+      active.controller.abort()
+    }
+    activeTranslations.clear()
+  })
+
+  registerGuardedHandler('translator:test-connection', async () => {
     const config = settingsStore.getTranslator()
     if (!config.baseUrl || !config.apiKey) {
       return { error: '请先配置 Base URL 和 API Key' }

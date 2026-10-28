@@ -1,235 +1,115 @@
 /* ========================================
-   Base64 Codec 页面
+   Base64 Codec
+   工具栏 + 左右双栏输入/输出
    ======================================== */
 
-.b64-page {
-  width: 100%;
-  height: 100%;
+.b64-toolbar {
+  overflow: hidden;
+}
+
+.b64-toolbar-row {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
-  padding: 40px 24px;
-  overflow-y: auto;
-}
-
-.b64-card {
-  width: 100%;
-  max-width: 720px;
-  background: var(--glass-bg);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--glass-border);
-  border-radius: 20px;
-  padding: 32px;
-  box-shadow: var(--shadow-xl);
-}
-
-.b64-header {
-  text-align: center;
-  margin-bottom: 28px;
-}
-
-.b64-title {
-  font-size: 24px;
-  font-weight: 700;
-  color: var(--color-text);
-  font-family: 'JetBrains Mono', monospace;
-  letter-spacing: -0.5px;
-  margin-bottom: 6px;
-}
-
-.b64-subtitle {
-  font-size: 14px;
-  color: var(--color-text-muted);
-}
-
-/* 控制区域 */
-.b64-controls {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 20px;
-}
-
-.b64-mode-selector,
-.b64-variant-selector {
-  display: flex;
-  gap: 4px;
-  padding: 4px;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-}
-
-.b64-mode-btn,
-.b64-variant-btn {
-  padding: 8px 16px;
-  background: transparent;
-  border: 1px solid transparent;
-  border-radius: 8px;
-  color: var(--color-text-muted);
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.b64-mode-btn:hover,
-.b64-variant-btn:hover {
-  color: var(--color-text-secondary);
-  background: var(--color-surface-hover);
-}
-
-.b64-mode-btn.active,
-.b64-variant-btn.active {
-  background: var(--color-accent-soft);
-  color: var(--color-text-inverse);
-  border-color: var(--color-accent-soft);
-}
-
-/* 提示 */
-.b64-hint {
+  flex-wrap: wrap;
+  gap: 8px 10px;
   padding: 10px 14px;
-  background: var(--color-accent-soft-subtle);
-  border: 1px solid var(--color-accent-soft);
-  border-radius: 10px;
-  font-size: 12px;
-  color: var(--color-accent-soft);
-  margin-bottom: 16px;
+}
+
+.b64-toolbar-note {
+  margin-left: auto;
+  color: var(--color-text-muted);
+  font-size: var(--text-2xs);
 }
 
 .b64-detect {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 14px;
+  gap: 7px;
+  padding: 7px 14px;
+  border-top: 1px solid color-mix(in srgb, var(--color-warning) 24%, var(--color-border));
   background: var(--color-warning-subtle);
-  border: 1px solid var(--color-warning);
-  border-radius: 10px;
-  font-size: 12px;
   color: var(--color-warning);
-  margin-bottom: 16px;
+  font-size: var(--text-xs);
 }
 
 .b64-detect-btn {
   margin-left: auto;
-  padding: 4px 10px;
-  background: var(--color-warning);
-  border: none;
-  border-radius: 6px;
-  color: white;
-  font-size: 11px;
-  font-weight: 600;
+  height: 24px;
+  padding: 0 8px;
+  border: 1px solid color-mix(in srgb, var(--color-warning) 34%, var(--color-border));
+  border-radius: var(--radius-xs);
+  background: transparent;
+  color: var(--color-warning);
+  font-family: inherit;
+  font-size: var(--text-2xs);
   cursor: pointer;
-  transition: opacity 0.15s ease;
 }
 
 .b64-detect-btn:hover {
-  opacity: 0.9;
+  background: color-mix(in srgb, var(--color-warning) 12%, transparent);
 }
 
-/* 输入输出区域 */
+.b64-detect-btn:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+/* ── 双栏 ───────────────────────────────────── */
+
 .b64-io {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+}
+
+@container tool (min-width: 900px) {
+  .b64-io {
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: stretch;
+  }
+}
+
+.b64-pane {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin-bottom: 16px;
+  min-width: 0;
+  overflow: hidden;
 }
 
-.b64-input-area,
-.b64-output-area {
-  flex: 1;
+.b64-pane:focus-within {
+  box-shadow: inset 0 0 0 1px var(--color-accent);
 }
 
-.b64-input-header,
-.b64-output-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 8px;
+.b64-pane .tool-panel-head {
+  min-height: 38px;
 }
 
-.b64-input-label,
-.b64-output-label {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--color-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.b64-input-hint {
-  font-size: 10px;
-  color: var(--color-text-muted);
+.b64-pane .tool-btn {
+  height: 26px;
+  padding: 0 8px;
+  font-size: var(--text-2xs);
 }
 
 .b64-output-actions {
   display: flex;
-  gap: 6px;
-}
-
-.b64-format-btn {
-  display: flex;
   align-items: center;
   gap: 4px;
-  padding: 4px 10px;
-  background: var(--color-accent-soft-subtle);
-  border: 1px solid var(--color-accent-soft);
-  border-radius: 6px;
-  color: var(--color-accent-soft);
-  font-size: 11px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.b64-format-btn:hover {
-  background: var(--color-accent-soft);
-  color: white;
-}
-
-.b64-copy-btn {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 10px;
-  background: var(--color-editor-bg);
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-  color: var(--color-text-muted);
-  font-size: 11px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.b64-copy-btn:hover:not(:disabled) {
-  border-color: var(--color-accent-soft);
-  color: var(--color-accent-soft);
-}
-
-.b64-copy-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
+  margin-left: auto;
 }
 
 .b64-textarea {
+  flex: 1;
   width: 100%;
+  min-height: 240px;
   padding: 12px 14px;
+  border: 0;
   background: var(--color-editor-bg);
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
   color: var(--color-text);
-  font-size: 13px;
   font-family: 'JetBrains Mono', monospace;
-  line-height: 1.5;
-  resize: vertical;
-  transition: all 0.2s ease;
+  font-size: var(--text-sm);
+  line-height: 1.65;
   outline: none;
-}
-
-.b64-textarea:focus {
-  border-color: var(--color-accent-soft);
+  resize: vertical;
 }
 
 .b64-textarea::placeholder {
@@ -238,86 +118,54 @@
 
 .b64-textarea.b64-output {
   background: var(--color-surface);
+  color: var(--color-text-secondary);
   cursor: default;
 }
 
-/* 交换按钮 */
+.b64-textarea.b64-output--error {
+  color: var(--color-danger);
+}
+
+/* 交换 */
 .b64-swap-area {
   display: flex;
+  align-items: center;
   justify-content: center;
 }
 
 .b64-swap-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  background: var(--color-surface);
+  width: 30px;
+  height: 30px;
   border: 1px solid var(--color-border);
-  border-radius: 10px;
+  background: var(--color-surface);
   color: var(--color-text-muted);
-  cursor: pointer;
-  transition: all 0.15s ease;
 }
 
 .b64-swap-btn:hover:not(:disabled) {
-  border-color: var(--color-accent-soft);
-  color: var(--color-accent-soft);
+  border-color: var(--color-border-hover);
+  color: var(--color-text);
 }
 
 .b64-swap-btn:disabled {
-  opacity: 0.3;
+  opacity: 0.4;
   cursor: not-allowed;
 }
 
-/* 操作按钮 */
-.b64-actions {
-  display: flex;
-  justify-content: flex-end;
+/* ── 窄容器 ─────────────────────────────────── */
+
+@container tool (max-width: 899px) {
+  .b64-swap-btn svg {
+    transform: rotate(90deg);
+  }
+
+  .b64-textarea {
+    min-height: 150px;
+  }
 }
 
-.b64-action-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  background: transparent;
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  color: var(--color-text-muted);
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.b64-action-btn:hover {
-  border-color: var(--color-border-hover);
-  color: var(--color-text-secondary);
-}
-
-/* 响应式 */
-@media (max-width: 600px) {
-  .b64-page {
-    padding: 24px 16px;
-  }
-
-  .b64-card {
-    padding: 24px 20px;
-    border-radius: 16px;
-  }
-
-  .b64-title {
-    font-size: 20px;
-  }
-
-  .b64-controls {
-    flex-direction: column;
-  }
-
-  .b64-mode-selector,
-  .b64-variant-selector {
-    justify-content: center;
+@container tool (max-width: 640px) {
+  .b64-toolbar-note {
+    flex-basis: 100%;
+    margin-left: 0;
   }
 }

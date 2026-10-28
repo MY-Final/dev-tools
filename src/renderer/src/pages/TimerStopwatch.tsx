@@ -8,29 +8,55 @@ type TimerMode = 'stopwatch' | 'countdown' | 'pomodoro' | 'interval'
 
 let _audioCtx: AudioContext | null = null
 
-function getAudioContext(): AudioContext {
-  if (!_audioCtx || _audioCtx.state === 'closed') {
-    _audioCtx = new AudioContext()
+function getAudioContext(): AudioContext | null {
+  try {
+    if (typeof window === 'undefined' || typeof window.AudioContext === 'undefined') {
+      return null
+    }
+    if (!_audioCtx || _audioCtx.state === 'closed') {
+      _audioCtx = new window.AudioContext()
+    }
+    return _audioCtx
+  } catch {
+    return null
   }
-  return _audioCtx
+}
+
+function resumeAudioContext(): void {
+  const ctx = getAudioContext()
+  if (!ctx || ctx.state === 'running') return
+  void ctx.resume().catch(() => {
+    // Audio availability must never affect timer state.
+  })
 }
 
 function playBeep(duration = 200, freq = 880): void {
-  try {
-    const ctx = getAudioContext()
-    const osc = ctx.createOscillator()
-    const gain = ctx.createGain()
-    osc.type = 'square'
-    osc.frequency.value = freq
-    gain.gain.setValueAtTime(0.3, ctx.currentTime)
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration / 1000)
-    osc.connect(gain)
-    gain.connect(ctx.destination)
-    osc.start()
-    osc.stop(ctx.currentTime + duration / 1000)
-  } catch {
-    // ignore
+  const ctx = getAudioContext()
+  if (!ctx) return
+
+  const play = async (): Promise<void> => {
+    try {
+      if (ctx.state !== 'running') {
+        await ctx.resume()
+      }
+      if (ctx.state !== 'running') return
+
+      const osc = ctx.createOscillator()
+      const gain = ctx.createGain()
+      osc.type = 'square'
+      osc.frequency.value = freq
+      gain.gain.setValueAtTime(0.3, ctx.currentTime)
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration / 1000)
+      osc.connect(gain)
+      gain.connect(ctx.destination)
+      osc.start()
+      osc.stop(ctx.currentTime + duration / 1000)
+    } catch {
+      // Audio failures are non-fatal and must not change timer state.
+    }
   }
+
+  void play()
 }
 
 function playAlarm(): void {
@@ -97,6 +123,7 @@ export default function TimerStopwatch(): React.JSX.Element {
   const startRef = useRef(0)
   const pausedRef = useRef(0)
   const timeoutIds = useRef<ReturnType<typeof setTimeout>[]>([])
+  const startTimerRef = useRef<() => void>(() => {})
 
   // Alarm-check refs (stable, read in tick)
   const runningRef = useRef(false)
@@ -114,21 +141,38 @@ export default function TimerStopwatch(): React.JSX.Element {
   const intWorkRef = useRef(30)
   const intRestRef = useRef(15)
 
-  // Sync refs (after state declarations)
-  runningRef.current = running
-  modeRef.current = mode
-  cdTotalRef.current = cdTotal
-  pomoTotalRef.current = pomoTotal
-  pomoPhaseRef.current = pomoPhase
-  pomoCountRef.current = pomoCount
-  pomoBreakRef.current = pomoBreak
-  pomoWorkRef.current = pomoWork
-  intTotalRef.current = intTotal
-  intIsWorkRef.current = intIsWork
-  intCurrentRoundRef.current = intCurrentRound
-  intRoundsRef.current = intRounds
-  intWorkRef.current = intWork
-  intRestRef.current = intRest
+  // Keep tick reading the latest state without re-creating the interval.
+  useEffect(() => {
+    runningRef.current = running
+    modeRef.current = mode
+    cdTotalRef.current = cdTotal
+    pomoTotalRef.current = pomoTotal
+    pomoPhaseRef.current = pomoPhase
+    pomoCountRef.current = pomoCount
+    pomoBreakRef.current = pomoBreak
+    pomoWorkRef.current = pomoWork
+    intTotalRef.current = intTotal
+    intIsWorkRef.current = intIsWork
+    intCurrentRoundRef.current = intCurrentRound
+    intRoundsRef.current = intRounds
+    intWorkRef.current = intWork
+    intRestRef.current = intRest
+  }, [
+    cdTotal,
+    intCurrentRound,
+    intIsWork,
+    intRest,
+    intRounds,
+    intTotal,
+    intWork,
+    mode,
+    pomoBreak,
+    pomoCount,
+    pomoPhase,
+    pomoTotal,
+    pomoWork,
+    running,
+  ])
 
   // ── Schedule helper (cleans on unmount) ─
   const schedule = useCallback((fn: () => void, delay: number) => {
@@ -196,24 +240,31 @@ export default function TimerStopwatch(): React.JSX.Element {
         setIntIsWork(true)
         setIntTotal(intWorkRef.current * 1000)
       }
-      schedule(() => { setElapsed(0); pausedRef.current = 0; start() }, 200)
+      schedule(() => { setElapsed(0); pausedRef.current = 0; startTimerRef.current() }, 200)
     }
   }, [schedule])
 
   const start = useCallback(() => {
     if (runningRef.current) return
+    resumeAudioContext()
     startRef.current = Date.now() - pausedRef.current
     intervalRef.current = setInterval(tick, 16)
     setRunning(true)
   }, [tick])
 
+  useEffect(() => {
+    startTimerRef.current = start
+  }, [start])
+
   const pause = useCallback(() => {
+    resumeAudioContext()
     if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null }
     pausedRef.current = Date.now() - startRef.current
     setRunning(false)
   }, [])
 
   const reset = useCallback(() => {
+    resumeAudioContext()
     if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null }
     timeoutIds.current.forEach(clearTimeout)
     timeoutIds.current = []
@@ -302,7 +353,7 @@ export default function TimerStopwatch(): React.JSX.Element {
           ))}
         </div>
         <div className="ts-display-wrap">
-          <div className="ts-display"><span className="ts-time">{display}</span></div>
+          <div className="ts-display" role="timer" aria-label={`${mode === 'stopwatch' ? '秒表' : mode === 'countdown' ? '倒计时' : mode === 'pomodoro' ? '番茄钟' : '间歇训练'} ${display}`}><span className="ts-time">{display}</span></div>
           {mode === 'pomodoro' && <div className="ts-phase-badge">{(pomoPhase === 'work' ? '🍅 专注' : '☕ 休息')} · {pomoCount} 个番茄</div>}
           {mode === 'interval' && <div className="ts-phase-badge">{intIsWork ? '💪 运动' : '😮‍💨 休息'} · 第 {Math.min(intCurrentRound + 1, intRounds)}/{intRounds} 轮</div>}
           {(mode === 'countdown' || mode === 'pomodoro' || mode === 'interval') && (
@@ -313,7 +364,7 @@ export default function TimerStopwatch(): React.JSX.Element {
           <button className="ts-ctrl-btn ts-ctrl-primary" onClick={running ? pause : start}>{running ? <Pause size={20} /> : <Play size={20} />}<span>{running ? '暂停' : '开始'}</span></button>
           {mode === 'stopwatch' && running && <button className="ts-ctrl-btn" onClick={addLap}><Flag size={18} /><span>分圈</span></button>}
           <button className="ts-ctrl-btn" onClick={reset}><RotateCcw size={18} /><span>重置</span></button>
-          <button className="ts-ctrl-btn" onClick={enterFullscreen} title="全屏"><Maximize size={16} /></button>
+          <button type="button" className="ts-ctrl-btn" onClick={enterFullscreen} title="全屏" aria-label="全屏显示计时器"><Maximize size={16} aria-hidden="true" /></button>
         </div>
         {mode === 'countdown' && !running && (
           <div className="ts-settings">
@@ -321,11 +372,11 @@ export default function TimerStopwatch(): React.JSX.Element {
               <button key={m} className="ts-preset-btn" onClick={() => { setCdMinutes(m); setCdSeconds(0); setCdHours(0); setCdTotal(m * 60 * 1000); setElapsed(0); pausedRef.current = 0 }}>{label}</button>
             ))}</div>
             <div className="ts-cd-inputs">
-              <input className="ts-cd-input" type="number" min={0} max={99} value={cdHours} onChange={(e) => { const h = parseInt(e.target.value) || 0; setCdHours(h); setCdTotal((h * 3600 + cdMinutes * 60 + cdSeconds) * 1000); setElapsed(0); pausedRef.current = 0 }} />
+              <input className="ts-cd-input" type="number" min={0} max={99} aria-label="倒计时小时数" value={cdHours} onChange={(e) => { const h = parseInt(e.target.value) || 0; setCdHours(h); setCdTotal((h * 3600 + cdMinutes * 60 + cdSeconds) * 1000); setElapsed(0); pausedRef.current = 0 }} />
               <span>:</span>
-              <input className="ts-cd-input" type="number" min={0} max={59} value={cdMinutes} onChange={(e) => { const m = parseInt(e.target.value) || 0; setCdMinutes(m); setCdTotal((cdHours * 3600 + m * 60 + cdSeconds) * 1000); setElapsed(0); pausedRef.current = 0 }} />
+              <input className="ts-cd-input" type="number" min={0} max={59} aria-label="倒计时分钟数" value={cdMinutes} onChange={(e) => { const m = parseInt(e.target.value) || 0; setCdMinutes(m); setCdTotal((cdHours * 3600 + m * 60 + cdSeconds) * 1000); setElapsed(0); pausedRef.current = 0 }} />
               <span>:</span>
-              <input className="ts-cd-input" type="number" min={0} max={59} value={cdSeconds} onChange={(e) => { const s = parseInt(e.target.value) || 0; setCdSeconds(s); setCdTotal((cdHours * 3600 + cdMinutes * 60 + s) * 1000); setElapsed(0); pausedRef.current = 0 }} />
+              <input className="ts-cd-input" type="number" min={0} max={59} aria-label="倒计时秒数" value={cdSeconds} onChange={(e) => { const s = parseInt(e.target.value) || 0; setCdSeconds(s); setCdTotal((cdHours * 3600 + cdMinutes * 60 + s) * 1000); setElapsed(0); pausedRef.current = 0 }} />
             </div>
           </div>
         )}

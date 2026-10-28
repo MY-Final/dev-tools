@@ -1,5 +1,5 @@
-import { ipcMain } from 'electron'
 import { settingsStore } from './settings'
+import { registerGuardedHandler } from './ipc-security'
 
 const DEFAULT_REGISTRIES = [
   'https://index.docker.io/v1/search',
@@ -32,7 +32,7 @@ async function fetchDockerSearch(query: string, size: number): Promise<Response 
 }
 
 export function registerDockerHandlers(): void {
-  ipcMain.handle('docker:search', async (_event, query: string, size: number) => {
+  registerGuardedHandler('docker:search', async (_event, query: string, size: number) => {
     try {
       const res = await fetchDockerSearch(query, size)
       if (!res) return []
@@ -51,7 +51,7 @@ export function registerDockerHandlers(): void {
     }
   })
 
-  ipcMain.handle('docker:tags', async (_event, imageName: string) => {
+  registerGuardedHandler('docker:tags', async (_event, imageName: string) => {
     try {
       const path = imageName.includes('/')
         ? imageName

@@ -1,5 +1,27 @@
-import { Copy, Check, Database, Zap } from 'lucide-react'
+import { Copy, Check, Zap } from 'lucide-react'
 import { useConverter, type Unit } from '@renderer/tools/converter/useConverter'
+import '../styles/converter.css'
+
+const UNIT_NAMES: Record<Unit, string> = {
+  B: 'Bytes',
+  KB: 'Kilobytes',
+  MB: 'Megabytes',
+  GB: 'Gigabytes',
+  TB: 'Terabytes',
+  KiB: 'Kibibytes',
+  MiB: 'Mebibytes',
+  GiB: 'Gibibytes',
+  TiB: 'Tebibytes'
+}
+
+const QUICK_CONVERSIONS: { from: string; unit: Unit; label: string }[] = [
+  { from: '1', unit: 'KB', label: '1 KB → B' },
+  { from: '1024', unit: 'KB', label: '1024 KB → MB' },
+  { from: '1024', unit: 'MB', label: '1024 MB → GB' },
+  { from: '1', unit: 'GB', label: '1 GB → MB' },
+  { from: '1', unit: 'TB', label: '1 TB → GB' },
+  { from: '1', unit: 'GiB', label: '1 GiB → MiB' }
+]
 
 export default function Converter(): React.JSX.Element {
   const {
@@ -19,157 +41,140 @@ export default function Converter(): React.JSX.Element {
   } = useConverter()
 
   return (
-    <div className="converter-page">
-      {/* 背景装饰 */}
-      <div className="converter-bg-decoration" />
-
-      {/* 主卡片 */}
-      <div className="converter-card">
-        <div className="converter-hero">
-          <div className="converter-header">
-            <div className="converter-kicker">
-              <Database size={14} />
-              Data units
-            </div>
-            <h2 className="converter-title">Data Size Converter</h2>
-            <p className="converter-subtitle">输入一个数值，实时换算常用数据大小单位。</p>
-          </div>
+    <div className="converter-page tool-page dsv-page">
+      <header className="tool-page-header">
+        <div className="tool-page-heading">
+          <h2 className="tool-page-title">Data Size Converter</h2>
+          <p className="tool-page-desc">输入任意一个单位，其余单位实时换算；结果精度可随时调整。</p>
         </div>
+        <div className="tool-page-actions">
+          <div className="tool-segmented" role="group" aria-label="换算进制">
+            <button
+              type="button"
+              className={`tool-seg ${mode === 'binary' ? 'active' : ''}`}
+              aria-pressed={mode === 'binary'}
+              onClick={() => handleModeChange('binary')}
+            >
+              Binary
+            </button>
+            <button
+              type="button"
+              className={`tool-seg ${mode === 'decimal' ? 'active' : ''}`}
+              aria-pressed={mode === 'decimal'}
+              onClick={() => handleModeChange('decimal')}
+            >
+              Decimal
+            </button>
+          </div>
+          <label className="dsv-precision">
+            <span>精度</span>
+            <select
+              className="tool-select"
+              aria-label="结果精度"
+              value={precision}
+              onChange={handlePrecisionChange}
+            >
+              {[2, 4, 6, 8].map((p) => (
+                <option key={p} value={p}>
+                  {p} 位
+                </option>
+              ))}
+            </select>
+          </label>
+          <button type="button" className="tool-btn tool-btn--outline" onClick={handleCopyAll}>
+            <Copy size={14} aria-hidden="true" />
+            复制全部
+          </button>
+        </div>
+      </header>
 
-        <div className="converter-workbench">
-          <section className="converter-main-panel">
-            {/* 分段控制器 */}
-            <div className="converter-segment">
-              <button
-                className={`converter-segment-btn ${mode === 'decimal' ? 'active' : ''}`}
-                onClick={() => handleModeChange('decimal')}
+      <div className="tool-split dsv-layout">
+        <section className="tool-panel dsv-panel" aria-label="单位换算">
+          <div className="dsv-rows">
+            {(units as readonly Unit[]).map((unit) => (
+              <div
+                key={unit}
+                className={`dsv-row ${unit === activeUnit ? 'is-active' : ''}`}
+                onClick={(e) => {
+                  if (!(e.target as HTMLElement).closest('button')) {
+                    e.currentTarget.querySelector('input')?.focus()
+                  }
+                }}
               >
-                <span className="converter-segment-label">Decimal</span>
-                <span className="converter-segment-hint">1000</span>
-              </button>
-              <button
-                className={`converter-segment-btn ${mode === 'binary' ? 'active' : ''}`}
-                onClick={() => handleModeChange('binary')}
-              >
-                <span className="converter-segment-label">Binary</span>
-                <span className="converter-segment-hint">1024</span>
-              </button>
-            </div>
-
-            {/* 输入区域 */}
-            <div className="converter-inputs">
-              {(units as readonly Unit[]).map((unit) => (
-                <div
-                  key={unit}
-                  className={`converter-input-group ${unit === activeUnit ? 'active' : ''}`}
+                <label className="dsv-unit" htmlFor={`dsv-${unit}`}>
+                  <span className="dsv-symbol">{unit}</span>
+                  <span className="dsv-name">{UNIT_NAMES[unit]}</span>
+                </label>
+                <input
+                  id={`dsv-${unit}`}
+                  className="dsv-input"
+                  type="text"
+                  inputMode="decimal"
+                  autoComplete="off"
+                  spellCheck={false}
+                  value={values[unit] || ''}
+                  onChange={(e) => handleInputChange(unit, e.target.value)}
+                  placeholder="0"
+                  aria-label={`${unit} (${UNIT_NAMES[unit]}) 数值`}
+                />
+                <button
+                  type="button"
+                  className="tool-icon-btn dsv-copy"
+                  onClick={() => handleCopyValue(unit)}
+                  title={`复制 ${unit} 数值`}
+                  aria-label={`复制 ${unit} 数值`}
+                  disabled={!values[unit]}
                 >
-                  <div className="converter-input-label">
-                    <span className="converter-unit-name">{unit}</span>
-                    <span className="converter-unit-full">
-                      {unit === 'B' && 'Bytes'}
-                      {unit === 'KB' && 'Kilobytes'}
-                      {unit === 'MB' && 'Megabytes'}
-                      {unit === 'GB' && 'Gigabytes'}
-                      {unit === 'TB' && 'Terabytes'}
-                      {unit === 'KiB' && 'Kibibytes'}
-                      {unit === 'MiB' && 'Mebibytes'}
-                      {unit === 'GiB' && 'Gibibytes'}
-                      {unit === 'TiB' && 'Tebibytes'}
-                    </span>
-                  </div>
-                  <div className="converter-input-wrapper">
-                    <input
-                      type="text"
-                      className="converter-input"
-                      value={values[unit] || ''}
-                      onChange={(e) => handleInputChange(unit, e.target.value)}
-                      placeholder="0"
-                    />
-                    <button
-                      className="converter-copy-btn"
-                      onClick={() => handleCopyValue(unit)}
-                      title="复制数值"
-                    >
-                      {copiedUnit === unit ? <Check size={14} /> : <Copy size={14} />}
-                    </button>
-                  </div>
-                </div>
+                  {copiedUnit === unit ? (
+                    <Check size={14} aria-hidden="true" />
+                  ) : (
+                    <Copy size={14} aria-hidden="true" />
+                  )}
+                </button>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <aside className="dsv-aside">
+          <section className="dsv-block">
+            <h3 className="dsv-block-title">
+              <Zap size={13} aria-hidden="true" />
+              快捷换算
+            </h3>
+            <div className="dsv-chips">
+              {QUICK_CONVERSIONS.map((item) => (
+                <button
+                  key={item.label}
+                  type="button"
+                  className="dsv-chip"
+                  onClick={() => handleQuickConvert(item.from, item.unit)}
+                >
+                  {item.label}
+                </button>
               ))}
             </div>
           </section>
 
-          <aside className="converter-side-panel">
-            {/* 精度选择 + 复制全部 */}
-            <div className="converter-actions">
-              <div className="converter-precision">
-                <span className="converter-precision-label">结果精度</span>
-                <div className="converter-precision-options">
-                  {[2, 4, 6, 8].map((p) => (
-                    <button
-                      key={p}
-                      className={`converter-precision-btn ${precision === p ? 'active' : ''}`}
-                      onClick={() =>
-                        handlePrecisionChange({
-                          target: { value: String(p) }
-                        } as React.ChangeEvent<HTMLSelectElement>)
-                      }
-                    >
-                      {p}
-                    </button>
-                  ))}
-                </div>
+          <section className="dsv-block">
+            <h3 className="dsv-block-title">进制说明</h3>
+            <dl className="dsv-ref">
+              <div className="dsv-ref-row">
+                <dt>Binary</dt>
+                <dd>1 KiB = 1024 B</dd>
               </div>
-              <button className="converter-copy-all" onClick={handleCopyAll}>
-                <Copy size={14} />
-                复制全部
-              </button>
-            </div>
-
-            {/* 快捷转换 */}
-            <div className="converter-shortcuts">
-              <div className="converter-shortcuts-title">
-                <Zap size={13} />
-                快捷转换
+              <div className="dsv-ref-row">
+                <dt>Decimal</dt>
+                <dd>1 KB = 1000 B</dd>
               </div>
-              <div className="converter-shortcuts-list">
-                {[
-                  { from: '1', unit: 'KB' as Unit, label: '1 KB → B' },
-                  { from: '1024', unit: 'KB' as Unit, label: '1024 KB → MB' },
-                  { from: '1024', unit: 'MB' as Unit, label: '1024 MB → GB' },
-                  { from: '1', unit: 'GB' as Unit, label: '1 GB → MB' },
-                  { from: '1', unit: 'TB' as Unit, label: '1 TB → GB' },
-                  { from: '1', unit: 'GiB' as Unit, label: '1 GiB → MiB' }
-                ].map((item) => (
-                  <button
-                    key={item.label}
-                    className="converter-pill"
-                    onClick={() => handleQuickConvert(item.from, item.unit)}
-                  >
-                    {item.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="converter-reference">
-              <div className="converter-reference-title">Binary vs Decimal</div>
-              <div className="converter-reference-row">
-                <span>Binary</span>
-                <strong>1 KiB = 1024 B</strong>
-              </div>
-              <div className="converter-reference-row">
-                <span>Decimal</span>
-                <strong>1 KB = 1000 B</strong>
-              </div>
-            </div>
-          </aside>
-        </div>
+            </dl>
+          </section>
+        </aside>
       </div>
 
-      {/* Toast */}
       {toast && (
-        <div className="converter-toast">
-          <Check size={14} />
+        <div className="dsv-toast" role="status">
+          <Check size={14} aria-hidden="true" />
           {toast}
         </div>
       )}

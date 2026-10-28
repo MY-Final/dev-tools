@@ -1,58 +1,56 @@
 import { useState, useMemo, useCallback } from 'react'
-import { Copy, Check, Network, ArrowRight } from 'lucide-react'
+import { Copy, Check, Network } from 'lucide-react'
+
+const MAX_CIDR_BLOCKS = 64
 
 function ipToNumber(ip: string): number | null {
   const parts = ip.split('.')
   if (parts.length !== 4) return null
+
   let result = 0
   for (const part of parts) {
-    const num = parseInt(part, 10)
-    if (isNaN(num) || num < 0 || num > 255) return null
-    result = (result << 8) | num
+    if (!/^\d{1,3}$/.test(part)) return null
+    const value = Number(part)
+    if (value < 0 || value > 255) return null
+    result = result * 256 + value
   }
-  return result >>> 0
+  return result
 }
 
 function numberToIp(num: number): string {
   return [(num >>> 24) & 0xff, (num >>> 16) & 0xff, (num >>> 8) & 0xff, num & 0xff].join('.')
 }
 
-function ipRangeToCIDRs(startIp: number, endIp: number): string[] {
+function ipRangeToCIDRs(startIp: number, endIp: number): { cidrs: string[]; truncated: boolean } {
   const cidrs: string[] = []
   let current = startIp
 
-  while (current <= endIp) {
-    let maxSize = 32
-    while (maxSize > 0) {
-      const mask = (~0 << (32 - (maxSize - 1))) >>> 0
-      const network = (current & mask) >>> 0
-      if (network !== current) break
-      maxSize--
+  while (current <= endIp && cidrs.length < MAX_CIDR_BLOCKS) {
+    let prefix = 32
+
+    while (prefix > 0) {
+      const candidatePrefix = prefix - 1
+      const blockSize = 2 ** (32 - candidatePrefix)
+      if (current % blockSize !== 0) break
+
+      const blockEnd = current + blockSize - 1
+      if (blockEnd > endIp) break
+      prefix = candidatePrefix
     }
 
-    let size = maxSize
-    while (size > 0) {
-      const mask = (~0 << (32 - size)) >>> 0
-      const network = (current & mask) >>> 0
-      const broadcast = (network | (~mask >>> 0)) >>> 0
-      if (broadcast <= endIp) break
-      size--
-    }
-
-    const cidr = size === 0 ? 32 : size
-    cidrs.push(`${numberToIp(current)}/${cidr}`)
-
-    const mask = cidr === 0 ? 0 : (~0 << (32 - cidr)) >>> 0
-    const broadcast = (current | (~mask >>> 0)) >>> 0
-    current = broadcast + 1
+    const blockSize = 2 ** (32 - prefix)
+    cidrs.push(`${numberToIp(current)}/${prefix}`)
+    current += blockSize
   }
 
-  return cidrs
+  return {
+    cidrs,
+    truncated: current <= endIp
+  }
 }
-
 function getCIDRHosts(cidr: string): number {
-  const prefix = parseInt(cidr.split('/')[1], 10)
-  return Math.pow(2, 32 - prefix)
+  const prefix = Number.parseInt(cidr.split('/')[1], 10)
+  return 2 ** (32 - prefix)
 }
 
 interface RangeResult {
@@ -61,6 +59,7 @@ interface RangeResult {
   networkCount: number
   startIp: string
   endIp: string
+  truncated: boolean
 }
 
 export default function IPRangeExpander(): React.JSX.Element {
@@ -74,7 +73,7 @@ export default function IPRangeExpander(): React.JSX.Element {
     if (startNum === null || endNum === null) return null
     if (startNum > endNum) return null
 
-    const cidrs = ipRangeToCIDRs(startNum, endNum)
+    const { cidrs, truncated } = ipRangeToCIDRs(startNum, endNum)
     const totalIPs = endNum - startNum + 1
 
     return {
@@ -82,7 +81,8 @@ export default function IPRangeExpander(): React.JSX.Element {
       totalIPs,
       networkCount: cidrs.length,
       startIp: startInput,
-      endIp: endInput
+      endIp: endInput,
+      truncated
     }
   }, [startInput, endInput])
 
@@ -92,7 +92,7 @@ export default function IPRangeExpander(): React.JSX.Element {
       setCopied(key)
       setTimeout(() => setCopied(null), 1500)
     } catch {
-      // fallback
+      // Fallback is intentionally unavailable so clipboard errors are not reported as success.
     }
   }, [])
 
@@ -103,7 +103,7 @@ export default function IPRangeExpander(): React.JSX.Element {
       setCopied('all')
       setTimeout(() => setCopied(null), 1500)
     } catch {
-      // fallback
+      // Fallback is intentionally unavailable so clipboard errors are not reported as success.
     }
   }, [result])
 
@@ -112,130 +112,156 @@ export default function IPRangeExpander(): React.JSX.Element {
     setEndInput(end)
   }, [])
 
+  const invalid = result === null
+
   return (
-    <div className="re-page">
-      <div className="re-card">
-        <div className="re-header">
-          <h2 className="re-title">IPv4 Range Expander</h2>
-          <p className="re-subtitle">IP 范围转 CIDR 计算</p>
+    <div className="re-page tool-page">
+      <header className="tool-page-header">
+        <div className="tool-page-heading">
+          <h2 className="tool-page-title">IPv4 Range Expander</h2>
+          <p className="tool-page-desc">把任意 IPv4 地址区间拆分为最小的 CIDR 块集合。</p>
         </div>
+      </header>
 
-        <div className="re-inputs">
-          <div className="re-input-group">
-            <label className="re-input-label">Start IP</label>
-            <input
-              type="text"
-              className="re-input"
-              value={startInput}
-              onChange={(e) => setStartInput(e.target.value)}
-              placeholder="192.168.1.1"
-            />
+      <div className="tool-split re-layout">
+        <section className="tool-panel re-input-panel">
+          <div className="tool-panel-head">
+            <h3 className="tool-panel-title">地址范围</h3>
           </div>
-          <div className="re-arrow">
-            <ArrowRight size={20} />
-          </div>
-          <div className="re-input-group">
-            <label className="re-input-label">End IP</label>
-            <input
-              type="text"
-              className="re-input"
-              value={endInput}
-              onChange={(e) => setEndInput(e.target.value)}
-              placeholder="192.168.1.254"
-            />
-          </div>
-        </div>
-
-        <div className="re-samples">
-          <button
-            className="re-sample-btn"
-            onClick={() => loadSample('192.168.1.1', '192.168.1.254')}
-          >
-            192.168.1.0/24
-          </button>
-          <button className="re-sample-btn" onClick={() => loadSample('10.0.0.1', '10.0.0.126')}>
-            10.0.0.0/25
-          </button>
-          <button
-            className="re-sample-btn"
-            onClick={() => loadSample('192.168.1.1', '192.168.2.200')}
-          >
-            跨网段
-          </button>
-        </div>
-
-        {result ? (
-          <>
-            <div className="re-stats">
-              <div className="re-stat">
-                <span className="re-stat-label">Total IPs</span>
-                <span className="re-stat-value">{result.totalIPs.toLocaleString()}</span>
-              </div>
-              <div className="re-stat">
-                <span className="re-stat-label">CIDR Blocks</span>
-                <span className="re-stat-value">{result.networkCount}</span>
-              </div>
+          <div className="re-body">
+            <div className="re-inputs">
+              <label className="re-input-group">
+                <span>起始 IP</span>
+                <input
+                  type="text"
+                  className="tool-input tool-input--mono re-input"
+                  value={startInput}
+                  onChange={(e) => setStartInput(e.target.value)}
+                  placeholder="192.168.1.1"
+                  inputMode="decimal"
+                  spellCheck={false}
+                />
+              </label>
+              <span className="re-arrow" aria-hidden="true">
+                →
+              </span>
+              <label className="re-input-group">
+                <span>结束 IP</span>
+                <input
+                  type="text"
+                  className="tool-input tool-input--mono re-input"
+                  value={endInput}
+                  onChange={(e) => setEndInput(e.target.value)}
+                  placeholder="192.168.1.254"
+                  inputMode="decimal"
+                  spellCheck={false}
+                />
+              </label>
             </div>
 
-            <div className="re-section">
-              <div className="re-section-header">
-                <span className="re-section-label">CIDR Result</span>
-                {result.cidrs.length > 1 && (
-                  <button className="re-copy-all-btn" onClick={copyAllCIDRs}>
-                    {copied === 'all' ? <Check size={12} /> : <Copy size={12} />}
-                    {copied === 'all' ? '已复制' : '复制全部'}
-                  </button>
+            {invalid && (
+              <p className="re-error" role="status">
+                请输入有效的 IPv4 地址，并确保起始地址不大于结束地址。
+              </p>
+            )}
+
+            <div className="re-samples">
+              <span className="re-samples-label">示例</span>
+              <button
+                type="button"
+                className="re-sample-btn"
+                onClick={() => loadSample('192.168.1.1', '192.168.1.254')}
+              >
+                /24 网段
+              </button>
+              <button
+                type="button"
+                className="re-sample-btn"
+                onClick={() => loadSample('10.0.0.1', '10.0.0.126')}
+              >
+                /25 网段
+              </button>
+              <button
+                type="button"
+                className="re-sample-btn"
+                onClick={() => loadSample('192.168.1.1', '192.168.2.200')}
+              >
+                跨网段
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <section className="tool-panel re-result-panel">
+          <div className="tool-panel-head">
+            <h3 className="tool-panel-title">CIDR 结果</h3>
+            {result && <span className="re-result-count">{result.networkCount} 块</span>}
+            {result && result.cidrs.length > 1 && (
+              <button type="button" className="tool-btn re-copy-all" onClick={copyAllCIDRs}>
+                {copied === 'all' ? (
+                  <Check size={13} aria-hidden="true" />
+                ) : (
+                  <Copy size={13} aria-hidden="true" />
                 )}
+                {copied === 'all' ? '已复制' : '复制全部'}
+              </button>
+            )}
+          </div>
+
+          {result ? (
+            <>
+              <div className="re-stats">
+                <div className="re-stat">
+                  <span className="re-stat-label">地址总数</span>
+                  <span className="re-stat-value">{result.totalIPs.toLocaleString()}</span>
+                </div>
+                <div className="re-stat">
+                  <span className="re-stat-label">CIDR 块</span>
+                  <span className="re-stat-value">{result.networkCount}</span>
+                </div>
+                <div className="re-stat">
+                  <span className="re-stat-label">范围</span>
+                  <span className="re-stat-value re-stat-value--range">
+                    {result.startIp} – {result.endIp}
+                  </span>
+                </div>
               </div>
+
               <div className="re-cidr-list">
                 {result.cidrs.map((cidr, i) => {
                   const hosts = getCIDRHosts(cidr)
                   return (
-                    <div
+                    <button
                       key={i}
+                      type="button"
                       className="re-cidr-item"
                       onClick={() => copyValue(cidr, `cidr-${i}`)}
+                      title={`复制 ${cidr}`}
                     >
                       <code className="re-cidr-value">{cidr}</code>
-                      <span className="re-cidr-hosts">{hosts} IPs</span>
-                      {copied === `cidr-${i}` && (
-                        <span className="re-copied-badge">
-                          <Check size={12} />
-                        </span>
-                      )}
-                    </div>
+                      <span className="re-cidr-hosts">{hosts.toLocaleString()} IPs</span>
+                      <span className="re-cidr-copy" aria-hidden="true">
+                        {copied === `cidr-${i}` ? <Check size={13} /> : <Copy size={13} />}
+                      </span>
+                    </button>
                   )
                 })}
               </div>
-            </div>
 
-            <div className="re-visual">
-              <div className="re-visual-row">
-                <div className="re-visual-block start">
-                  <span className="re-visual-label">Start</span>
-                  <code className="re-visual-ip">{result.startIp}</code>
+              {result.truncated && (
+                <div className="re-notice">
+                  <Network size={14} aria-hidden="true" />
+                  <span>范围超过安全上限，仅显示前 {MAX_CIDR_BLOCKS} 个 CIDR 块</span>
                 </div>
-                <div className="re-visual-line" />
-                <div className="re-visual-block middle">
-                  <span className="re-visual-label">
-                    {result.networkCount} CIDR{result.networkCount > 1 ? 's' : ''}
-                  </span>
-                  <code className="re-visual-ip">{result.cidrs[0]}</code>
-                </div>
-                <div className="re-visual-line" />
-                <div className="re-visual-block end">
-                  <span className="re-visual-label">End</span>
-                  <code className="re-visual-ip">{result.endIp}</code>
-                </div>
-              </div>
+              )}
+            </>
+          ) : (
+            <div className="re-empty">
+              <Network size={26} aria-hidden="true" />
+              <span>输入有效的起始和结束 IP 后显示结果</span>
             </div>
-          </>
-        ) : (
-          <div className="re-empty">
-            <Network size={32} />
-            <span>输入有效的起始和结束 IP 地址</span>
-          </div>
-        )}
+          )}
+        </section>
       </div>
     </div>
   )

@@ -5,6 +5,11 @@ type FileFormat = 'txt' | 'json' | 'csv' | 'binary' | 'base64'
 type SizeUnit = 'KB' | 'MB' | 'GB'
 
 const UNIT_BYTES: Record<SizeUnit, number> = { KB: 1024, MB: 1024 * 1024, GB: 1024 * 1024 * 1024 }
+const CRYPTO_CHUNK_BYTES = 65536
+const STREAM_CHUNK_BYTES = 64 * 1024
+const BASE64_RAW_CHUNK_BYTES = 60 * 1024
+const TEXT_LINE_LENGTH = 80
+const encoder = new TextEncoder()
 
 const FORMAT_LABELS: Record<FileFormat, { label: string; ext: string; mime: string; desc: string }> = {
   txt: { label: 'TXT', ext: '.txt', mime: 'text/plain', desc: '纯文本，每行随机英文字符' },
@@ -14,14 +19,50 @@ const FORMAT_LABELS: Record<FileFormat, { label: string; ext: string; mime: stri
   base64: { label: 'Base64', ext: '.b64', mime: 'text/plain', desc: 'Base64 编码的随机数据' }
 }
 
-const ALPHABET = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 '
+const TEXT_ALPHABET_BYTES = Uint8Array.from(
+  'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ',
+  (char) => char.charCodeAt(0)
+)
+const BASE64_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
 const CSV_HEADERS = ['id', 'name', 'email', 'score', 'created_at', 'status']
 const STATUSES = ['active', 'inactive', 'pending', 'archived']
 
-function randomString(len: number): string {
-  const arr = new Uint8Array(len)
-  crypto.getRandomValues(arr)
-  return Array.from(arr, (v) => ALPHABET[v % ALPHABET.length]).join('')
+function fillRandomBytes(length: number): Uint8Array<ArrayBuffer> {
+  const bytes = new Uint8Array(length)
+  for (let offset = 0; offset < length; offset += CRYPTO_CHUNK_BYTES) {
+    const end = Math.min(offset + CRYPTO_CHUNK_BYTES, length)
+    crypto.getRandomValues(bytes.subarray(offset, end))
+  }
+  return bytes
+}
+
+function randomBytesFromAlphabet(length: number, alphabet: Uint8Array, newlineEvery = 0): Uint8Array<ArrayBuffer> {
+  const bytes = fillRandomBytes(length)
+  for (let i = 0; i < bytes.length; i++) {
+    bytes[i] = newlineEvery > 0 && i > 0 && i % newlineEvery === 0
+      ? 10
+      : alphabet[bytes[i] % alphabet.length]
+  }
+  return bytes
+}
+
+function encodeBase64Chunk(bytes: Uint8Array): string {
+  let result = ''
+  for (let i = 0; i < bytes.length; i += 3) {
+    const a = bytes[i]
+    const b = bytes[i + 1] ?? 0
+    const c = bytes[i + 2] ?? 0
+    result += BASE64_ALPHABET[(a >> 2) & 63]
+    result += BASE64_ALPHABET[((a << 4) | (b >> 4)) & 63]
+    result += BASE64_ALPHABET[((b << 2) | (c >> 6)) & 63]
+    result += BASE64_ALPHABET[c & 63]
+  }
+  return result
+}
+
+function randomString(length: number): string {
+  const bytes = randomBytesFromAlphabet(length, TEXT_ALPHABET_BYTES)
+  return new TextDecoder().decode(bytes)
 }
 
 function randomName(): string {
@@ -29,60 +70,147 @@ function randomName(): string {
   return first[Math.floor(Math.random() * first.length)]
 }
 
-function generateContent(format: FileFormat, targetBytes: number): Uint8Array {
-  switch (format) {
-    case 'txt': {
-      let text = ''
-      while (text.length < targetBytes) {
-        text += randomString(80) + '\n'
-      }
-      return new TextEncoder().encode(text.slice(0, targetBytes))
-    }
-    case 'json': {
-      let json = '[\n'
-      let first = true
-      while (json.length < targetBytes - 3) {
-        if (!first) json += ',\n'
-        first = false
-        json += `  {"id":${Math.floor(Math.random() * 100000)},"name":"${randomName()}","score":${(Math.random() * 100).toFixed(2)},"active":${Math.random() > 0.5}}`
-      }
-      json += '\n]'
-      return new TextEncoder().encode(json.slice(0, targetBytes))
-    }
-    case 'csv': {
-      let csv = CSV_HEADERS.join(',') + '\n'
-      let i = 1
-      while (csv.length < targetBytes) {
-        csv += `${i},${randomName()},${randomString(8)}@test.com,${(Math.random() * 100).toFixed(0)},${new Date().toISOString()},${STATUSES[i % STATUSES.length]}\n`
-        i++
-      }
-      return new TextEncoder().encode(csv.slice(0, targetBytes))
-    }
-    case 'binary': {
-      const buf = new Uint8Array(targetBytes)
-      crypto.getRandomValues(buf)
-      return buf
-    }
-    case 'base64': {
-      const rawSize = Math.ceil((targetBytes * 3) / 4)
-      const raw = new Uint8Array(rawSize)
-      crypto.getRandomValues(raw)
-      let b64 = ''
-      for (let i = 0; i < raw.length; i += 3) {
-        const a = raw[i]
-        const b = raw[i + 1] ?? 0
-        const c = raw[i + 2] ?? 0
-        b64 += alphabet[(a >> 2) & 63]
-        b64 += alphabet[((a << 4) | (b >> 4)) & 63]
-        b64 += alphabet[((b << 2) | (c >> 6)) & 63]
-        b64 += alphabet[c & 63]
-      }
-      return new TextEncoder().encode(b64.slice(0, targetBytes))
-    }
-  }
+function yieldToBrowser(): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, 0))
 }
 
-const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+async function createTextBlob(targetBytes: number): Promise<Blob> {
+  const parts: Uint8Array<ArrayBuffer>[] = []
+  let remaining = targetBytes
+  let chunkIndex = 0
+
+  while (remaining > 0) {
+    const chunkSize = Math.min(STREAM_CHUNK_BYTES, remaining)
+    parts.push(randomBytesFromAlphabet(chunkSize, TEXT_ALPHABET_BYTES, TEXT_LINE_LENGTH))
+    remaining -= chunkSize
+    chunkIndex++
+    if (chunkIndex % 64 === 0) await yieldToBrowser()
+  }
+
+  return new Blob(parts, { type: FORMAT_LABELS.txt.mime })
+}
+
+async function createBinaryBlob(targetBytes: number): Promise<Blob> {
+  const parts: Uint8Array<ArrayBuffer>[] = []
+  let remaining = targetBytes
+  let chunkIndex = 0
+
+  while (remaining > 0) {
+    const chunkSize = Math.min(STREAM_CHUNK_BYTES, remaining)
+    parts.push(fillRandomBytes(chunkSize))
+    remaining -= chunkSize
+    chunkIndex++
+    if (chunkIndex % 64 === 0) await yieldToBrowser()
+  }
+
+  return new Blob(parts, { type: FORMAT_LABELS.binary.mime })
+}
+
+async function createBase64Blob(targetBytes: number): Promise<Blob> {
+  const parts: string[] = []
+  const rawBytes = Math.floor(targetBytes / 4) * 3
+  let remaining = rawBytes
+  let chunkIndex = 0
+
+  while (remaining > 0) {
+    const chunkSize = Math.min(BASE64_RAW_CHUNK_BYTES, remaining)
+    parts.push(encodeBase64Chunk(fillRandomBytes(chunkSize)))
+    remaining -= chunkSize
+    chunkIndex++
+    if (chunkIndex % 64 === 0) await yieldToBrowser()
+  }
+
+  return new Blob(parts, { type: FORMAT_LABELS.base64.mime })
+}
+
+async function createJsonBlob(targetBytes: number): Promise<Blob> {
+  const parts: string[] = ['[']
+  let writtenBytes = 1
+  let firstRecord = true
+  let batch = ''
+  let chunkIndex = 0
+
+  while (true) {
+    const separator = firstRecord ? '\n  ' : ',\n  '
+    const record =
+      `${separator}{"id":${Math.floor(Math.random() * 100000)},` +
+      `"name":"${randomName()}","score":${(Math.random() * 100).toFixed(2)},` +
+      `"active":${Math.random() > 0.5}}`
+    const recordBytes = encoder.encode(record).length
+
+    // Reserve two bytes for the closing bracket. JSON must never be sliced mid-record.
+    if (writtenBytes + recordBytes + 2 > targetBytes) break
+
+    batch += record
+    writtenBytes += recordBytes
+    firstRecord = false
+    chunkIndex++
+
+    if (batch.length >= STREAM_CHUNK_BYTES) {
+      parts.push(batch)
+      batch = ''
+      if (chunkIndex % 64 === 0) await yieldToBrowser()
+    }
+  }
+
+  if (batch) parts.push(batch)
+
+  const closing = targetBytes - writtenBytes >= 2 ? '\n]' : ']'
+  const paddingLength = Math.max(0, targetBytes - writtenBytes - closing.length)
+  parts.push(`${' '.repeat(paddingLength)}${closing}`)
+
+  return new Blob(parts, { type: FORMAT_LABELS.json.mime })
+}
+
+async function createCsvBlob(targetBytes: number): Promise<Blob> {
+  const header = `${CSV_HEADERS.join(',')}\n`
+  const parts: string[] = [header]
+  let writtenBytes = encoder.encode(header).length
+  let rowIndex = 1
+  let batch = ''
+  let chunkIndex = 0
+
+  while (writtenBytes < targetBytes) {
+    const row = `${rowIndex},${randomName()},${randomString(8)}@test.com,${(Math.random() * 100).toFixed(0)},${new Date().toISOString()},${STATUSES[rowIndex % STATUSES.length]}\n`
+    const rowBytes = encoder.encode(row).length
+
+    if (writtenBytes + rowBytes > targetBytes) break
+
+    batch += row
+    writtenBytes += rowBytes
+    rowIndex++
+    chunkIndex++
+
+    if (batch.length >= STREAM_CHUNK_BYTES) {
+      parts.push(batch)
+      batch = ''
+      if (chunkIndex % 64 === 0) await yieldToBrowser()
+    }
+  }
+
+  if (batch) parts.push(batch)
+
+  if (writtenBytes < targetBytes) {
+    parts.push('\n'.repeat(targetBytes - writtenBytes))
+  }
+
+  return new Blob(parts, { type: FORMAT_LABELS.csv.mime })
+}
+
+function generateFileBlob(format: FileFormat, targetBytes: number): Promise<Blob> {
+  switch (format) {
+    case 'txt':
+      return createTextBlob(targetBytes)
+    case 'json':
+      return createJsonBlob(targetBytes)
+    case 'csv':
+      return createCsvBlob(targetBytes)
+    case 'binary':
+      return createBinaryBlob(targetBytes)
+    case 'base64':
+      return createBase64Blob(targetBytes)
+  }
+}
 
 export default function FileGenerator(): React.JSX.Element {
   const [size, setSize] = useState(1)
@@ -90,7 +218,7 @@ export default function FileGenerator(): React.JSX.Element {
   const [format, setFormat] = useState<FileFormat>('txt')
   const [generating, setGenerating] = useState(false)
 
-  const totalBytes = useMemo(() => size * UNIT_BYTES[unit], [size, unit])
+  const totalBytes = useMemo(() => Math.max(1, Math.floor(size)) * UNIT_BYTES[unit], [size, unit])
 
   const sizeLabel = useMemo(() => {
     const bytes = totalBytes
@@ -102,12 +230,10 @@ export default function FileGenerator(): React.JSX.Element {
 
   const handleGenerate = useCallback(async () => {
     setGenerating(true)
-    // Yield to let UI update before heavy computation
-    await new Promise((r) => setTimeout(r, 50))
+    await new Promise((resolve) => setTimeout(resolve, 50))
 
     try {
-      const content = generateContent(format, totalBytes)
-      const blob = new Blob([content as Uint8Array<ArrayBuffer>], { type: FORMAT_LABELS[format].mime })
+      const blob = await generateFileBlob(format, totalBytes)
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
@@ -115,7 +241,7 @@ export default function FileGenerator(): React.JSX.Element {
       document.body.appendChild(a)
       a.click()
       document.body.removeChild(a)
-      URL.revokeObjectURL(url)
+      window.setTimeout(() => URL.revokeObjectURL(url), 0)
     } finally {
       setGenerating(false)
     }
@@ -137,7 +263,6 @@ export default function FileGenerator(): React.JSX.Element {
           <p className="fg-subtitle">生成指定大小的测试文件，用于上传限制测试</p>
         </div>
 
-        {/* Size */}
         <div className="fg-section">
           <span className="fg-section-label">文件大小</span>
           <div className="fg-size-row">
@@ -147,7 +272,7 @@ export default function FileGenerator(): React.JSX.Element {
               value={size}
               min={1}
               max={unit === 'GB' ? 10 : 1024}
-              onChange={(e) => setSize(Number(e.target.value) || 1)}
+              onChange={(e) => setSize(Math.max(1, Math.floor(Number(e.target.value) || 1)))}
             />
             <div className="fg-unit-tabs">
               {(['KB', 'MB', 'GB'] as SizeUnit[]).map((u) => (
@@ -167,7 +292,6 @@ export default function FileGenerator(): React.JSX.Element {
           </div>
         </div>
 
-        {/* Format */}
         <div className="fg-section">
           <span className="fg-section-label">文件格式</span>
           <div className="fg-formats">
@@ -191,7 +315,6 @@ export default function FileGenerator(): React.JSX.Element {
           </div>
         </div>
 
-        {/* Generate */}
         <button
           className="fg-generate-btn"
           onClick={handleGenerate}

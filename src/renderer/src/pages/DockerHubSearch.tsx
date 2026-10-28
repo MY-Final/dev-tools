@@ -2,6 +2,46 @@ import { useState, useCallback, useRef, useEffect } from 'react'
 import { Search, Star, Download, Copy, Check, Terminal, Tag, ChevronDown, ChevronRight } from 'lucide-react'
 import '../styles/dockerhub-search.css'
 
+const REQUEST_TIMEOUT_MS = 15000
+
+function createNamedError(name: 'AbortError' | 'TimeoutError'): Error {
+  const error = new Error(name)
+  error.name = name
+  return error
+}
+
+function isTimeoutError(error: unknown): boolean {
+  return error instanceof Error && error.name === 'TimeoutError'
+}
+
+function withRequestTimeout<T>(promise: Promise<T>, controller: AbortController): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      reject(createNamedError('TimeoutError'))
+      controller.abort()
+    }, REQUEST_TIMEOUT_MS)
+
+    const handleAbort = (): void => {
+      clearTimeout(timeout)
+      reject(createNamedError('AbortError'))
+    }
+
+    controller.signal.addEventListener('abort', handleAbort, { once: true })
+    promise.then(
+      (value) => {
+        clearTimeout(timeout)
+        controller.signal.removeEventListener('abort', handleAbort)
+        resolve(value)
+      },
+      (error: unknown) => {
+        clearTimeout(timeout)
+        controller.signal.removeEventListener('abort', handleAbort)
+        reject(error)
+      }
+    )
+  })
+}
+
 interface DockerSearchResult {
   name: string
   description: string
@@ -28,44 +68,126 @@ export default function DockerHubSearch(): React.JSX.Element {
   const [expandedImg, setExpandedImg] = useState('')
   const [tags, setTags] = useState<{ name: string; digest: string; digestShort: string; size: number; arch: string; os: string; lastUpdated: string }[]>([])
   const [tagsLoading, setTagsLoading] = useState(false)
+  const [tagsError, setTagsError] = useState('')
   const [visibleCount, setVisibleCount] = useState(10)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const searchRequestRef = useRef(0)
+  const tagsRequestRef = useRef(0)
+  const searchAbortRef = useRef<AbortController | null>(null)
+  const tagsAbortRef = useRef<AbortController | null>(null)
 
   const doSearch = useCallback(async (q: string) => {
-    if (!q.trim()) { setResults([]); setError(''); return }
-    setLoading(true); setError('')
-    try {
-      const res = await window.docker.search(q, 20)
-      if (res && res.length > 0) setResults(res)
-      else setError('未找到匹配的镜像')
-    } catch {
-      setError('搜索失败，请检查网络')
+    if (!q.trim()) {
+      searchAbortRef.current?.abort()
+      searchAbortRef.current = null
+      searchRequestRef.current += 1
+      setResults([])
+      setError('')
+      setLoading(false)
+      return
     }
-    setLoading(false)
+    searchAbortRef.current?.abort()
+    const controller = new AbortController()
+    searchAbortRef.current = controller
+    const requestId = ++searchRequestRef.current
+    setResults([])
+    setLoading(true)
+    setError('')
+    try {
+      const res = await withRequestTimeout(window.docker.search(q, 20), controller)
+      if (requestId !== searchRequestRef.current || controller.signal.aborted) return
+      setResults(res)
+    } catch (error) {
+      if (isTimeoutError(error)) {
+        if (requestId === searchRequestRef.current) setError('搜索超时 — Docker Hub 在 15 秒内没有响应')
+        return
+      }
+      if (controller.signal.aborted || requestId !== searchRequestRef.current) return
+      setError('搜索失败 — 网络请求失败，请稍后重试')
+    } finally {
+      if (requestId === searchRequestRef.current) {
+        setLoading(false)
+        if (searchAbortRef.current === controller) searchAbortRef.current = null
+      }
+    }
+  }, [])
+
+  const handleQueryChange = useCallback((value: string) => {
+    searchRequestRef.current += 1
+    searchAbortRef.current?.abort()
+    searchAbortRef.current = null
+    tagsRequestRef.current += 1
+    tagsAbortRef.current?.abort()
+    tagsAbortRef.current = null
+    setQuery(value)
+    setResults([])
+    setError('')
+    setExpandedImg('')
+    setTags([])
+    setTagsError('')
+    setTagsLoading(false)
+    if (!value.trim()) {
+      setLoading(false)
+      return
+    }
+    setLoading(true)
   }, [])
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current)
+    if (!query.trim()) return
     debounceRef.current = setTimeout(() => doSearch(query), 300)
-    return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+    }
   }, [query, doSearch])
+
+  useEffect(() => () => {
+    searchAbortRef.current?.abort()
+    tagsAbortRef.current?.abort()
+  }, [])
 
   const copyCmd = useCallback(async (text: string) => {
     try { await navigator.clipboard.writeText(text); setCopied(text); setTimeout(() => setCopied(''), 1500) } catch { /* ignore */ }
   }, [])
 
   const toggleTags = useCallback(async (imageName: string) => {
-    if (expandedImg === imageName) { setExpandedImg(''); return }
+    if (expandedImg === imageName) {
+      tagsAbortRef.current?.abort()
+      tagsAbortRef.current = null
+      tagsRequestRef.current += 1
+      setExpandedImg('')
+      setTags([])
+      setTagsError('')
+      setTagsLoading(false)
+      return
+    }
+    tagsAbortRef.current?.abort()
+    const controller = new AbortController()
+    tagsAbortRef.current = controller
+    const requestId = ++tagsRequestRef.current
     setExpandedImg(imageName)
     setVisibleCount(10)
+    setTags([])
+    setTagsError('')
     setTagsLoading(true)
     try {
-      const res = await window.docker.getTags(imageName)
+      const res = await withRequestTimeout(window.docker.getTags(imageName), controller)
+      if (requestId !== tagsRequestRef.current || controller.signal.aborted) return
       setTags(res || [])
-    } catch {
-      setTags([])
+    } catch (error) {
+      if (isTimeoutError(error)) {
+        if (requestId === tagsRequestRef.current) setTagsError('标签加载超时，请稍后重试')
+        return
+      }
+      if (controller.signal.aborted || requestId !== tagsRequestRef.current) return
+      setTagsError('标签加载失败，请稍后重试')
+    } finally {
+      if (requestId === tagsRequestRef.current) {
+        setTagsLoading(false)
+        if (tagsAbortRef.current === controller) tagsAbortRef.current = null
+      }
     }
-    setTagsLoading(false)
   }, [expandedImg])
 
   const formatSize = useCallback((bytes: number): string => {
@@ -78,7 +200,7 @@ export default function DockerHubSearch(): React.JSX.Element {
 
   return (
     <div className="dh-page">
-      <div className="dh-card">
+      <div className="dh-card" aria-busy={loading || tagsLoading}>
         <div className="dh-header">
           <h2 className="dh-title">Docker Hub Search</h2>
           <p className="dh-subtitle">搜索 Docker Hub 镜像，一键复制拉取命令</p>
@@ -89,20 +211,36 @@ export default function DockerHubSearch(): React.JSX.Element {
           <input
             className="dh-search-input"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') doSearch(query) }}
+            onChange={(e) => handleQueryChange(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                if (debounceRef.current) clearTimeout(debounceRef.current)
+                void doSearch(query)
+              }
+            }}
             placeholder="搜索 Docker 镜像..."
+            aria-label="搜索 Docker 镜像"
           />
           {loading && <Terminal size={16} className="dh-spin" />}
         </div>
 
-        {error && <div className="dh-error">{error}</div>}
+        {loading && (
+          <div className="dh-empty" role="status" aria-live="polite">
+            {results.length > 0 ? '正在刷新搜索结果…' : '正在搜索…'}
+          </div>
+        )}
 
-        {!loading && query && results.length === 0 && !error && (
+        {error && <div className="dh-error" role="alert">{error}</div>}
+
+        {!loading && query.trim() && results.length === 0 && !error && (
+          <div className="dh-empty">未找到匹配的镜像</div>
+        )}
+
+        {!loading && !query.trim() && results.length === 0 && !error && (
           <div className="dh-empty">输入关键词搜索 Docker 镜像</div>
         )}
 
-        <div className="dh-results">
+        <div className="dh-results" aria-busy={loading}>
           {results.map((img) => (
             <div key={img.name} className="dh-item">
               <div className="dh-item-header">
@@ -129,9 +267,11 @@ export default function DockerHubSearch(): React.JSX.Element {
                 查看标签
               </button>
               {expandedImg === img.imageName && (
-                <div className="dh-tags">
+                <div className="dh-tags" aria-busy={tagsLoading}>
                   {tagsLoading ? (
-                    <div className="dh-tags-loading">加载中...</div>
+                    <div className="dh-tags-loading" role="status" aria-live="polite">加载中...</div>
+                  ) : tagsError ? (
+                    <div className="dh-tags-loading" role="alert">{tagsError}</div>
                   ) : tags.length === 0 ? (
                     <div className="dh-tags-loading">暂无标签</div>
                   ) : (

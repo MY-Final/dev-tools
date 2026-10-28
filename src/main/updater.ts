@@ -11,16 +11,20 @@ export type UpdateStatus =
   | { type: 'downloaded'; version: string }
   | { type: 'error'; message: string }
 
-let mainWindow: BrowserWindow | null = null
+let getMainWindow: () => BrowserWindow | null = () => null
+let updaterInitialized = false
 
 function sendStatus(status: UpdateStatus): void {
-  if (mainWindow && !mainWindow.isDestroyed()) {
+  const mainWindow = getMainWindow()
+  if (mainWindow && !mainWindow.isDestroyed() && !mainWindow.webContents.isDestroyed()) {
     mainWindow.webContents.send('updater:status', status)
   }
 }
 
-export function initUpdater(window: BrowserWindow): void {
-  mainWindow = window
+export function initUpdater(windowProvider: () => BrowserWindow | null): void {
+  getMainWindow = windowProvider
+  if (updaterInitialized) return
+  updaterInitialized = true
 
   // Don't auto-download — let the user decide
   autoUpdater.autoDownload = false

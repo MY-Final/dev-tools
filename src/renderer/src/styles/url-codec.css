@@ -1,298 +1,171 @@
 /* ========================================
-   URL Codec 页面
+   URL Codec
+   工具栏 + 输入/输出双栏
    ======================================== */
 
-.uc-page {
-  width: 100%;
-  height: 100%;
+.urlc-toolbar {
+  overflow: hidden;
+}
+
+.urlc-toolbar-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  padding: 10px 14px;
+}
+
+.urlc-hint {
+  margin-left: auto;
+  color: var(--color-text-muted);
+  font-size: var(--text-2xs);
+}
+
+.urlc-samples {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.urlc-sample-btn {
+  height: 24px;
+  padding: 0 8px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xs);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  font-family: inherit;
+  font-size: var(--text-2xs);
+  cursor: pointer;
+  transition:
+    background-color 0.12s ease,
+    border-color 0.12s ease,
+    color 0.12s ease;
+}
+
+.urlc-sample-btn:hover {
+  border-color: var(--color-border-hover);
+  background: var(--color-surface-hover);
+  color: var(--color-text);
+}
+
+.urlc-sample-btn:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+/* ── 双栏 ───────────────────────────────────── */
+
+.urlc-pane {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  padding: 40px 24px;
-  overflow-y: auto;
+  min-width: 0;
+  overflow: hidden;
 }
 
-.uc-card {
-  width: 100%;
-  max-width: 600px;
-  background: var(--glass-bg);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--glass-border);
-  border-radius: 20px;
-  padding: 32px;
-  box-shadow: var(--shadow-xl);
+.urlc-pane:focus-within {
+  box-shadow: inset 0 0 0 1px var(--color-accent);
 }
 
-.uc-header {
-  text-align: center;
-  margin-bottom: 28px;
+.urlc-pane .tool-panel-head {
+  min-height: 38px;
 }
 
-.uc-title {
-  font-size: 24px;
-  font-weight: 700;
-  color: var(--color-text);
-  font-family: 'JetBrains Mono', monospace;
-  letter-spacing: -0.5px;
-  margin-bottom: 6px;
-}
-
-.uc-subtitle {
-  font-size: 14px;
-  color: var(--color-text-muted);
-}
-
-/* 模式选择器 */
-.uc-mode-selector {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 12px;
-  padding: 6px;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 14px;
-}
-
-.uc-mode-btn {
+.urlc-textarea {
   flex: 1;
-  padding: 10px 12px;
-  background: transparent;
-  border: 1px solid transparent;
-  border-radius: 10px;
-  color: var(--color-text-muted);
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.uc-mode-btn:hover {
-  color: var(--color-text-secondary);
-  background: var(--color-surface-hover);
-}
-
-.uc-mode-btn.active {
-  background: var(--color-accent-soft);
-  color: var(--color-text-inverse);
-  border-color: var(--color-accent-soft);
-}
-
-.uc-hint {
-  font-size: 12px;
-  color: var(--color-text-muted);
-  margin-bottom: 20px;
-  padding: 0 4px;
-}
-
-/* 输入区域 */
-.uc-input-area {
-  margin-bottom: 20px;
-}
-
-.uc-input-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 10px;
-}
-
-.uc-input-label,
-.uc-output-label {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--color-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.uc-samples {
-  display: flex;
-  gap: 6px;
-}
-
-.uc-sample-btn {
-  padding: 4px 10px;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-  color: var(--color-text-muted);
-  font-size: 11px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.uc-sample-btn:hover {
-  border-color: var(--color-accent-soft);
-  color: var(--color-accent-soft);
-}
-
-.uc-textarea {
   width: 100%;
+  min-height: 220px;
   padding: 12px 14px;
+  border: 0;
   background: var(--color-editor-bg);
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
   color: var(--color-text);
-  font-size: 13px;
   font-family: 'JetBrains Mono', monospace;
-  line-height: 1.5;
-  resize: vertical;
-  transition: all 0.2s ease;
+  font-size: var(--text-sm);
+  line-height: 1.65;
   outline: none;
+  resize: vertical;
 }
 
-.uc-textarea:focus {
-  border-color: var(--color-accent-soft);
-}
-
-.uc-textarea::placeholder {
+.urlc-textarea::placeholder {
   color: var(--color-text-muted);
 }
 
-/* 操作按钮 */
-.uc-actions {
+.urlc-actions {
   display: flex;
   gap: 8px;
-  margin-bottom: 20px;
+  padding: 10px 14px;
+  border-top: 1px solid var(--color-border);
 }
 
-.uc-btn {
-  display: inline-flex;
+/* ── 输出 ───────────────────────────────────── */
+
+.urlc-output-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.urlc-output-actions .tool-btn {
+  height: 26px;
+  padding: 0 8px;
+  font-size: var(--text-2xs);
+}
+
+.urlc-output-text {
+  flex: 1;
+  min-height: 220px;
+  margin: 0;
+  padding: 14px;
+  overflow: auto;
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: var(--text-sm);
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.urlc-empty {
+  display: flex;
+  flex: 1;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 10px 16px;
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.uc-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.uc-btn-primary {
-  background: var(--color-accent-soft);
-  border-color: var(--color-accent-soft);
-  color: var(--color-text-inverse);
-}
-
-.uc-btn-primary:hover:not(:disabled) {
-  background: var(--color-accent-soft-hover);
-}
-
-.uc-btn-secondary {
-  background: var(--color-surface);
-  border-color: var(--color-accent-soft);
-  color: var(--color-accent-soft);
-}
-
-.uc-btn-secondary:hover:not(:disabled) {
-  background: var(--color-accent-soft-subtle);
-}
-
-.uc-btn-ghost {
-  background: transparent;
-  border-color: var(--color-border);
+  min-height: 220px;
+  padding: 24px;
   color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  text-align: center;
 }
 
-.uc-btn-ghost:hover:not(:disabled) {
-  border-color: var(--color-border-hover);
-  color: var(--color-text-secondary);
-}
-
-/* 错误提示 */
-.uc-error {
-  padding: 10px 14px;
-  background: var(--color-danger-subtle);
-  border: 1px solid var(--color-danger);
-  border-radius: 10px;
-  font-size: 12px;
-  color: var(--color-danger);
-  margin-bottom: 20px;
-}
-
-/* 输出区域 */
-.uc-output-area {
-  padding: 20px;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 14px;
-}
-
-.uc-output-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 12px;
-}
-
-.uc-copy-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  background: var(--color-editor-bg);
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  color: var(--color-text-muted);
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.uc-copy-btn:hover {
-  border-color: var(--color-accent-soft);
-  color: var(--color-accent-soft);
-}
-
-.uc-output-text {
+.urlc-error {
+  flex: 1;
+  min-height: 220px;
   padding: 14px;
-  background: var(--color-editor-bg);
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 13px;
-  color: var(--color-text);
-  word-break: break-all;
-  line-height: 1.5;
+  background: var(--color-danger-subtle);
+  color: var(--color-danger);
+  font-size: var(--text-sm);
 }
 
-/* 响应式 */
-@media (max-width: 600px) {
-  .uc-page {
-    padding: 24px 16px;
+/* ── 窄容器 ─────────────────────────────────── */
+
+@container tool (max-width: 899px) {
+  .urlc-textarea,
+  .urlc-output-text,
+  .urlc-empty,
+  .urlc-error {
+    min-height: 150px;
+  }
+}
+
+@container tool (max-width: 640px) {
+  .urlc-hint {
+    flex-basis: 100%;
+    margin-left: 0;
   }
 
-  .uc-card {
-    padding: 24px 20px;
-    border-radius: 16px;
-  }
-
-  .uc-title {
-    font-size: 20px;
-  }
-
-  .uc-input-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-  }
-
-  .uc-actions {
-    flex-wrap: wrap;
-  }
-
-  .uc-btn {
-    flex: 1;
-    min-width: calc(50% - 4px);
+  .urlc-samples {
+    display: none;
   }
 }

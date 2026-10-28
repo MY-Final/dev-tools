@@ -22,9 +22,9 @@
   padding: 12px 14px;
   background: var(--color-surface);
   border: 1.5px solid var(--color-border);
-  border-radius: 10px;
+  border-radius: 8px;
   color: var(--color-text);
-  font-size: 12px;
+  font-size: 0.75rem;
   font-family: 'JetBrains Mono', monospace;
   outline: none;
   resize: vertical;
@@ -57,7 +57,7 @@
   border-radius: 8px;
   background: var(--color-surface);
   color: var(--color-text-muted);
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -83,7 +83,7 @@
 }
 
 .uap-result-title {
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 600;
   color: var(--color-text);
 }
@@ -97,7 +97,7 @@
   border-radius: 6px;
   background: var(--color-surface);
   color: var(--color-text-muted);
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -113,13 +113,13 @@
 .uap-section {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: 10px;
+  border-radius: 8px;
   overflow: hidden;
 }
 
 .uap-section-title {
   padding: 8px 14px;
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--color-text);
   background: var(--color-background);
@@ -129,7 +129,7 @@
 .uap-info-row {
   display: flex;
   padding: 8px 14px;
-  font-size: 12px;
+  font-size: 0.75rem;
   border-bottom: 1px solid var(--color-border);
 }
 

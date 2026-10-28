@@ -1,5 +1,5 @@
-import { ipcMain } from 'electron'
 import { settingsStore } from './settings'
+import { registerGuardedHandler } from './ipc-security'
 
 const DEFAULT_REGISTRIES = [
   'https://registry.npmjs.org',
@@ -28,7 +28,7 @@ async function fetchNpm(path: string): Promise<Response | null> {
 }
 
 export function registerNpmHandlers(): void {
-  ipcMain.handle('npm:search', async (_event, query: string, size: number) => {
+  registerGuardedHandler('npm:search', async (_event, query: string, size: number) => {
     try {
       const params = new URLSearchParams({ text: query, size: String(size || 20) })
       const res = await fetchNpm(`/-/v1/search?${params}`)
@@ -48,7 +48,7 @@ export function registerNpmHandlers(): void {
     }
   })
 
-  ipcMain.handle('npm:package', async (_event, packageName: string) => {
+  registerGuardedHandler('npm:package', async (_event, packageName: string) => {
     try {
       const res = await fetchNpm(`/${encodeURIComponent(packageName)}`)
       if (!res) return null

@@ -1,275 +1,273 @@
 /* ========================================
-   Subnet Calculator 页面
+   IPv4 Subnet Calculator
+   输入条 + 双列结果 + 元信息面板
    ======================================== */
 
-.sc-page {
-  width: 100%;
-  height: 100%;
+.sc-input-panel {
+  overflow: hidden;
+}
+
+.sc-input-row {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  padding: 40px 24px;
-  overflow-y: auto;
-}
-
-.sc-card {
-  width: 100%;
-  max-width: 560px;
-  background: var(--glass-bg);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--glass-border);
-  border-radius: 20px;
-  padding: 32px;
-  box-shadow: var(--shadow-xl);
-}
-
-.sc-header {
-  text-align: center;
-  margin-bottom: 28px;
-}
-
-.sc-title {
-  font-size: 24px;
-  font-weight: 700;
-  color: var(--color-text);
-  font-family: 'JetBrains Mono', monospace;
-  letter-spacing: -0.5px;
-  margin-bottom: 6px;
-}
-
-.sc-subtitle {
-  font-size: 14px;
-  color: var(--color-text-muted);
-}
-
-/* 输入区域 */
-.sc-input-area {
-  margin-bottom: 24px;
+  align-items: flex-end;
+  gap: 10px;
+  padding: 14px;
 }
 
 .sc-input-group {
-  margin-bottom: 12px;
-}
-
-.sc-input-label {
-  display: block;
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--color-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 6px;
-}
-
-.sc-input {
-  width: 100%;
-  padding: 10px 14px;
-  background: var(--color-editor-bg);
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  color: var(--color-text);
-  font-size: 14px;
-  font-family: 'JetBrains Mono', monospace;
-  outline: none;
-  transition: all 0.2s ease;
-}
-
-.sc-input:focus {
-  border-color: var(--color-accent-soft);
-}
-
-.sc-input::placeholder {
-  color: var(--color-text-muted);
-}
-
-.sc-input-cidr {
-  text-align: center;
-  font-size: 15px;
-}
-
-.sc-inputs-row {
-  display: flex;
-  gap: 12px;
-}
-
-.sc-inputs-row .sc-input-group {
-  flex: 1;
-}
-
-.sc-input-cidr-small {
-  max-width: 100px;
-}
-
-/* Section */
-.sc-section {
-  margin-bottom: 20px;
-}
-
-.sc-section:last-child {
-  margin-bottom: 0;
-}
-
-.sc-section-label {
-  display: block;
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--color-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 10px;
-}
-
-/* 结果行 */
-.sc-results {
   display: flex;
   flex-direction: column;
   gap: 6px;
+  min-width: 0;
 }
 
-.sc-result-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 14px;
-  background: var(--color-editor-bg);
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-}
-
-.sc-result-label {
-  font-size: 12px;
+.sc-input-group > span {
   color: var(--color-text-muted);
+  font-size: var(--text-2xs);
 }
 
-.sc-result-value-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.sc-input-ip {
+  flex: 1;
 }
 
-.sc-result-value {
+.sc-input-ip .tool-input {
+  width: 100%;
+}
+
+.sc-input-prefix {
+  flex: 0 0 76px;
+}
+
+.sc-input-prefix .tool-input {
+  width: 100%;
+  text-align: center;
+}
+
+.sc-slash {
+  padding-bottom: 8px;
+  color: var(--color-text-muted);
   font-family: 'JetBrains Mono', monospace;
-  font-size: 13px;
-  font-weight: 600;
+  font-size: var(--text-md);
+}
+
+.sc-presets {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+  padding-bottom: 2px;
+}
+
+.sc-preset {
+  height: 26px;
+  min-width: 38px;
+  padding: 0 8px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: var(--text-2xs);
+  cursor: pointer;
+  transition:
+    background-color 0.12s ease,
+    border-color 0.12s ease,
+    color 0.12s ease;
+}
+
+.sc-preset:hover {
+  border-color: var(--color-border-hover);
+  background: var(--color-surface-hover);
   color: var(--color-text);
 }
 
-.sc-copy-btn {
-  display: flex;
+.sc-preset.active {
+  border-color: var(--color-border-active);
+  background: var(--color-surface-active);
+  color: var(--color-text);
+}
+
+.sc-preset:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+.sc-error {
+  margin: 0;
+  padding: 8px 14px;
+  border-top: 1px solid color-mix(in srgb, var(--color-danger) 22%, var(--color-border));
+  background: var(--color-danger-subtle);
+  color: var(--color-danger);
+  font-size: var(--text-xs);
+}
+
+/* ── 结果 ───────────────────────────────────── */
+
+.sc-results-panel {
+  overflow: hidden;
+}
+
+.sc-result-cidr {
+  margin-left: auto;
+  color: var(--color-text-muted);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.sc-results {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1px;
+  background: var(--color-border);
+}
+
+@container tool (min-width: 760px) {
+  .sc-results {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.sc-result-row {
+  display: grid;
+  grid-template-columns: 104px minmax(0, 1fr) 24px;
   align-items: center;
-  justify-content: center;
+  gap: 10px;
+  min-width: 0;
+  min-height: 44px;
+  padding: 7px 12px;
+  background: var(--color-surface);
+}
+
+.sc-result-row:hover {
+  background: var(--color-surface-hover);
+}
+
+.sc-result-label {
+  overflow: hidden;
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sc-result-value {
+  overflow: hidden;
+  color: var(--color-text);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sc-copy-btn {
   width: 24px;
   height: 24px;
-  background: transparent;
-  border: 1px solid transparent;
-  border-radius: 4px;
   color: var(--color-text-muted);
-  cursor: pointer;
-  transition: all 0.15s ease;
 }
 
 .sc-copy-btn:hover {
-  border-color: var(--color-border);
-  color: var(--color-accent-soft);
+  color: var(--color-text);
 }
 
-/* IP 信息 */
+/* ── 元信息 ─────────────────────────────────── */
+
+.sc-meta-panel {
+  overflow: hidden;
+}
+
 .sc-info-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 8px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-border);
 }
 
 .sc-info-item {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  padding: 12px;
-  background: var(--color-editor-bg);
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
+  gap: 2px;
+  min-width: 0;
+  padding: 9px 14px;
+  background: var(--color-surface);
 }
 
 .sc-info-label {
-  font-size: 10px;
   color: var(--color-text-muted);
-  text-transform: uppercase;
+  font-size: var(--text-2xs);
 }
 
 .sc-info-value {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--color-accent-soft);
-}
-
-/* Binary */
-.sc-binary-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  overflow: hidden;
+  color: var(--color-text);
+  font-size: var(--text-sm);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .sc-binary-item {
-  padding: 12px 14px;
-  background: var(--color-editor-bg);
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
+  display: grid;
+  grid-template-columns: 104px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  min-height: 38px;
+  padding: 7px 14px;
+}
+
+.sc-binary-item + .sc-binary-item {
+  border-top: 1px solid var(--color-border);
 }
 
 .sc-binary-label {
-  display: block;
-  font-size: 10px;
   color: var(--color-text-muted);
-  margin-bottom: 6px;
+  font-size: var(--text-2xs);
 }
 
 .sc-binary-value {
+  overflow-x: auto;
+  color: var(--color-text-secondary);
   font-family: 'JetBrains Mono', monospace;
-  font-size: 12px;
-  color: var(--color-text);
-  letter-spacing: 1px;
+  font-size: var(--text-2xs);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  scrollbar-width: thin;
 }
 
-/* 空状态 */
+/* ── 空状态 ─────────────────────────────────── */
+
 .sc-empty {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
-  padding: 40px;
+  gap: 10px;
+  padding: 48px 20px;
   color: var(--color-text-muted);
-  font-size: 14px;
+  font-size: var(--text-sm);
+  text-align: center;
 }
 
-/* 响应式 */
-@media (max-width: 600px) {
-  .sc-page {
-    padding: 24px 16px;
+/* ── 窄容器 ─────────────────────────────────── */
+
+@container tool (max-width: 560px) {
+  .sc-input-row {
+    flex-wrap: wrap;
   }
 
-  .sc-card {
-    padding: 24px 20px;
-    border-radius: 16px;
+  .sc-input-ip {
+    flex-basis: 100%;
   }
 
-  .sc-title {
-    font-size: 20px;
+  .sc-presets {
+    margin-left: 0;
+    padding-bottom: 0;
   }
 
-  .sc-inputs-row {
-    flex-direction: column;
-    gap: 0;
+  .sc-result-row {
+    grid-template-columns: 92px minmax(0, 1fr) 24px;
   }
 
-  .sc-input-cidr-small {
-    max-width: none;
-  }
-
-  .sc-info-grid {
-    grid-template-columns: 1fr;
+  .sc-info-value {
+    font-size: var(--text-xs);
   }
 }

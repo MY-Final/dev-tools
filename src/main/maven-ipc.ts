@@ -1,5 +1,5 @@
-import { ipcMain } from 'electron'
 import { settingsStore } from './settings'
+import { registerGuardedHandler } from './ipc-security'
 
 const MAVEN_DEFAULT_SEARCH = 'https://search.maven.org/solrsearch/select'
 
@@ -27,7 +27,7 @@ async function mavenFetch(params: URLSearchParams, retries = 2, customUrl?: stri
 }
 
 export function registerMavenHandlers(): void {
-  ipcMain.handle('maven:search', async (_event, query: string, rows: number) => {
+  registerGuardedHandler('maven:search', async (_event, query: string, rows: number) => {
     const config = settingsStore.getSettings()
     const params = new URLSearchParams({ q: query, rows: String(rows || 20), wt: 'json' })
     const res = await mavenFetch(params, 2, config.mavenSearchUrl)
@@ -35,7 +35,7 @@ export function registerMavenHandlers(): void {
     return res.json()
   })
 
-  ipcMain.handle('maven:versions', async (_event, groupId: string, artifactId: string) => {
+  registerGuardedHandler('maven:versions', async (_event, groupId: string, artifactId: string) => {
     const config = settingsStore.getSettings()
     const params = new URLSearchParams({ q: `g:${groupId} AND a:${artifactId}`, core: 'gav', rows: '15', wt: 'json' })
     const res = await mavenFetch(params, 1, config.mavenSearchUrl)

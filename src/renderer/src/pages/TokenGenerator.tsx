@@ -1,32 +1,17 @@
 import { useState, useMemo } from 'react'
-import {
-  Key,
-  Copy,
-  Check,
-  Download,
-  RefreshCw,
-  Hash,
-  Shield,
-  FileCode,
-  Sparkles,
-  Settings
-} from 'lucide-react'
+import { Copy, Check, Download, RefreshCw } from 'lucide-react'
 import {
   useTokenGenerator,
   type TokenType,
   type RandomStringCharset
 } from '@renderer/tools/token-generator/useTokenGenerator'
 
-const TOKEN_TYPES: {
-  id: TokenType
-  label: string
-  icon: React.ComponentType<{ size?: number }>
-}[] = [
-  { id: 'uuid', label: 'UUID', icon: Hash },
-  { id: 'jwt', label: 'JWT', icon: FileCode },
-  { id: 'api-key', label: 'API Key', icon: Key },
-  { id: 'random-string', label: 'Random String', icon: Sparkles },
-  { id: 'secret-key', label: 'Secret Key', icon: Shield }
+const TOKEN_TYPES: { id: TokenType; label: string }[] = [
+  { id: 'uuid', label: 'UUID' },
+  { id: 'jwt', label: 'JWT' },
+  { id: 'api-key', label: 'API Key' },
+  { id: 'random-string', label: '随机字符串' },
+  { id: 'secret-key', label: 'Secret Key' }
 ]
 
 const EXPIRATION_OPTIONS = [
@@ -77,14 +62,18 @@ export default function TokenGenerator(): React.JSX.Element {
     switch (tokenType) {
       case 'uuid':
         return (
-          <div className="tg-config-section">
-            <div className="tg-config-label">生成数量</div>
-            <div className="tg-presets">
+          <div className="tg-section">
+            <span className="tg-label" id="tg-count-label">
+              生成数量
+            </span>
+            <div className="tool-segmented" role="group" aria-labelledby="tg-count-label">
               {COUNT_PRESETS.map((count) => (
                 <button
                   key={count}
-                  className={`tg-preset-btn ${config.uuid.count === count ? 'active' : ''}`}
+                  type="button"
+                  className={`tool-seg ${config.uuid.count === count ? 'active' : ''}`}
                   onClick={() => updateConfig('uuid', 'count', count)}
+                  aria-pressed={config.uuid.count === count}
                 >
                   {count}
                 </button>
@@ -96,42 +85,58 @@ export default function TokenGenerator(): React.JSX.Element {
       case 'jwt':
         return (
           <>
-            <div className="tg-config-section">
-              <div className="tg-config-label">Header</div>
+            <div className="tg-section tg-section--stack">
+              <label className="tg-label" htmlFor="tg-jwt-header">
+                Header
+              </label>
               <textarea
+                id="tg-jwt-header"
                 className="tg-textarea"
                 value={config.jwt.header}
                 onChange={(e) => updateConfig('jwt', 'header', e.target.value)}
                 rows={3}
+                spellCheck={false}
               />
             </div>
-            <div className="tg-config-section">
-              <div className="tg-config-label">Payload</div>
+            <div className="tg-section tg-section--stack">
+              <label className="tg-label" htmlFor="tg-jwt-payload">
+                Payload
+              </label>
               <textarea
+                id="tg-jwt-payload"
                 className="tg-textarea"
                 value={config.jwt.payload}
                 onChange={(e) => updateConfig('jwt', 'payload', e.target.value)}
                 rows={4}
+                spellCheck={false}
               />
             </div>
-            <div className="tg-config-section">
-              <div className="tg-config-label">Secret</div>
+            <div className="tg-section tg-section--stack">
+              <label className="tg-label" htmlFor="tg-jwt-secret">
+                Secret
+              </label>
               <input
-                className="tg-input"
+                id="tg-jwt-secret"
+                className="tool-input tool-input--mono"
                 type="text"
                 value={config.jwt.secret}
                 onChange={(e) => updateConfig('jwt', 'secret', e.target.value)}
                 placeholder="my-secret-key"
+                spellCheck={false}
               />
             </div>
-            <div className="tg-config-section">
-              <div className="tg-config-label">过期时间</div>
-              <div className="tg-presets">
+            <div className="tg-section">
+              <span className="tg-label" id="tg-exp-label">
+                过期时间
+              </span>
+              <div className="tool-segmented" role="group" aria-labelledby="tg-exp-label">
                 {EXPIRATION_OPTIONS.map((opt) => (
                   <button
                     key={opt.value}
-                    className={`tg-preset-btn ${config.jwt.expiration === opt.value ? 'active' : ''}`}
+                    type="button"
+                    className={`tool-seg ${config.jwt.expiration === opt.value ? 'active' : ''}`}
                     onClick={() => updateConfig('jwt', 'expiration', opt.value)}
+                    aria-pressed={config.jwt.expiration === opt.value}
                   >
                     {opt.label}
                   </button>
@@ -144,35 +149,43 @@ export default function TokenGenerator(): React.JSX.Element {
       case 'api-key':
         return (
           <>
-            <div className="tg-config-section">
-              <div className="tg-config-label">前缀</div>
-              <div className="tg-presets">
+            <div className="tg-section tg-section--stack">
+              <span className="tg-label">前缀</span>
+              <div className="tool-segmented" role="group" aria-label="API Key 前缀">
                 {['pk_live', 'pk_test', 'sk_live', 'sk_test'].map((prefix) => (
                   <button
                     key={prefix}
-                    className={`tg-preset-btn ${config['api-key'].prefix === prefix ? 'active' : ''}`}
+                    type="button"
+                    className={`tool-seg ${config['api-key'].prefix === prefix ? 'active' : ''}`}
                     onClick={() => updateConfig('api-key', 'prefix', prefix)}
+                    aria-pressed={config['api-key'].prefix === prefix}
                   >
                     {prefix}
                   </button>
                 ))}
               </div>
               <input
-                className="tg-input tg-input-custom"
+                className="tool-input tool-input--mono"
                 type="text"
                 value={config['api-key'].prefix}
                 onChange={(e) => updateConfig('api-key', 'prefix', e.target.value)}
                 placeholder="自定义前缀"
+                aria-label="API Key 自定义前缀"
+                spellCheck={false}
               />
             </div>
-            <div className="tg-config-section">
-              <div className="tg-config-label">长度</div>
-              <div className="tg-presets">
+            <div className="tg-section">
+              <span className="tg-label" id="tg-api-length-label">
+                长度
+              </span>
+              <div className="tool-segmented" role="group" aria-labelledby="tg-api-length-label">
                 {LENGTH_PRESETS.map((len) => (
                   <button
                     key={len}
-                    className={`tg-preset-btn ${config['api-key'].length === len ? 'active' : ''}`}
+                    type="button"
+                    className={`tool-seg ${config['api-key'].length === len ? 'active' : ''}`}
                     onClick={() => updateConfig('api-key', 'length', len)}
+                    aria-pressed={config['api-key'].length === len}
                   >
                     {len}
                   </button>
@@ -185,40 +198,49 @@ export default function TokenGenerator(): React.JSX.Element {
       case 'random-string':
         return (
           <>
-            <div className="tg-config-section">
-              <div className="tg-config-label">长度</div>
-              <div className="tg-presets">
+            <div className="tg-section">
+              <span className="tg-label" id="tg-rs-length-label">
+                长度
+              </span>
+              <div className="tool-segmented" role="group" aria-labelledby="tg-rs-length-label">
                 {LENGTH_PRESETS.map((len) => (
                   <button
                     key={len}
-                    className={`tg-preset-btn ${config['random-string'].length === len ? 'active' : ''}`}
+                    type="button"
+                    className={`tool-seg ${config['random-string'].length === len ? 'active' : ''}`}
                     onClick={() => updateConfig('random-string', 'length', len)}
+                    aria-pressed={config['random-string'].length === len}
                   >
                     {len}
                   </button>
                 ))}
               </div>
             </div>
-            <div className="tg-config-section">
-              <div className="tg-config-label">字符类型</div>
-              <div className="tg-charset-options">
-                {CHARSET_OPTIONS.map((opt) => (
-                  <button
-                    key={opt.id}
-                    className={`tg-charset-btn ${config['random-string'].charset.includes(opt.id) ? 'active' : ''}`}
-                    onClick={() => {
-                      const current = config['random-string'].charset
-                      const next = current.includes(opt.id)
-                        ? current.filter((c) => c !== opt.id)
-                        : [...current, opt.id]
-                      if (next.length > 0) {
-                        updateConfig('random-string', 'charset', next)
-                      }
-                    }}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
+            <div className="tg-section tg-section--stack">
+              <span className="tg-label">字符类型</span>
+              <div className="tg-charsets">
+                {CHARSET_OPTIONS.map((opt) => {
+                  const active = config['random-string'].charset.includes(opt.id)
+                  return (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      className={`tg-charset ${active ? 'active' : ''}`}
+                      onClick={() => {
+                        const current = config['random-string'].charset
+                        const next = current.includes(opt.id)
+                          ? current.filter((c) => c !== opt.id)
+                          : [...current, opt.id]
+                        if (next.length > 0) {
+                          updateConfig('random-string', 'charset', next)
+                        }
+                      }}
+                      aria-pressed={active}
+                    >
+                      {opt.label}
+                    </button>
+                  )
+                })}
               </div>
             </div>
           </>
@@ -226,14 +248,18 @@ export default function TokenGenerator(): React.JSX.Element {
 
       case 'secret-key':
         return (
-          <div className="tg-config-section">
-            <div className="tg-config-label">长度</div>
-            <div className="tg-presets">
+          <div className="tg-section">
+            <span className="tg-label" id="tg-secret-length-label">
+              长度
+            </span>
+            <div className="tool-segmented" role="group" aria-labelledby="tg-secret-length-label">
               {[32, 64, 128, 256].map((len) => (
                 <button
                   key={len}
-                  className={`tg-preset-btn ${config['secret-key'].length === len ? 'active' : ''}`}
+                  type="button"
+                  className={`tool-seg ${config['secret-key'].length === len ? 'active' : ''}`}
                   onClick={() => updateConfig('secret-key', 'length', len)}
+                  aria-pressed={config['secret-key'].length === len}
                 >
                   {len}
                 </button>
@@ -248,94 +274,139 @@ export default function TokenGenerator(): React.JSX.Element {
   }
 
   return (
-    <div className="token-generator-page">
-      <div className="tg-bg-decoration" />
-
-      <div className="tg-card">
-        <div className="tg-header">
-          <h2 className="tg-title">Token Generator</h2>
-          <p className="tg-subtitle">生成各种随机标识符、认证 Token 和密钥</p>
+    <div className="token-generator-page tool-page">
+      <header className="tool-page-header">
+        <div className="tool-page-heading">
+          <h2 className="tool-page-title">Token Generator</h2>
+          <p className="tool-page-desc">
+            批量生成 UUID、JWT、API Key、随机字符串与 Secret Key，支持复制和导出。
+          </p>
         </div>
+      </header>
 
-        <div className="tg-type-selector">
-          {TOKEN_TYPES.map((type) => {
-            const Icon = type.icon
-            return (
+      <section className="tool-panel tg-typebar">
+        <div className="tg-typebar-row">
+          <div className="tool-segmented" role="group" aria-label="Token 类型">
+            {TOKEN_TYPES.map((type) => (
               <button
                 key={type.id}
-                className={`tg-type-btn ${tokenType === type.id ? 'active' : ''}`}
+                type="button"
+                className={`tool-seg ${tokenType === type.id ? 'active' : ''}`}
                 onClick={() => setTokenType(type.id)}
+                aria-pressed={tokenType === type.id}
               >
-                <Icon size={16} />
-                <span>{type.label}</span>
+                {type.label}
               </button>
-            )
-          })}
-        </div>
-
-        <div className="tg-config">
-          <div className="tg-config-header">
-            <Settings size={14} className="tg-config-icon" />
-            <span>配置选项</span>
+            ))}
           </div>
-          {renderConfig()}
         </div>
+      </section>
 
-        <button className="tg-generate-btn" onClick={generate}>
-          <RefreshCw size={16} />
-          生成
-        </button>
+      <div className="tool-split tool-split--even tg-layout">
+        <section className="tool-panel tg-config">
+          <div className="tool-panel-head">
+            <h3 className="tool-panel-title">配置</h3>
+            <span className="tg-count-note">
+              {results.length > 0 ? `已生成 ${results.length} 条` : '尚未生成'}
+            </span>
+          </div>
+          <div className="tg-config-body">{renderConfig()}</div>
+          <div className="tg-actions">
+            <button type="button" className="tool-btn tool-btn--primary" onClick={generate}>
+              <RefreshCw size={14} aria-hidden="true" />
+              生成
+            </button>
+          </div>
+        </section>
 
-        {results.length > 0 && (
-          <div className="tg-results">
-            <div className="tg-results-header">
-              <span className="tg-results-label">生成结果</span>
-              <div className="tg-results-actions">
-                <button className="tg-action-btn" onClick={handleCopyAll}>
-                  <Copy size={14} />
-                  复制全部
-                </button>
-                <button className="tg-action-btn" onClick={() => handleExport('txt')}>
-                  <Download size={14} />
-                  TXT
-                </button>
-                <button className="tg-action-btn" onClick={() => handleExport('json')}>
-                  <Download size={14} />
-                  JSON
-                </button>
+        <section className="tool-panel tg-results">
+          <div className="tool-panel-head">
+            <h3 className="tool-panel-title">结果</h3>
+            <div className="tg-results-actions">
+              <button
+                type="button"
+                className="tool-btn"
+                onClick={handleCopyAll}
+                disabled={results.length === 0}
+              >
+                <Copy size={13} aria-hidden="true" />
+                复制全部
+              </button>
+              <button
+                type="button"
+                className="tool-btn"
+                onClick={() => handleExport('txt')}
+                disabled={results.length === 0}
+                title="导出 TXT"
+              >
+                <Download size={13} aria-hidden="true" />
+                TXT
+              </button>
+              <button
+                type="button"
+                className="tool-btn"
+                onClick={() => handleExport('json')}
+                disabled={results.length === 0}
+                title="导出 JSON"
+              >
+                <Download size={13} aria-hidden="true" />
+                JSON
+              </button>
+            </div>
+          </div>
+
+          {results.length > 0 ? (
+            <>
+              <div className="tg-results-list">
+                {visibleResults.map((token, index) => (
+                  <div key={index} className="tg-result-item">
+                    <code className="tg-result-text" title={token}>
+                      {token}
+                    </code>
+                    <button
+                      type="button"
+                      className="tool-icon-btn tg-copy-btn"
+                      onClick={() => handleCopy(token, index)}
+                      title="复制"
+                      aria-label={`复制第 ${index + 1} 条结果`}
+                    >
+                      {copiedIndex === index ? (
+                        <Check size={14} aria-hidden="true" />
+                      ) : (
+                        <Copy size={14} aria-hidden="true" />
+                      )}
+                    </button>
+                  </div>
+                ))}
               </div>
-            </div>
-            <div className="tg-results-list">
-              {visibleResults.map((token, index) => (
-                <div key={index} className="tg-result-item">
-                  <code className="tg-result-text">{token}</code>
-                  <button
-                    className="tg-copy-btn"
-                    onClick={() => handleCopy(token, index)}
-                    title="复制"
-                  >
-                    {copiedIndex === index ? <Check size={14} /> : <Copy size={14} />}
-                  </button>
-                </div>
-              ))}
-            </div>
-            {hiddenResultCount > 0 && (
-              <button className="tg-expand-results" onClick={() => setResultsExpanded(true)}>
-                展开剩余 {hiddenResultCount} 条
-              </button>
-            )}
-            {resultsExpanded && results.length > COLLAPSED_RESULT_COUNT && (
-              <button className="tg-expand-results" onClick={() => setResultsExpanded(false)}>
-                收起结果
-              </button>
-            )}
-          </div>
-        )}
+              {hiddenResultCount > 0 && (
+                <button
+                  type="button"
+                  className="tg-expand"
+                  onClick={() => setResultsExpanded(true)}
+                >
+                  展开剩余 {hiddenResultCount} 条
+                </button>
+              )}
+              {resultsExpanded && results.length > COLLAPSED_RESULT_COUNT && (
+                <button
+                  type="button"
+                  className="tg-expand"
+                  onClick={() => setResultsExpanded(false)}
+                >
+                  收起结果
+                </button>
+              )}
+            </>
+          ) : (
+            <div className="tg-empty">选择类型并调整配置，点击「生成」查看结果。</div>
+          )}
+        </section>
       </div>
 
       {toast && (
-        <div className="tg-toast">
-          <Check size={14} />
+        <div className="tg-toast" role="status">
+          <Check size={14} aria-hidden="true" />
           {toast}
         </div>
       )}

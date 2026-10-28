@@ -25,7 +25,7 @@
   border: 1.5px solid var(--color-border);
   border-radius: 8px;
   color: var(--color-text);
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-family: 'JetBrains Mono', monospace;
   outline: none;
   transition: border-color 0.2s;
@@ -48,7 +48,7 @@
   padding: 8px 16px;
   border: none;
   border-radius: 8px;
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -63,7 +63,7 @@
 
 .wst-btn-connect {
   background: var(--color-success);
-  color: #fff;
+  color: var(--color-text-inverse);
 }
 
 .wst-btn-connect:hover:not(:disabled) {
@@ -72,7 +72,7 @@
 
 .wst-btn-disconnect {
   background: var(--color-danger);
-  color: #fff;
+  color: var(--color-text-inverse);
 }
 
 .wst-btn-disconnect:hover:not(:disabled) {
@@ -81,7 +81,7 @@
 
 .wst-btn-send {
   background: var(--color-accent-soft);
-  color: #fff;
+  color: var(--color-text-inverse);
 }
 
 .wst-btn-send:hover:not(:disabled) {
@@ -92,7 +92,7 @@
   background: transparent;
   color: var(--color-text-muted);
   padding: 4px 10px;
-  font-size: 11px;
+  font-size: 0.6875rem;
   border: 1px solid var(--color-border);
 }
 
@@ -116,7 +116,7 @@
   border-radius: 8px;
   background: var(--color-surface);
   color: var(--color-text-muted);
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -140,7 +140,7 @@
 }
 
 .wst-mode-badge {
-  font-size: 9px;
+  font-size: 0.625rem;
   font-weight: 700;
   padding: 1px 5px;
   border-radius: 4px;
@@ -161,7 +161,7 @@
   border-radius: 8px;
   cursor: pointer;
   color: var(--color-text-secondary);
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 500;
   transition: all 0.15s ease;
   font-family: inherit;
@@ -181,7 +181,7 @@
 
 .wst-auth-hint {
   color: var(--color-text-muted);
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 400;
   margin-left: auto;
 }
@@ -204,7 +204,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 600;
   color: var(--color-text);
   padding: 6px 0 2px;
@@ -224,10 +224,10 @@
   gap: 3px;
   padding: 3px 8px;
   border: 1px solid var(--color-border);
-  border-radius: 5px;
+  border-radius: 4px;
   background: transparent;
   color: var(--color-text-muted);
-  font-size: 10px;
+  font-size: 0.625rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -256,7 +256,7 @@
 }
 
 .wst-auth-row-label {
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--color-text);
   font-weight: 500;
   flex-shrink: 0;
@@ -270,7 +270,7 @@
   border: 1.5px solid var(--color-border);
   border-radius: 6px;
   color: var(--color-text);
-  font-size: 12px;
+  font-size: 0.75rem;
   font-family: 'JetBrains Mono', monospace;
   outline: none;
   transition: border-color 0.2s;
@@ -301,7 +301,7 @@
   border-radius: 6px;
   background: transparent;
   color: var(--color-text-muted);
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -327,7 +327,7 @@
   border: 1.5px solid var(--color-border);
   border-radius: 6px;
   color: var(--color-text);
-  font-size: 12px;
+  font-size: 0.75rem;
   font-family: 'JetBrains Mono', monospace;
   outline: none;
   transition: border-color 0.2s;
@@ -344,7 +344,7 @@
 .wst-param-eq {
   color: var(--color-text-muted);
   font-family: 'JetBrains Mono', monospace;
-  font-size: 12px;
+  font-size: 0.75rem;
   flex-shrink: 0;
 }
 
@@ -355,7 +355,7 @@
   border: 1.5px solid var(--color-border);
   border-radius: 6px;
   color: var(--color-text);
-  font-size: 12px;
+  font-size: 0.75rem;
   font-family: 'JetBrains Mono', monospace;
   outline: none;
   transition: border-color 0.2s;
@@ -395,7 +395,7 @@
 }
 
 .wst-auth-note {
-  font-size: 11px;
+  font-size: 0.6875rem;
   color: var(--color-text-muted);
   padding: 4px 0 0;
   line-height: 1.5;
@@ -407,7 +407,7 @@
 }
 
 .wst-auth-footer {
-  font-size: 11px;
+  font-size: 0.6875rem;
   color: var(--color-text-muted);
   padding: 6px 0 0;
   line-height: 1.5;
@@ -421,7 +421,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 500;
   padding: 4px 0;
 }
@@ -451,7 +451,7 @@
 
 .wst-status-protocol {
   margin-left: auto;
-  font-size: 11px;
+  font-size: 0.6875rem;
   color: var(--color-text-muted);
 }
 
@@ -475,7 +475,7 @@
   border: 1.5px solid var(--color-border);
   border-radius: 8px;
   color: var(--color-text);
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-family: 'JetBrains Mono', monospace;
   outline: none;
   transition: border-color 0.2s;
@@ -500,7 +500,7 @@
 }
 
 .wst-log-title {
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--color-text);
 }
@@ -522,7 +522,7 @@
   gap: 8px;
   padding: 40px;
   color: var(--color-text-muted);
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
 .wst-empty-icon {
@@ -535,7 +535,7 @@
   gap: 8px;
   padding: 5px 10px;
   border-radius: 6px;
-  font-size: 12px;
+  font-size: 0.75rem;
   font-family: 'JetBrains Mono', monospace;
   transition: background 0.1s;
 }
@@ -564,13 +564,13 @@
 
 .wst-log-time {
   color: var(--color-text-muted);
-  font-size: 11px;
+  font-size: 0.6875rem;
   flex-shrink: 0;
   min-width: 60px;
 }
 
 .wst-log-badge {
-  font-size: 10px;
+  font-size: 0.625rem;
   font-weight: 600;
   padding: 1px 6px;
   border-radius: 4px;

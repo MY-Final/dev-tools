@@ -1,132 +1,135 @@
 /* ========================================
    Case Converter 页面
+   页框、卡片底色和页头对齐由 tool-layout.css 统一处理，这里只写内容区。
+   布局随工具栏宽度变化，使用 @container tool，不使用视口媒体查询。
    ======================================== */
 
-.cc-page {
-  width: 100%;
-  height: 100%;
+.cc-card {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  padding: 40px 24px;
-  overflow-y: auto;
-}
-
-.cc-card {
-  width: 100%;
-  max-width: 680px;
-  background: var(--glass-bg);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--glass-border);
-  border-radius: 20px;
-  padding: 32px;
-  box-shadow: var(--shadow-xl);
-}
-
-.cc-header {
-  text-align: center;
-  margin-bottom: 28px;
+  gap: 14px;
+  min-width: 0;
 }
 
 .cc-title {
-  font-size: 24px;
-  font-weight: 700;
+  margin: 0;
   color: var(--color-text);
-  font-family: 'JetBrains Mono', monospace;
-  letter-spacing: -0.5px;
-  margin-bottom: 6px;
+  font-family: inherit;
+  font-size: var(--text-2xl);
+  font-weight: 600;
+  letter-spacing: -0.02em;
 }
 
 .cc-subtitle {
-  font-size: 14px;
+  margin: 4px 0 0;
   color: var(--color-text-muted);
+  font-size: var(--text-base);
+  line-height: 1.55;
 }
 
-/* 输入区域 */
+/* 输入区 */
 .cc-input-area {
-  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.cc-input-header {
+.cc-input-head {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 10px;
+  gap: 8px 12px;
 }
 
-.cc-input-label {
-  font-size: 11px;
+.cc-label {
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
   font-weight: 600;
+}
+
+.cc-stats {
+  margin-left: auto;
   color: var(--color-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: var(--text-xs);
+  white-space: nowrap;
 }
 
-.cc-samples {
-  display: flex;
-  gap: 6px;
-}
-
-.cc-sample-btn {
-  padding: 4px 10px;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-  color: var(--color-text-muted);
-  font-size: 11px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.cc-sample-btn:hover {
-  border-color: var(--color-accent-soft);
-  color: var(--color-accent-soft);
-}
-
+/* 随内容增高，约 12 行后滚动 */
 .cc-textarea {
   width: 100%;
-  padding: 12px 14px;
+  min-height: 84px;
+  max-height: 260px;
+  field-sizing: content;
+  padding: 10px 12px;
   background: var(--color-editor-bg);
   border: 1px solid var(--color-border);
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   color: var(--color-text);
-  font-size: 13px;
   font-family: 'JetBrains Mono', monospace;
-  line-height: 1.5;
+  font-size: var(--text-base);
+  line-height: 1.6;
   resize: vertical;
-  transition: all 0.2s ease;
+  overflow-y: auto;
   outline: none;
-}
-
-.cc-textarea:focus {
-  border-color: var(--color-accent-soft);
+  transition: border-color 0.15s ease;
 }
 
 .cc-textarea::placeholder {
   color: var(--color-text-muted);
+  opacity: 1;
 }
 
-/* 操作栏 */
-.cc-actions-bar {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 20px;
+.cc-textarea:hover {
+  border-color: var(--color-border-hover);
 }
 
+.cc-textarea:focus-visible {
+  border-color: var(--color-accent-soft);
+}
+
+/* 按钮 */
 .cc-btn {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 8px 14px;
+  gap: 5px;
+  min-height: 28px;
+  padding: 4px 10px;
+  background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: 8px;
-  font-size: 12px;
-  font-weight: 500;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+  line-height: 1.2;
+  white-space: nowrap;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.cc-btn:hover:not(:disabled) {
+  background: var(--color-surface-hover);
+  border-color: var(--color-border-hover);
+  color: var(--color-text);
+}
+
+.cc-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.cc-btn-quiet {
+  background: transparent;
+  border-color: transparent;
+  color: var(--color-text-muted);
+}
+
+.cc-btn-quiet:hover:not(:disabled) {
+  background: var(--color-surface);
+  border-color: var(--color-border);
+  color: var(--color-text-secondary);
 }
 
 .cc-btn-primary {
@@ -135,154 +138,210 @@
   color: var(--color-text-inverse);
 }
 
-.cc-btn-primary:hover {
+.cc-btn-primary:hover:not(:disabled) {
   background: var(--color-accent-soft-hover);
+  border-color: var(--color-accent-soft-hover);
+  color: var(--color-text-inverse);
 }
 
-.cc-btn-ghost {
-  background: transparent;
-  border-color: var(--color-border);
+.cc-btn:focus-visible,
+.cc-chip:focus-visible,
+.cc-search:focus-visible,
+.cc-check input:focus-visible {
+  outline: 2px solid var(--color-accent-soft);
+  outline-offset: 2px;
+}
+
+/* 筛选工具栏 */
+.cc-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+
+.cc-search {
+  flex: 1 1 200px;
+  min-width: 0;
+  height: 30px;
+  padding: 0 10px;
+  background: var(--color-editor-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  font-size: var(--text-sm);
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.cc-search::placeholder {
   color: var(--color-text-muted);
 }
 
-.cc-btn-ghost:hover {
+.cc-search:hover {
   border-color: var(--color-border-hover);
-  color: var(--color-text-secondary);
 }
 
-/* 结果列表 */
+.cc-search:focus-visible {
+  border-color: var(--color-accent-soft);
+}
+
+.cc-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.cc-check input {
+  margin: 0;
+  accent-color: var(--color-accent-soft);
+}
+
+/* 结果行：窄屏上下堆叠，宽屏为 标签 | 结果 | 操作 三列 */
 .cc-results {
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 
-.cc-result-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 10px 14px;
+.cc-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  gap: 8px 14px;
+  padding: 10px 12px;
   background: var(--color-editor-bg);
   border: 1px solid var(--color-border);
-  border-radius: 10px;
-  transition: all 0.15s ease;
+  border-radius: var(--radius-lg);
+  transition: border-color 0.15s ease;
 }
 
-.cc-result-row:hover {
+.cc-row:hover {
   border-color: var(--color-border-hover);
 }
 
-.cc-result-info {
+.cc-row-info {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  min-width: 120px;
-  flex-shrink: 0;
+  min-width: 0;
 }
 
-.cc-result-label {
-  font-size: 13px;
-  font-weight: 600;
+.cc-row-label {
   color: var(--color-text);
   font-family: 'JetBrains Mono', monospace;
+  font-size: var(--text-base);
+  font-weight: 600;
+  overflow-wrap: anywhere;
 }
 
-.cc-result-hint {
-  font-size: 11px;
+.cc-row-desc {
   color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  line-height: 1.5;
 }
 
-.cc-result-value-wrap {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.cc-row-value {
+  display: block;
   min-width: 0;
-  flex: 1;
-}
-
-.cc-result-value {
-  flex: 1;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 13px;
-  color: var(--color-accent-soft);
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
   padding: 6px 10px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  user-select: all;
-}
-
-.cc-result-actions {
-  display: flex;
-  gap: 4px;
-  flex-shrink: 0;
-}
-
-.cc-icon-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: var(--text-base);
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  user-select: text;
+}
+
+.cc-row-same .cc-row-value {
   color: var(--color-text-muted);
+}
+
+.cc-row-empty {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  font-style: italic;
+}
+
+.cc-row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+@container tool (min-width: 640px) {
+  .cc-row {
+    grid-template-columns: minmax(150px, 180px) minmax(0, 1fr) auto;
+    align-items: center;
+  }
+
+  .cc-row-actions {
+    flex-wrap: nowrap;
+    justify-content: flex-end;
+  }
+}
+
+/* 空状态与无匹配提示 */
+.cc-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.cc-empty p {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-base);
+}
+
+.cc-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-width: 100%;
+}
+
+.cc-chip {
+  max-width: 100%;
+  padding: 4px 10px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  color: var(--color-text-secondary);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: var(--text-sm);
+  text-align: left;
+  overflow-wrap: anywhere;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease;
 }
 
-.cc-icon-btn:hover {
-  border-color: var(--color-accent-soft);
-  color: var(--color-accent-soft);
+.cc-chip:hover {
+  border-color: var(--color-border-hover);
+  color: var(--color-text);
 }
 
-/* 底部提示 */
-.cc-hint-footer {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 20px;
-  padding: 10px 14px;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  font-size: 12px;
+.cc-no-match {
+  margin: 0;
+  padding: 14px 12px;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-lg);
   color: var(--color-text-muted);
-}
-
-/* 响应式 */
-@media (max-width: 600px) {
-  .cc-page {
-    padding: 24px 16px;
-  }
-
-  .cc-card {
-    padding: 24px 20px;
-    border-radius: 16px;
-  }
-
-  .cc-title {
-    font-size: 20px;
-  }
-
-  .cc-input-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-  }
-
-  .cc-result-row {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-  }
-
-  .cc-result-value-wrap {
-    width: 100%;
-  }
+  font-size: var(--text-sm);
+  line-height: 1.6;
 }

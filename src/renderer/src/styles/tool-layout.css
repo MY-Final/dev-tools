@@ -1,24 +1,39 @@
 /* ========================================
    Shared Tool Layout
+   所有工具共用一套骨架：左对齐页头 + 内容区，
+   宽度按内容类型分三档，工作台类占满剩余高度。
    ======================================== */
 
 .tool-shell {
+  --tool-gutter: clamp(20px, 2.6vw, 36px);
+
   width: 100%;
+  min-width: 0;
   min-height: 100%;
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  padding: clamp(48px, 7vh, 84px) clamp(24px, 4vw, 56px) 40px;
+  padding: 28px var(--tool-gutter) 48px;
+
+  /* 布局按内容区实际宽度切换，窗口缩放与侧栏收放都能响应 */
+  container-type: inline-size;
+  container-name: tool;
 }
 
 .tool-shell-main {
-  width: min(100%, 760px);
+  --tool-max: 900px;
+
+  width: 100%;
+  max-width: var(--tool-max);
   min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-wrap: anywhere;
 }
 
 /* Result-heavy tools: lists, reports, generated batches. */
 .tool-shell-main:has(.nfm-page),
-.tool-shell-main:has(.re-page),
 .tool-shell-main:has(.token-generator-page),
 .tool-shell-main:has(.clm-page),
 .tool-shell-main:has(.sv-page),
@@ -27,15 +42,17 @@
 .tool-shell-main:has(.mvn-page),
 .tool-shell-main:has(.npm-page),
 .tool-shell-main:has(.dh-page),
-.tool-shell-main:has(.uap-page) {
-  width: min(100%, 960px);
+.tool-shell-main:has(.uap-page),
+.tool-shell-main:has(.at-page),
+.tool-shell-main:has(.ev-page) {
+  --tool-max: 1080px;
 }
 
 /* Cheat sheets are reference libraries, not forms. */
 .tool-shell-main:has(.gcs-page),
 .tool-shell-main:has(.dcs-page),
 .tool-shell-main:has(.cs-page) {
-  width: min(100%, 1080px);
+  --tool-max: 1240px;
 }
 
 /* Complex tools that benefit from a larger operating surface. */
@@ -47,83 +64,191 @@
 .tool-shell-main:has(.xp-page),
 .tool-shell-main:has(.wst-page),
 .tool-shell-main:has(.cors-page),
-.tool-shell-main:has(.tr-page) {
-  width: min(100%, 1040px);
+.tool-shell-main:has(.tr-page),
+.tool-shell-main:has(.tc-page),
+.tool-shell-main:has(.tzc-page),
+.tool-shell-main:has(.dfc-page),
+.tool-shell-main:has(.nb-page),
+.tool-shell-main:has(.cv-page),
+.tool-shell-main:has(.pg2-page),
+.tool-shell-main:has(.kt-page),
+.tool-shell-main:has(.mt-page),
+.tool-shell-main:has(.re-page),
+.tool-shell-main:has(.sc-page),
+.tool-shell-main:has(.v4c-page),
+.tool-shell-main:has(.device-page),
+.tool-shell-main:has(.urlc-page),
+.tool-shell-main:has(.b64-page),
+.tool-shell-main:has(.hmac-page),
+.tool-shell-main:has(.jwt-page),
+.tool-shell-main:has(.jd-page),
+.tool-shell-main:has(.ade-page),
+.tool-shell-main:has(.cron-page),
+.tool-shell-main:has(.cp-page),
+.tool-shell-main:has(.pg-page) {
+  --tool-max: 1120px;
 }
 
 /* Workspace tools manage their own dense editor/table layout. */
 .tool-shell-main:has(.jf-page),
 .tool-shell-main:has(.mp-page),
 .tool-shell-main:has(.csv-page),
-.tool-shell-main:has(.xf-page) {
-  width: 100%;
+.tool-shell-main:has(.xf-page),
+.tool-shell-main:has(.df-page) {
+  --tool-max: none;
 }
 
-.tool-shell :is(
-  .converter-page,
-  .tc-page,
-  .cv-page,
-  .nb-page,
-  .uc-page,
-  .im-page,
-  .dfc-page,
-  .nf-page,
-  .nfm-page,
-  .re-page,
-  .cc-page,
-  .bc-page,
-  .url-page,
-  .hash-page,
-  .pwd-page,
-  .jwt-page,
-  .jd-page,
-  .token-page,
-  .token-generator-page,
-  .cron-page,
-  .lorem-page,
-  .li-page,
-  .regex-page,
-  .rx-page,
-  .diff-page,
-  .ud-page,
-  .htmljsx-page,
-  .hmac-page,
-  .cert-page,
-  .ssh-page,
-  .skg-page,
-  .tn-page,
-  .re-page,
-  .v4c-page,
-  .sc-page,
-  .pg2-page,
-  .myip-page,
-  .ts-page,
-  .kt-page,
-  .mt-page,
-  .clm-page,
-  .uv-page,
-  .si-page,
-  .sv-page,
-  .ta-page,
-  .ui-page,
-  .tzc-page,
-  .tr-page,
-  .mvn-page,
-  .npm-page,
-  .dh-page,
-  .uap-page,
-  .jc-page,
-  .dc-page,
-  .xp-page,
-  .wst-page,
-  .cors-page
-) {
+.tool-shell:has(:is(.jf-page, .mp-page, .csv-page, .xf-page, .df-page)) {
+  align-items: stretch;
+  height: 100%;
+  min-height: 0;
+}
+
+/* 工作台占满可用高度，ToolHelp 提示条不再被 100vh 计算忽略 */
+.tool-shell-main:has(:is(.jf-page, .mp-page, .csv-page, .xf-page, .df-page)) {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.tool-shell-main:has(:is(.jf-page, .mp-page, .csv-page, .xf-page, .df-page))
+  > :is(.jf-page, .mp-page, .csv-page, .xf-page, .df-page) {
+  flex: 1 1 auto;
+  height: auto;
+  min-height: 0;
+}
+
+/* 宽屏时把可用宽度还给内容：表单类保持可读行长，结果/速查类展开 */
+@container tool (min-width: 1080px) {
+  .tool-shell-main {
+    --tool-max: 980px;
+  }
+
+  .tool-shell-main:has(.nfm-page),
+  .tool-shell-main:has(.token-generator-page),
+  .tool-shell-main:has(.clm-page),
+  .tool-shell-main:has(.sv-page),
+  .tool-shell-main:has(.uv-page),
+  .tool-shell-main:has(.si-page),
+  .tool-shell-main:has(.mvn-page),
+  .tool-shell-main:has(.npm-page),
+  .tool-shell-main:has(.dh-page),
+  .tool-shell-main:has(.uap-page),
+  .tool-shell-main:has(.at-page),
+  .tool-shell-main:has(.ev-page) {
+    --tool-max: 1280px;
+  }
+
+  .tool-shell-main:has(.gcs-page),
+  .tool-shell-main:has(.dcs-page),
+  .tool-shell-main:has(.cs-page) {
+    --tool-max: 1440px;
+  }
+
+  .tool-shell-main:has(.converter-page),
+  .tool-shell-main:has(.uc-page),
+  .tool-shell-main:has(.ta-page),
+  .tool-shell-main:has(.jc-page),
+  .tool-shell-main:has(.dc-page),
+  .tool-shell-main:has(.xp-page),
+  .tool-shell-main:has(.wst-page),
+  .tool-shell-main:has(.cors-page),
+  .tool-shell-main:has(.tr-page),
+  .tool-shell-main:has(.tc-page),
+  .tool-shell-main:has(.tzc-page),
+  .tool-shell-main:has(.dfc-page),
+  .tool-shell-main:has(.nb-page),
+  .tool-shell-main:has(.cv-page),
+  .tool-shell-main:has(.pg2-page),
+  .tool-shell-main:has(.kt-page),
+  .tool-shell-main:has(.mt-page),
+  .tool-shell-main:has(.re-page),
+  .tool-shell-main:has(.sc-page),
+  .tool-shell-main:has(.v4c-page),
+  .tool-shell-main:has(.device-page),
+  .tool-shell-main:has(.urlc-page),
+  .tool-shell-main:has(.b64-page),
+  .tool-shell-main:has(.hmac-page),
+  .tool-shell-main:has(.jwt-page),
+  .tool-shell-main:has(.jd-page),
+  .tool-shell-main:has(.ade-page),
+  .tool-shell-main:has(.cron-page),
+  .tool-shell-main:has(.cp-page),
+  .tool-shell-main:has(.pg-page) {
+    --tool-max: 1280px;
+  }
+}
+
+.tool-shell
+  :is(
+    .converter-page,
+    .tc-page,
+    .cv-page,
+    .nb-page,
+    .uc-page,
+    .im-page,
+    .dfc-page,
+    .nf-page,
+    .nfm-page,
+    .re-page,
+    .cc-page,
+    .b64-page,
+    .urlc-page,
+    .hg-page,
+    .pg-page,
+    .jwt-page,
+    .jd-page,
+    .token-page,
+    .token-generator-page,
+    .cron-page,
+    .lorem-page,
+    .li-page,
+    .regex-page,
+    .rx-page,
+    .diff-page,
+    .ud-page,
+    .htmljsx-page,
+    .hmac-page,
+    .cp-page,
+    .ssh-page,
+    .skg-page,
+    .tn-page,
+    .v4c-page,
+    .sc-page,
+    .pg2-page,
+    .myip-page,
+    .ts-page,
+    .kt-page,
+    .mt-page,
+    .clm-page,
+    .uv-page,
+    .si-page,
+    .sv-page,
+    .ta-page,
+    .ui-page,
+    .tzc-page,
+    .tr-page,
+    .mvn-page,
+    .npm-page,
+    .dh-page,
+    .uap-page,
+    .jc-page,
+    .dc-page,
+    .xp-page,
+    .wst-page,
+    .cors-page
+  ) {
   height: auto;
   min-height: 0;
   padding: 0;
   align-items: stretch;
   justify-content: flex-start;
   overflow: visible;
+}
+
+.tool-shell :is(.gcs-card, .dcs-card, .cs-card) {
+  max-width: none;
 }
 
 .tool-shell :is(.gcs-page, .dcs-page, .cs-page) {
@@ -135,141 +260,252 @@
   overflow: visible;
 }
 
-.tool-shell :is(
-  .converter-card,
-  .tc-card,
-  .cv-card,
-  .nb-card,
-  .uc-card,
-  .im-card,
-  .dfc-card,
-  .nf-card,
-  .nfm-card,
-  .re-card,
-  .cc-card,
-  .bc-card,
-  .url-card,
-  .hash-card,
-  .pwd-card,
-  .jwt-card,
-  .jd-card,
-  .token-card,
-  .tg-card,
-  .cron-card,
-  .lorem-card,
-  .li-card,
-  .regex-card,
-  .rx-card,
-  .diff-card,
-  .ud-card,
-  .htmljsx-card,
-  .hmac-card,
-  .cert-card,
-  .ssh-card,
-  .skg-card,
-  .tn-card,
-  .v4c-card,
-  .sc-card,
-  .pg2-card,
-  .myip-card,
-  .ts-card,
-  .kt-card,
-  .mt-card,
-  .clm-card,
-  .uv-card,
-  .si-card,
-  .sv-card,
-  .ta-card,
-  .ui-card,
-  .tzc-card,
-  .tr-card,
-  .mvn-card,
-  .npm-card,
-  .dh-card,
-  .uap-card,
-  .jc-card,
-  .dc-card,
-  .xp-card,
-  .wst-card,
-  .cors-card
-) {
+/* 工作台页面吃掉剩余高度，编辑器不再塌成几行 */
+.tool-shell :is(.jf-page, .mp-page, .csv-page, .xf-page, .df-page) {
+  flex: 1 1 auto;
+  height: auto;
+  min-height: 0;
+}
+
+.tool-shell
+  :is(
+    .converter-card,
+    .tc-card,
+    .cv-card,
+    .nb-card,
+    .uc-card,
+    .im-card,
+    .dfc-card,
+    .nf-card,
+    .nfm-card,
+    .re-card,
+    .cc-card,
+    .bc-card,
+    .url-card,
+    .hash-card,
+    .pwd-card,
+    .jwt-card,
+    .jd-card,
+    .token-card,
+    .tg-card,
+    .cron-card,
+    .lorem-card,
+    .li-card,
+    .regex-card,
+    .rx-card,
+    .diff-card,
+    .ud-card,
+    .htmljsx-card,
+    .hmac-card,
+    .cert-card,
+    .ssh-card,
+    .skg-card,
+    .tn-card,
+    .v4c-card,
+    .sc-card,
+    .pg2-card,
+    .myip-card,
+    .ts-card,
+    .kt-card,
+    .mt-card,
+    .clm-card,
+    .uv-card,
+    .si-card,
+    .sv-card,
+    .ta-card,
+    .ui-card,
+    .tzc-card,
+    .tr-card,
+    .mvn-card,
+    .npm-card,
+    .dh-card,
+    .uap-card,
+    .jc-card,
+    .dc-card,
+    .xp-card,
+    .wst-card,
+    .cors-card
+  ) {
+  width: 100%;
+  min-width: 0;
   max-width: none;
 }
 
-.tool-shell :is(.gcs-card, .dcs-card, .cs-card) {
-  max-width: none;
+/* ── 通用页框 ────────────────────────────────────────────────
+   每个工具页只保留一层内容平面：页面本身不再是浮在背景上的
+   圆角卡片，页头左对齐，标题收敛到同一档字号。这样即使某个
+   工具没有单独重写样式，也会落在同一套骨架上。 */
+.tool-shell-main > :is([class$='-page'], [class*='-page ']) {
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  padding: 0;
+  align-items: stretch;
+  justify-content: flex-start;
+  overflow: visible;
+  background: transparent;
+  border: 0;
 }
 
-.tool-shell :is(
-  .converter-header,
-  .tc-header,
-  .cv-header,
-  .nb-header,
-  .uc-header,
-  .im-header,
-  .dfc-header,
-  .nf-header,
-  .nfm-header,
-  .re-header,
-  .cc-header,
-  .bc-header,
-  .url-header,
-  .hash-header,
-  .pwd-header,
-  .jwt-header,
-  .jd-header,
-  .token-header,
-  .tg-header,
-  .cron-header,
-  .lorem-header,
-  .li-header,
-  .regex-header,
-  .rx-header,
-  .diff-header,
-  .ud-header,
-  .htmljsx-header,
-  .hmac-header,
-  .cert-header,
-  .ssh-header,
-  .skg-header,
-  .tn-header,
-  .v4c-header,
-  .sc-header,
-  .pg2-header,
-  .myip-header,
-  .ts-header,
-  .kt-header,
-  .mt-header,
-  .clm-header,
-  .uv-header,
-  .si-header,
-  .sv-header,
-  .ta-header,
-  .ui-header,
-  .tzc-header,
-  .tr-header,
-  .mvn-header,
-  .npm-header,
-  .dh-header,
-  .uap-header,
-  .jc-header,
-  .dc-header,
-  .xp-header,
-  .wst-header,
-  .cors-header
-) {
-  text-align: center;
+.tool-shell-main
+  > :is([class$='-page'], [class*='-page '])
+  > :is([class$='-card'], [class*='-card ']) {
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.tool-shell-main
+  > :is([class$='-page'], [class*='-page '])
+  > :is([class$='-card'], [class*='-card '])
+  > :is([class$='-header'], [class*='-header ']) {
+  margin-bottom: 18px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--color-border);
+  text-align: left;
+  align-items: flex-start;
+}
+
+/* 页面主标题只在这一层归一化，section 内部的小标题不受影响 */
+.tool-shell-main
+  > :is([class$='-page'], [class*='-page '])
+  > :is([class$='-card'], [class*='-card '])
+  > :is([class$='-header'], [class*='-header '])
+  > :is([class$='-title'], [class*='-title ']),
+.tool-shell-main
+  > :is([class$='-page'], [class*='-page '])
+  > :is([class$='-header'], [class*='-header '])
+  > :is([class$='-title'], [class*='-title ']) {
+  margin: 0 0 4px;
+  font-family: inherit;
+  font-size: var(--text-2xl);
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  color: var(--color-text);
+}
+
+.tool-shell-main
+  > :is([class$='-page'], [class*='-page '])
+  > :is([class$='-card'], [class*='-card '])
+  > :is([class$='-header'], [class*='-header '])
+  > :is([class$='-subtitle'], [class*='-subtitle ']),
+.tool-shell-main
+  > :is([class$='-page'], [class*='-page '])
+  > :is([class$='-header'], [class*='-header '])
+  > :is([class$='-subtitle'], [class*='-subtitle ']) {
+  margin: 0;
+  max-width: 62ch;
+  color: var(--color-text-muted);
+  font-size: var(--text-base);
+  line-height: 1.55;
+}
+
+/* 页头统一样式后，标题旁的装饰性 kicker/eyebrow 不必再占一行 */
+.tool-shell-main :is([class$='-kicker'], [class*='-kicker ']) {
+  display: none;
+}
+
+/* 分段选择器：填充 + 描边，与导航项的纯填充选中态区分开。
+   琥珀只留给主操作，避免每个标签都在抢注意力。 */
+.tool-shell-main :is([class$='-tab'], [class*='-tab ']):is(.active, [aria-selected='true']) {
+  background: var(--color-surface-active);
+  border-color: var(--color-border-active);
+  color: var(--color-text);
+  font-weight: 500;
+}
+
+.tool-shell-main :is([class$='-tab'], [class*='-tab ']):active:not(.active) {
+  background: var(--color-surface-active);
+}
+
+/* 标签栏按内容宽度收缩，不做成铺满整行的空槽 */
+.tool-shell-main :is([class$='-tabs'], [class*='-tabs ']) {
+  width: fit-content;
+  max-width: 100%;
+}
+
+.tool-shell-main :is([class$='-tabs'], [class*='-tabs ']) > :is([class$='-tab'], [class*='-tab ']) {
+  flex: 0 0 auto;
+}
+
+/* 页头统一左对齐；分类标题、表单标签自然形成扫描线 */
+.tool-shell
+  :is(
+    .converter-header,
+    .tc-header,
+    .cv-header,
+    .nb-header,
+    .uc-header,
+    .im-header,
+    .dfc-header,
+    .nf-header,
+    .nfm-header,
+    .re-header,
+    .cc-header,
+    .bc-header,
+    .url-header,
+    .hash-header,
+    .pwd-header,
+    .jwt-header,
+    .jd-header,
+    .token-header,
+    .tg-header,
+    .cron-header,
+    .lorem-header,
+    .li-header,
+    .regex-header,
+    .rx-header,
+    .diff-header,
+    .ud-header,
+    .htmljsx-header,
+    .hmac-header,
+    .cert-header,
+    .ssh-header,
+    .skg-header,
+    .tn-header,
+    .v4c-header,
+    .sc-header,
+    .pg2-header,
+    .myip-header,
+    .ts-header,
+    .kt-header,
+    .mt-header,
+    .clm-header,
+    .uv-header,
+    .si-header,
+    .sv-header,
+    .ta-header,
+    .ui-header,
+    .tzc-header,
+    .tr-header,
+    .mvn-header,
+    .npm-header,
+    .dh-header,
+    .uap-header,
+    .jc-header,
+    .dc-header,
+    .xp-header,
+    .wst-header,
+    .cors-header
+  ) {
+  text-align: left;
+  align-items: flex-start;
 }
 
 .tool-shell :is(.gcs-header, .dcs-header, .cs-header) {
-  text-align: center;
+  text-align: left;
+  align-items: flex-start;
 }
 
 /* Wide screens should use horizontal space for repeated results. */
 @media (min-width: 900px) {
-  .tool-shell .re-cidr-list,
   .tool-shell .tg-results-list,
-  .tool-shell .clm-list,
   .tool-shell .tn-list {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -278,13 +514,13 @@
 
   .tool-shell :is(.gcs-content, .dcs-content, .cs-content) {
     display: block;
-    column-width: 420px;
-    column-gap: 16px;
+    column-width: 400px;
+    column-gap: 20px;
   }
 
   .tool-shell :is(.gcs-category, .dcs-category, .cs-category) {
     break-inside: avoid;
-    margin-bottom: 16px;
+    margin-bottom: 18px;
   }
 
   .tool-shell :is(.gcs-command, .dcs-command, .cs-command) {
@@ -306,45 +542,410 @@
   }
 }
 
-@media (min-width: 1280px) {
-  .tool-shell-main {
-    width: min(100%, 820px);
-  }
-
-  .tool-shell-main:has(.nfm-page),
-  .tool-shell-main:has(.re-page),
-  .tool-shell-main:has(.token-generator-page),
-  .tool-shell-main:has(.clm-page),
-  .tool-shell-main:has(.sv-page),
-  .tool-shell-main:has(.uv-page),
-  .tool-shell-main:has(.si-page),
-  .tool-shell-main:has(.mvn-page),
-  .tool-shell-main:has(.npm-page),
-  .tool-shell-main:has(.dh-page),
-  .tool-shell-main:has(.uap-page) {
-    width: min(100%, 980px);
-  }
-
-  .tool-shell-main:has(.gcs-page),
-  .tool-shell-main:has(.dcs-page),
-  .tool-shell-main:has(.cs-page) {
-    width: min(100%, 1120px);
-  }
-
-  .tool-shell-main:has(.converter-page),
-  .tool-shell-main:has(.ta-page),
-  .tool-shell-main:has(.jc-page),
-  .tool-shell-main:has(.dc-page),
-  .tool-shell-main:has(.xp-page),
-  .tool-shell-main:has(.wst-page),
-  .tool-shell-main:has(.cors-page),
-  .tool-shell-main:has(.tr-page) {
-    width: min(100%, 1080px);
+@media (max-width: 1100px) {
+  .tool-shell {
+    padding: 24px 20px 36px;
   }
 }
 
-@media (max-width: 1100px) {
+@media (max-width: 767px) {
   .tool-shell {
-    padding: 28px 18px;
+    padding: 16px 12px 32px;
+  }
+
+  .tool-shell-main {
+    width: 100%;
+  }
+
+  .tool-shell :is(input, select, textarea, button) {
+    max-width: 100%;
+  }
+
+  .tool-shell :is(pre, code) {
+    max-width: 100%;
+    overflow-x: auto;
+  }
+}
+
+/* ========================================
+   工具页公共骨架
+   结构优先于装饰：页头 + 工具条 + 单一内容平面。
+   新页面直接复用这些类，避免每页各写一套卡片。
+   ======================================== */
+
+.tool-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
+}
+
+.tool-page-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.tool-page-heading {
+  min-width: 0;
+}
+
+.tool-page-title {
+  margin: 0;
+  color: var(--color-text);
+  font-size: var(--text-2xl);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.tool-page-desc {
+  max-width: 68ch;
+  margin: 5px 0 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-base);
+  line-height: 1.55;
+}
+
+.tool-page-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* 一个功能模块一张平面，平面内部用分隔线组织，不再叠加小卡片 */
+.tool-panel {
+  min-width: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.tool-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 40px;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.tool-panel-title {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+  font-weight: 500;
+}
+
+.tool-panel-body {
+  padding: 14px;
+}
+
+.tool-panel-body--flush {
+  padding: 0;
+}
+
+.tool-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* ── 控件标尺：输入框/下拉 32px，主输入 38px，按钮 32px ── */
+
+.tool-input,
+.tool-select {
+  height: 32px;
+  min-height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-editor-bg);
+  color: var(--color-text);
+  font-family: inherit;
+  font-size: var(--text-base);
+  line-height: 1.4;
+  outline: none;
+  transition:
+    border-color 0.12s ease,
+    background-color 0.12s ease,
+    box-shadow 0.12s ease;
+}
+
+.tool-input::placeholder {
+  color: var(--color-text-muted);
+}
+
+.tool-input:hover:not(:focus),
+.tool-select:hover:not(:focus) {
+  border-color: var(--color-border-hover);
+}
+
+.tool-input:focus,
+.tool-select:focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 2px var(--color-accent-subtle);
+}
+
+.tool-input--lg {
+  height: 38px;
+  min-height: 38px;
+  padding: 0 12px;
+  font-size: var(--text-md);
+}
+
+.tool-input--mono,
+.tool-select--mono {
+  font-family: 'JetBrains Mono', monospace;
+  font-variant-ligatures: none;
+}
+
+.tool-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-family: inherit;
+  font-size: var(--text-base);
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  transition:
+    background-color 0.12s ease,
+    border-color 0.12s ease,
+    color 0.12s ease;
+}
+
+.tool-btn:hover:not(:disabled) {
+  background: var(--color-surface-hover);
+  color: var(--color-text);
+}
+
+.tool-btn:active:not(:disabled) {
+  background: var(--color-surface-active);
+}
+
+.tool-btn:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+.tool-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.tool-btn--outline {
+  border-color: var(--color-border);
+  background: var(--color-surface);
+}
+
+.tool-btn--outline:hover:not(:disabled) {
+  border-color: var(--color-border-hover);
+}
+
+.tool-btn--primary {
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+  color: var(--color-text-inverse);
+  font-weight: 600;
+}
+
+.tool-btn--primary:hover:not(:disabled) {
+  border-color: var(--color-accent-hover);
+  background: var(--color-accent-hover);
+  color: var(--color-text-inverse);
+}
+
+.tool-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition:
+    background-color 0.12s ease,
+    color 0.12s ease;
+}
+
+.tool-icon-btn:hover {
+  background: var(--color-surface-hover);
+  color: var(--color-text);
+}
+
+.tool-icon-btn:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+/* 紧凑分段选择器：与导航的纯填充选中态区分，多一条内描边 */
+.tool-segmented {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-editor-bg);
+}
+
+.tool-seg {
+  height: 26px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  font-weight: 400;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color 0.12s ease,
+    color 0.12s ease,
+    box-shadow 0.12s ease;
+}
+
+.tool-seg:hover:not(.active) {
+  background: var(--color-surface-hover);
+  color: var(--color-text);
+}
+
+.tool-seg.active {
+  background: var(--color-surface-active);
+  color: var(--color-text);
+  box-shadow: inset 0 0 0 1px var(--color-border-active);
+  font-weight: 500;
+}
+
+.tool-seg:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+.tool-segmented--lg .tool-seg {
+  height: 30px;
+  padding: 0 14px;
+  font-size: var(--text-base);
+}
+
+/* ── 行式数据：一个平面里放多行，用发丝线分隔 ── */
+
+.tool-rows {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.tool-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  min-height: 44px;
+  padding: 6px 14px;
+  border-top: 1px solid var(--color-border);
+}
+
+.tool-row:first-child {
+  border-top: 0;
+}
+
+.tool-row:hover {
+  background: color-mix(in srgb, var(--color-surface-hover) 60%, transparent);
+}
+
+.tool-row-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.tool-row-label {
+  color: var(--color-text);
+  font-size: var(--text-base);
+  font-weight: 500;
+}
+
+.tool-row-hint {
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+}
+
+.tool-row-value {
+  flex: 1;
+  min-width: 0;
+  color: var(--color-text);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: var(--text-base);
+  word-break: break-all;
+}
+
+/* ── 响应式分栏：窄窗口单列，宽窗口才并排 ── */
+
+.tool-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.tool-split--even {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@container tool (min-width: 980px) {
+  .tool-split {
+    grid-template-columns: minmax(0, 1.7fr) minmax(280px, 1fr);
+  }
+
+  .tool-split--even {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .tool-split--wide {
+    grid-template-columns: minmax(0, 1fr) minmax(320px, 0.62fr);
+  }
+}
+
+@media (max-width: 767px) {
+  .tool-page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .tool-page-actions {
+    justify-content: flex-start;
+    width: 100%;
+  }
+
+  .tool-row {
+    padding: 6px 10px;
   }
 }

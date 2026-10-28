@@ -17,10 +17,8 @@
   width: 100%;
   max-width: 640px;
   background: var(--glass-bg);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--glass-border);
-  border-radius: 20px;
+  border-radius: 16px;
   padding: 32px;
   box-shadow: var(--shadow-xl);
 }
@@ -31,7 +29,7 @@
 }
 
 .fg-title {
-  font-size: 24px;
+  font-size: 1.5rem;
   font-weight: 700;
   color: var(--color-text);
   font-family: 'JetBrains Mono', monospace;
@@ -40,7 +38,7 @@
 }
 
 .fg-subtitle {
-  font-size: 14px;
+  font-size: 0.875rem;
   color: var(--color-text-muted);
 }
 
@@ -50,10 +48,9 @@
 
 .fg-section-label {
   display: block;
-  font-size: 10px;
+  font-size: 0.625rem;
   font-weight: 600;
   color: var(--color-text-muted);
-  text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-bottom: 10px;
 }
@@ -70,9 +67,9 @@
   padding: 10px 14px;
   background: var(--color-editor-bg);
   border: 1px solid var(--color-border);
-  border-radius: 10px;
+  border-radius: 8px;
   color: var(--color-text);
-  font-size: 18px;
+  font-size: 1rem;
   font-weight: 600;
   font-family: 'JetBrains Mono', monospace;
   outline: none;
@@ -89,7 +86,7 @@
   padding: 3px;
   background: var(--color-editor-bg);
   border: 1px solid var(--color-border);
-  border-radius: 10px;
+  border-radius: 8px;
 }
 
 .fg-unit-btn {
@@ -98,7 +95,7 @@
   border: none;
   border-radius: 8px;
   color: var(--color-text-muted);
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -110,7 +107,7 @@
 
 .fg-unit-btn.active {
   background: var(--color-accent-soft);
-  color: white;
+  color: var(--color-text-inverse);
 }
 
 .fg-size-hint {
@@ -118,7 +115,7 @@
   align-items: center;
   gap: 6px;
   margin-top: 8px;
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--color-text-muted);
 }
 
@@ -136,7 +133,7 @@
   padding: 12px 14px;
   background: var(--color-editor-bg);
   border: 1px solid var(--color-border);
-  border-radius: 10px;
+  border-radius: 8px;
   color: var(--color-text-secondary);
   cursor: pointer;
   transition: all 0.15s ease;
@@ -160,12 +157,12 @@
 }
 
 .fg-format-name {
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 600;
 }
 
 .fg-format-desc {
-  font-size: 11px;
+  font-size: 0.6875rem;
   color: var(--color-text-muted);
 }
 
@@ -178,10 +175,10 @@
   width: 100%;
   padding: 14px;
   background: var(--color-accent-soft);
-  color: white;
+  color: var(--color-text-inverse);
   border: none;
   border-radius: 12px;
-  font-size: 15px;
+  font-size: 0.875rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -221,7 +218,7 @@
   background: var(--color-warning-subtle);
   border: 1px solid var(--color-warning);
   border-radius: 8px;
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--color-warning);
 }
 
@@ -237,6 +234,6 @@
   }
 
   .fg-title {
-    font-size: 20px;
+    font-size: 1.25rem;
   }
 }

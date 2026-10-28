@@ -1,114 +1,214 @@
 /* ========================================
-   Data Converter 页面
+   Data Format Converter 页面
+   六个结构/表格格式之间互转。左右两栏常驻，
+   格式选择放在顶部一行，避免每次转换都要重选模式。
    ======================================== */
 
 .dc-page {
   width: 100%;
-  height: 100%;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  padding: 40px 24px;
-  overflow-y: auto;
+  align-items: stretch;
+  padding: 0;
 }
 
 .dc-card {
   width: 100%;
-  max-width: 700px;
-  background: var(--glass-bg);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--glass-border);
-  border-radius: 20px;
-  padding: 32px;
-  box-shadow: var(--shadow-xl);
+  max-width: none;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  box-shadow: none;
 }
 
 .dc-header {
-  text-align: center;
-  margin-bottom: 22px;
+  margin-bottom: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .dc-title {
-  font-size: 22px;
-  font-weight: 700;
-  font-family: 'JetBrains Mono', monospace;
+  font-size: var(--text-2xl);
+  font-weight: 600;
+  letter-spacing: -0.02em;
   color: var(--color-text);
   margin: 0 0 4px;
 }
 
 .dc-subtitle {
-  font-size: 12px;
+  font-size: var(--text-base);
   color: var(--color-text-muted);
+  margin: 0;
 }
 
-/* ── Tabs ──────────────────────────────── */
+/* ── 快捷组合 ──────────────────────────── */
 
 .dc-tabs {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  display: flex;
+  flex-wrap: wrap;
   gap: 4px;
-  padding: 4px;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
-  margin-bottom: 20px;
+  margin-bottom: 12px;
 }
 
 .dc-tab {
-  padding: 8px 6px;
+  padding: 5px 10px;
   background: transparent;
-  border: none;
-  border-radius: 9px;
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
   cursor: pointer;
-  transition: all 0.15s ease;
   white-space: nowrap;
-}
-
-.dc-tab.active {
-  background: var(--color-accent-soft);
-  color: #fff;
-  font-weight: 600;
+  transition:
+    background-color 0.12s ease,
+    border-color 0.12s ease,
+    color 0.12s ease;
 }
 
 .dc-tab:hover:not(.active) {
+  border-color: var(--color-border-hover);
   color: var(--color-text);
 }
 
-/* ── Panes ─────────────────────────────── */
+.dc-tab.active {
+  background: var(--color-surface-active);
+  border-color: var(--color-border-active);
+  color: var(--color-text);
+}
+
+/* ── 格式选择行 ────────────────────────── */
+
+.dc-format-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.dc-select-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.dc-select-label {
+  font-size: var(--text-2xs);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+}
+
+.dc-select {
+  padding: 5px 8px;
+  min-width: 108px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+
+.dc-select:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+.dc-swap-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  margin-bottom: 1px;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition:
+    color 0.12s ease,
+    border-color 0.12s ease;
+}
+
+.dc-swap-btn:hover {
+  border-color: var(--color-border-hover);
+  color: var(--color-text);
+}
+
+.dc-note {
+  margin: -6px 0 12px;
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+/* ── 双栏 ──────────────────────────────── */
+
+.dc-panes {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+}
+
+@container tool (min-width: 900px) {
+  .dc-panes {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 16px;
+  }
+}
 
 .dc-pane {
-  margin-bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
 
 .dc-pane-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
   margin-bottom: 6px;
+  min-height: 24px;
 }
 
 .dc-pane-label {
-  font-size: 11px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: var(--text-xs);
   font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--color-text-secondary);
+}
+
+.dc-pane-meta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: var(--text-2xs);
   color: var(--color-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+}
+
+.dc-pane-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .dc-btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
   background: none;
   border: 1px solid var(--color-border);
-  padding: 3px 10px;
-  border-radius: 6px;
-  font-size: 11px;
-  font-weight: 500;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
   color: var(--color-text-secondary);
   cursor: pointer;
+  transition:
+    background-color 0.12s ease,
+    color 0.12s ease;
 }
 
 .dc-btn-ghost:hover {
@@ -118,71 +218,91 @@
 
 .dc-textarea {
   width: 100%;
+  min-height: 280px;
   padding: 12px 14px;
   background: var(--color-editor-bg);
   border: 1px solid var(--color-border);
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   color: var(--color-text);
-  font-size: 12px;
   font-family: 'JetBrains Mono', monospace;
+  font-size: var(--text-sm);
+  line-height: 1.55;
   resize: vertical;
   outline: none;
-  box-sizing: border-box;
-  line-height: 1.5;
 }
 
-.dc-textarea:focus {
-  border-color: var(--color-accent-soft);
-  box-shadow: 0 0 0 3px var(--color-accent-soft-subtle);
+.dc-textarea::placeholder {
+  color: var(--color-text-muted);
+  opacity: 0.7;
 }
 
-/* ── Actions ───────────────────────────── */
-
-.dc-actions {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 14px;
+.dc-textarea:focus-visible {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 2px var(--color-accent-subtle);
 }
 
-.dc-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-}
-
-/* ── Error ─────────────────────────────── */
-
-.dc-error {
-  padding: 10px 14px;
-  background: rgba(229, 62, 62, 0.08);
-  border: 1px solid rgba(229, 62, 62, 0.2);
-  border-radius: 8px;
-  color: var(--color-danger, #e53e3e);
-  font-size: 12px;
-  font-family: 'JetBrains Mono', monospace;
-  margin-bottom: 14px;
-}
-
-/* ── Output ────────────────────────────── */
+/* ── 输出 ──────────────────────────────── */
 
 .dc-output {
-  padding: 16px;
+  flex: 1 1 auto;
+  min-height: 280px;
+  max-height: 560px;
+  margin: 0;
+  padding: 12px 14px;
   background: var(--color-editor-bg);
   border: 1px solid var(--color-border);
-  border-radius: 10px;
-  font-size: 12px;
+  border-radius: var(--radius-md);
   font-family: 'JetBrains Mono', monospace;
+  font-size: var(--text-sm);
+  line-height: 1.55;
   color: var(--color-text);
   white-space: pre-wrap;
-  word-break: break-word;
-  max-height: 400px;
+  overflow-wrap: anywhere;
   overflow-y: auto;
-  line-height: 1.5;
-  margin: 0;
 }
 
-@media (max-width: 500px) {
-  .dc-page { padding: 24px 16px; }
-  .dc-card { padding: 24px 18px; border-radius: 16px; }
-  .dc-tab { font-size: 10px; }
+.dc-placeholder {
+  color: var(--color-text-muted);
+  font-family: inherit;
+}
+
+.dc-error {
+  padding: 12px 14px;
+  background: var(--color-danger-subtle);
+  border: 1px solid color-mix(in srgb, var(--color-danger) 32%, transparent);
+  border-radius: var(--radius-md);
+  color: var(--color-danger);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.dc-warnings {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dc-warnings li {
+  padding: 6px 10px;
+  background: var(--color-warning-subtle);
+  border-left: 2px solid var(--color-warning);
+  border-radius: var(--radius-xs);
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+@container tool (max-width: 620px) {
+  .dc-select {
+    min-width: 84px;
+  }
+
+  .dc-textarea,
+  .dc-output {
+    min-height: 200px;
+  }
 }

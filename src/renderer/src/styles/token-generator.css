@@ -1,472 +1,280 @@
 /* ========================================
-   Token Generator 页面 - Soft Minimalism
+   Token Generator
+   类型工具条 + 配置/结果双栏
    ======================================== */
 
-.token-generator-page {
-  width: 100%;
-  height: 100%;
+.tg-typebar {
+  overflow: hidden;
+}
+
+.tg-typebar-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 14px;
+}
+
+/* 配置与结果按内容分配宽度，结果略宽 */
+@container tool (min-width: 980px) {
+  .tg-layout {
+    grid-template-columns: minmax(0, 0.88fr) minmax(0, 1.12fr);
+  }
+}
+
+/* ── 配置 ───────────────────────────────────── */
+
+.tg-config {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  padding: 40px 24px;
-  overflow-y: auto;
-  position: relative;
+  overflow: hidden;
 }
 
-.tg-bg-decoration {
-  position: fixed;
-  top: -200px;
-  left: -200px;
-  width: 500px;
-  height: 500px;
-  background: radial-gradient(circle, var(--color-accent-soft-subtle) 0%, transparent 70%);
-  pointer-events: none;
-  z-index: 0;
-}
-
-.tg-card {
-  position: relative;
-  z-index: 1;
-  width: 100%;
-  max-width: 600px;
-  background: var(--glass-bg);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--glass-border);
-  border-radius: 20px;
-  padding: 32px;
-  box-shadow: var(--shadow-xl);
-}
-
-.tg-header {
-  text-align: center;
-  margin-bottom: 28px;
-}
-
-.tg-title {
-  font-size: 24px;
-  font-weight: 700;
-  color: var(--color-text);
-  font-family: 'JetBrains Mono', monospace;
-  letter-spacing: -0.5px;
-  margin-bottom: 6px;
-}
-
-.tg-subtitle {
-  font-size: 14px;
-  color: var(--color-text-muted);
-}
-
-/* Token 类型选择器 */
-.tg-type-selector {
+.tg-config-body {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 24px;
-  padding: 6px;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 14px;
-}
-
-.tg-type-btn {
   flex: 1;
-  min-width: 100px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 10px 12px;
-  background: transparent;
-  border: 1px solid transparent;
-  border-radius: 10px;
+  flex-direction: column;
+}
+
+.tg-count-note {
   color: var(--color-text-muted);
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  font-size: var(--text-2xs);
+  white-space: nowrap;
 }
 
-.tg-type-btn:hover {
-  color: var(--color-text-secondary);
-  background: var(--color-surface-hover);
-}
-
-.tg-type-btn.active {
-  background: var(--color-accent-soft);
-  color: var(--color-text-inverse);
-  border-color: var(--color-accent-soft);
-}
-
-/* 配置区域 */
-.tg-config {
-  margin-bottom: 20px;
-  padding: 20px;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 14px;
-}
-
-.tg-config-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--color-text-secondary);
-  margin-bottom: 16px;
-}
-
-.tg-config-icon {
-  color: var(--color-accent-soft);
-}
-
-.tg-config-section {
-  margin-bottom: 16px;
-}
-
-.tg-config-section:last-child {
-  margin-bottom: 0;
-}
-
-.tg-config-label {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--color-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 10px;
-}
-
-/* 预设按钮组 */
-.tg-presets {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.tg-preset-btn {
-  padding: 8px 14px;
-  background: var(--color-editor-bg);
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  color: var(--color-text-secondary);
-  font-size: 12px;
-  font-weight: 500;
-  font-family: 'JetBrains Mono', monospace;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.tg-preset-btn:hover {
-  border-color: var(--color-border-hover);
-  color: var(--color-text);
-}
-
-.tg-preset-btn.active {
-  background: var(--color-accent-soft-subtle);
-  border-color: var(--color-accent-soft);
-  color: var(--color-accent-soft);
-}
-
-/* 字符集选项 */
-.tg-charset-options {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.tg-charset-btn {
-  padding: 8px 14px;
-  background: var(--color-editor-bg);
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  color: var(--color-text-secondary);
-  font-size: 12px;
-  font-weight: 500;
-  font-family: 'JetBrains Mono', monospace;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.tg-charset-btn:hover {
-  border-color: var(--color-border-hover);
-  color: var(--color-text);
-}
-
-.tg-charset-btn.active {
-  background: var(--color-accent-soft-subtle);
-  border-color: var(--color-accent-soft);
-  color: var(--color-accent-soft);
-}
-
-/* 输入框 */
-.tg-input {
-  width: 100%;
-  padding: 10px 14px;
-  background: var(--color-editor-bg);
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  color: var(--color-text);
-  font-size: 13px;
-  font-family: 'JetBrains Mono', monospace;
-  transition: all 0.2s ease;
-  outline: none;
-}
-
-.tg-input:focus {
-  border-color: var(--color-accent-soft);
-}
-
-.tg-input::placeholder {
-  color: var(--color-text-muted);
-}
-
-.tg-input-custom {
-  margin-top: 10px;
-}
-
-/* 文本区域 */
-.tg-textarea {
-  width: 100%;
-  padding: 12px 14px;
-  background: var(--color-editor-bg);
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  color: var(--color-text);
-  font-size: 12px;
-  font-family: 'JetBrains Mono', monospace;
-  line-height: 1.5;
-  resize: vertical;
-  transition: all 0.2s ease;
-  outline: none;
-}
-
-.tg-textarea:focus {
-  border-color: var(--color-accent-soft);
-}
-
-.tg-textarea::placeholder {
-  color: var(--color-text-muted);
-}
-
-/* 生成按钮 */
-.tg-generate-btn {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 14px 20px;
-  background: var(--color-accent-soft);
-  color: var(--color-text-inverse);
-  border: none;
-  border-radius: 14px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  margin-bottom: 24px;
-}
-
-.tg-generate-btn:hover {
-  background: var(--color-accent-soft-hover);
-}
-
-.tg-generate-btn:active {
-  transform: scale(0.98);
-}
-
-/* 结果区域 */
-.tg-results {
-  padding: 20px;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 14px;
-}
-
-.tg-results-header {
+.tg-section {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 14px;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  padding: 12px 14px;
+  border-top: 1px solid var(--color-border);
 }
 
-.tg-results-label {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--color-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+.tg-section:first-child {
+  border-top: 0;
+}
+
+.tg-section--stack {
+  align-items: stretch;
+  flex-direction: column;
+}
+
+.tg-label {
+  color: var(--color-text-secondary);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.tg-textarea {
+  display: block;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-editor-bg);
+  color: var(--color-text);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: var(--text-sm);
+  line-height: 1.6;
+  outline: none;
+  resize: vertical;
+  transition:
+    border-color 0.12s ease,
+    box-shadow 0.12s ease;
+}
+
+.tg-textarea:hover:not(:focus) {
+  border-color: var(--color-border-hover);
+}
+
+.tg-textarea:focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 2px var(--color-accent-subtle);
+}
+
+.tg-charsets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.tg-charset {
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-editor-bg);
+  color: var(--color-text-secondary);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: var(--text-xs);
+  cursor: pointer;
+  transition:
+    background-color 0.12s ease,
+    border-color 0.12s ease,
+    color 0.12s ease;
+}
+
+.tg-charset:hover {
+  border-color: var(--color-border-hover);
+  color: var(--color-text);
+}
+
+.tg-charset.active {
+  border-color: var(--color-border-active);
+  background: var(--color-surface-active);
+  color: var(--color-text);
+}
+
+.tg-charset:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+.tg-actions {
+  padding: 12px 14px;
+  border-top: 1px solid var(--color-border);
+}
+
+.tg-actions .tool-btn {
+  width: 100%;
+  height: 34px;
+}
+
+/* ── 结果 ───────────────────────────────────── */
+
+.tg-results {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .tg-results-actions {
   display: flex;
-  gap: 8px;
-}
-
-.tg-action-btn {
-  display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 6px 10px;
-  background: var(--color-editor-bg);
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  color: var(--color-text-muted);
-  font-size: 11px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 2px;
+  margin-left: auto;
 }
 
-.tg-action-btn:hover {
-  border-color: var(--color-border-hover);
-  color: var(--color-text-secondary);
+.tg-results-actions .tool-btn {
+  height: 26px;
+  padding: 0 8px;
+  font-size: var(--text-2xs);
 }
 
 .tg-results-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
 }
 
 .tg-result-item {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 12px 14px;
-  background: var(--color-editor-bg);
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  transition: all 0.2s ease;
+  min-height: 36px;
+  padding: 4px 8px 4px 14px;
+  border-top: 1px solid var(--color-border);
+}
+
+.tg-result-item:first-child {
+  border-top: 0;
 }
 
 .tg-result-item:hover {
-  border-color: var(--color-accent-soft);
+  background: color-mix(in srgb, var(--color-surface-hover) 60%, transparent);
 }
 
 .tg-result-text {
   flex: 1;
-  font-size: 13px;
-  font-family: 'JetBrains Mono', monospace;
+  min-width: 0;
+  overflow: hidden;
   color: var(--color-text);
-  word-break: break-all;
-  line-height: 1.4;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: var(--text-sm);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  user-select: all;
 }
 
 .tg-copy-btn {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+}
+
+.tg-copy-btn:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+.tg-expand {
+  width: 100%;
+  padding: 10px 14px;
+  border: 0;
+  border-top: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-family: inherit;
+  font-size: var(--text-xs);
+  cursor: pointer;
+}
+
+.tg-expand:hover {
+  background: var(--color-surface-hover);
+  color: var(--color-text);
+}
+
+.tg-expand:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: -2px;
+}
+
+.tg-empty {
   display: flex;
+  flex: 1;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
+  min-height: 220px;
+  padding: 24px;
   color: var(--color-text-muted);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  flex-shrink: 0;
+  font-size: var(--text-sm);
+  line-height: 1.6;
+  text-align: center;
 }
 
-.tg-copy-btn:hover {
-  border-color: var(--color-accent-soft);
-  color: var(--color-accent-soft);
-  background: var(--color-accent-soft-subtle);
-}
+/* 提示 */
 
-.tg-expand-results {
-  width: 100%;
-  margin-top: 12px;
-  padding: 10px 12px;
-  border: 1px dashed var(--color-border);
-  border-radius: 10px;
-  background: var(--color-editor-bg);
-  color: var(--color-text-secondary);
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.tg-expand-results:hover {
-  border-color: var(--color-accent-soft);
-  color: var(--color-accent-soft);
-  background: var(--color-accent-soft-subtle);
-}
-
-/* Toast */
 .tg-toast {
   position: fixed;
-  top: 20px;
-  right: 20px;
+  bottom: 28px;
+  left: 50%;
+  z-index: 100;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px 18px;
-  background: var(--glass-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid var(--glass-border);
-  border-radius: 12px;
-  box-shadow: var(--shadow-lg);
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--color-success);
-  z-index: 1000;
-  animation: toast-slide-in 0.2s ease;
+  gap: 6px;
+  padding: 8px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-md);
+  color: var(--color-text);
+  font-size: var(--text-sm);
+  transform: translateX(-50%);
+  pointer-events: none;
 }
 
-@keyframes toast-slide-in {
-  from {
-    opacity: 0;
-    transform: translateX(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
+/* ── 窄容器 ─────────────────────────────────── */
 
-/* 响应式 */
-@media (max-width: 600px) {
-  .token-generator-page {
-    padding: 24px 16px;
+@container tool (max-width: 640px) {
+  .tg-results-actions .tool-btn {
+    padding: 0 6px;
   }
 
-  .tg-card {
-    padding: 24px 20px;
-    border-radius: 16px;
-  }
-
-  .tg-title {
-    font-size: 20px;
-  }
-
-  .tg-type-selector {
-    gap: 6px;
-  }
-
-  .tg-type-btn {
-    min-width: 80px;
-    padding: 8px 10px;
-    font-size: 12px;
-  }
-
-  .tg-results-header {
-    flex-direction: column;
+  .tg-section {
     align-items: flex-start;
-    gap: 10px;
-  }
-
-  .tg-results-actions {
-    width: 100%;
-  }
-
-  .tg-action-btn {
-    flex: 1;
-    justify-content: center;
   }
 }

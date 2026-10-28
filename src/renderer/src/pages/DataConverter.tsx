@@ -1,259 +1,96 @@
 import { useState, useMemo, useCallback } from 'react'
-import { Copy, Check, RotateCcw, ArrowRightLeft } from 'lucide-react'
+import { Copy, Check, RotateCcw, ArrowRight, ArrowLeftRight, FileText } from 'lucide-react'
+import {
+  DATA_FORMATS,
+  convertDocument,
+  getFormatInfo,
+  type FormatId
+} from '@renderer/lib/data-formats'
+import TextFileBar from '@renderer/components/TextFileBar'
 import '../styles/data-converter.css'
 
-type ConvertMode = 'csv2json' | 'json2csv' | 'xml2json' | 'json2xml'
-
-interface ModeDef {
-  id: ConvertMode
-  label: string
-  inputLabel: string
-  outputLabel: string
-  inputPlaceholder: string
+const SAMPLES: Record<FormatId, string> = {
+  json: '{\n  "name": "Alice",\n  "age": 30,\n  "roles": ["admin", "user"],\n  "address": {\n    "city": "NYC",\n    "zip": "10001"\n  }\n}',
+  yaml: 'name: Alice\nage: 30\nroles:\n  - admin\n  - user\naddress:\n  city: NYC\n  zip: "10001"',
+  toml: 'name = "Alice"\nage = 30\nroles = [ "admin", "user" ]\n\n[address]\ncity = "NYC"\nzip = "10001"',
+  xml: '<person id="1">\n  <name>Alice</name>\n  <age>30</age>\n  <roles>admin</roles>\n  <roles>user</roles>\n</person>',
+  csv: 'name,age,city,role\nAlice,30,New York,Engineer\nBob,25,Los Angeles,Designer\nCharlie,35,Chicago,Manager',
+  tsv: 'name\tage\tcity\nAlice\t30\tNew York\nBob\t25\tLos Angeles'
 }
 
-const MODES: ModeDef[] = [
-  {
-    id: 'csv2json',
-    label: 'CSV → JSON',
-    inputLabel: 'CSV',
-    outputLabel: 'JSON',
-    inputPlaceholder: 'name,age,city\nAlice,30,NYC\nBob,25,LA'
-  },
-  {
-    id: 'json2csv',
-    label: 'JSON → CSV',
-    inputLabel: 'JSON',
-    outputLabel: 'CSV',
-    inputPlaceholder: '[{"name":"Alice","age":30},{"name":"Bob","age":25}]'
-  },
-  {
-    id: 'xml2json',
-    label: 'XML → JSON',
-    inputLabel: 'XML',
-    outputLabel: 'JSON',
-    inputPlaceholder: '<root><item><name>Alice</name><age>30</age></item></root>'
-  },
-  {
-    id: 'json2xml',
-    label: 'JSON → XML',
-    inputLabel: 'JSON',
-    outputLabel: 'XML',
-    inputPlaceholder: '{"root":{"item":[{"name":"Alice","age":30}]}}'
-  }
+const PAIRS: Array<{ from: FormatId; to: FormatId; label: string }> = [
+  { from: 'csv', to: 'json', label: 'CSV → JSON' },
+  { from: 'json', to: 'csv', label: 'JSON → CSV' },
+  { from: 'json', to: 'yaml', label: 'JSON → YAML' },
+  { from: 'yaml', to: 'json', label: 'YAML → JSON' },
+  { from: 'json', to: 'toml', label: 'JSON → TOML' },
+  { from: 'xml', to: 'json', label: 'XML → JSON' }
 ]
 
-// ── Converters ─────────────────────────────────────────────────
-
-function csvToJson(csv: string): string {
-  const lines = csv.trim().split(/\r?\n/).filter(Boolean)
-  if (lines.length === 0) return '[]'
-
-  const headers = parseCSVLine(lines[0])
-  const rows: Record<string, string>[] = []
-
-  for (let i = 1; i < lines.length; i++) {
-    const values = parseCSVLine(lines[i])
-    const row: Record<string, string> = {}
-    headers.forEach((h, j) => { row[h] = values[j] || '' })
-    rows.push(row)
-  }
-
-  return JSON.stringify(rows, null, 2)
+function FormatSelect({
+  value,
+  onChange,
+  label,
+  exclude
+}: {
+  value: FormatId
+  onChange: (next: FormatId) => void
+  label: string
+  exclude?: FormatId
+}): React.JSX.Element {
+  return (
+    <label className="dc-select-field">
+      <span className="dc-select-label">{label}</span>
+      <select
+        className="dc-select"
+        value={value}
+        onChange={(e) => onChange(e.target.value as FormatId)}
+      >
+        {DATA_FORMATS.filter((format) => format.id !== exclude).map((format) => (
+          <option key={format.id} value={format.id}>
+            {format.label}
+          </option>
+        ))}
+      </select>
+    </label>
+  )
 }
-
-function parseCSVLine(line: string): string[] {
-  const result: string[] = []
-  let current = ''
-  let inQuotes = false
-
-  for (let i = 0; i < line.length; i++) {
-    const ch = line[i]
-    if (inQuotes) {
-      if (ch === '"') {
-        if (line[i + 1] === '"') { current += '"'; i++ }
-        else inQuotes = false
-      } else current += ch
-    } else {
-      if (ch === '"') inQuotes = true
-      else if (ch === ',') { result.push(current.trim()); current = '' }
-      else current += ch
-    }
-  }
-  result.push(current.trim())
-  return result
-}
-
-function jsonToCsv(json: string): string {
-  const data = JSON.parse(json)
-  const arr = Array.isArray(data) ? data : [data]
-  if (arr.length === 0) return ''
-
-  const headers = Object.keys(arr[0])
-  const lines = [headers.join(',')]
-
-  for (const row of arr) {
-    const values = headers.map((h) => {
-      const v = row[h]
-      if (v === null || v === undefined) return ''
-      const s = String(v)
-      return s.includes(',') || s.includes('"') ? `"${s.replace(/"/g, '""')}"` : s
-    })
-    lines.push(values.join(','))
-  }
-
-  return lines.join('\n')
-}
-
-function xmlToJson(xml: string): string {
-  const parser = new DOMParser()
-  const doc = parser.parseFromString(xml, 'text/xml')
-  const err = doc.querySelector('parsererror')
-  if (err) throw new Error('XML 解析错误')
-
-  const result = nodeToJson(doc.documentElement)
-  return JSON.stringify(result, null, 2)
-}
-
-function nodeToJson(node: Element): unknown {
-  const obj: Record<string, unknown> = {}
-
-  // Attributes
-  if (node.attributes.length > 0) {
-    for (let i = 0; i < node.attributes.length; i++) {
-      obj['@' + node.attributes[i].name] = node.attributes[i].value
-    }
-  }
-
-  // Children
-  const childElements = Array.from(node.children)
-  const textContent = node.textContent?.trim() || ''
-
-  if (childElements.length === 0) {
-    return textContent || ''
-  }
-
-  // Group children by tag name
-  const groups: Map<string, Element[]> = new Map()
-  for (const child of childElements) {
-    const name = child.tagName
-    if (!groups.has(name)) groups.set(name, [])
-    groups.get(name)!.push(child)
-  }
-
-  for (const [name, children] of groups) {
-    const values = children.map(nodeToJson)
-    obj[name] = values.length === 1 ? values[0] : values
-  }
-
-  // Text content
-  if (textContent && childElements.length > 0) {
-    const textOnly = node.childNodes.length === 1 && node.childNodes[0].nodeType === Node.TEXT_NODE
-    if (!textOnly) obj['#text'] = textContent
-  }
-
-  return obj
-}
-
-function jsonToXml(json: string): string {
-  const data = JSON.parse(json)
-  return '<?xml version="1.0" encoding="UTF-8"?>\n' + valueToXml(data, 'root')
-}
-
-function valueToXml(value: unknown, tag: string): string {
-  if (value === null || value === undefined) return `<${tag} />`
-  if (typeof value !== 'object') return `<${tag}>${escapeXml(String(value))}</${tag}>`
-
-  if (Array.isArray(value)) {
-    return value.map((item) => {
-      if (typeof item === 'object' && !Array.isArray(item)) {
-        const keys = Object.keys(item)
-        const subTag = keys.length === 1 ? keys[0] : tag.slice(0, -1)
-        return objectToXml(item as Record<string, unknown>, subTag)
-      }
-      return valueToXml(item, tag.slice(0, -1))
-    }).join('\n')
-  }
-
-  return objectToXml(value as Record<string, unknown>, tag)
-}
-
-function objectToXml(obj: Record<string, unknown>, tag: string): string {
-  let attrs = ''
-  let children = ''
-
-  for (const [key, val] of Object.entries(obj)) {
-    if (key.startsWith('@')) {
-      attrs += ` ${key.slice(1)}="${escapeXml(String(val))}"`
-    } else if (key === '#text') {
-      children = escapeXml(String(val))
-    } else {
-      children += valueToXml(val, key) + '\n'
-    }
-  }
-
-  children = children.trimEnd()
-  if (!children) return `<${tag}${attrs} />`
-  return `<${tag}${attrs}>\n${children}\n</${tag}>`
-}
-
-function escapeXml(s: string): string {
-  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
-}
-
-// ── Samples ────────────────────────────────────────────────────
-
-const SAMPLES: Record<ConvertMode, string> = {
-  csv2json: 'name,age,city,role\nAlice,30,New York,Engineer\nBob,25,Los Angeles,Designer\nCharlie,35,Chicago,Manager',
-  json2csv: '[{"name":"Alice","age":30,"city":"New York"},{"name":"Bob","age":25,"city":"Los Angeles"},{"name":"Charlie","age":35,"city":"Chicago"}]',
-  xml2json: `<root>
-  <person id="1">
-    <name>Alice</name>
-    <age>30</age>
-    <city>New York</city>
-  </person>
-  <person id="2">
-    <name>Bob</name>
-    <age>25</age>
-    <city>Los Angeles</city>
-  </person>
-</root>`,
-  json2xml: '{"root":{"person":[{"@id":"1","name":"Alice","age":30},{"@id":"2","name":"Bob","age":25}]}}'
-}
-
-// ── Component ──────────────────────────────────────────────────
 
 export default function DataConverter(): React.JSX.Element {
-  const [mode, setMode] = useState<ConvertMode>('csv2json')
+  const [from, setFrom] = useState<FormatId>('csv')
+  const [to, setTo] = useState<FormatId>('json')
   const [input, setInput] = useState('')
   const [copied, setCopied] = useState(false)
 
-  const modeDef = MODES.find((m) => m.id === mode)!
+  const conversion = useMemo(() => {
+    if (!input.trim()) return null
+    return convertDocument(input, from, to)
+  }, [input, from, to])
 
-  const { output, error } = useMemo(() => {
-    if (!input.trim()) return { output: '', error: null }
-    try {
-      let result = ''
-      switch (mode) {
-        case 'csv2json': result = csvToJson(input); break
-        case 'json2csv': result = jsonToCsv(input); break
-        case 'xml2json': result = xmlToJson(input); break
-        case 'json2xml': result = jsonToXml(input); break
-      }
-      return { output: result, error: null }
-    } catch (err) {
-      return { output: '', error: (err as Error).message }
-    }
-  }, [input, mode])
+  const output = conversion?.ok ? conversion.output : ''
+  const error = conversion && !conversion.ok ? conversion.error : ''
+  const warnings = conversion?.warnings ?? []
 
-  const loadSample = useCallback(() => {
-    setInput(SAMPLES[mode])
-  }, [mode])
+  const loadSample = useCallback(() => setInput(SAMPLES[from]), [from])
+
+  const openFile = useCallback((content: string) => {
+    setInput(content)
+    // Guess the source format from the first non-empty line so opening a
+    // file does not silently convert it with the wrong reader.
+    const head = content.trimStart().slice(0, 200)
+    if (/^[[{]/.test(head)) setFrom('json')
+    else if (/^<\?xml|^<[A-Za-z_]/i.test(head)) setFrom('xml')
+    else if (/^[^:\n]+:\s/m.test(head) && !head.includes(',')) setFrom('yaml')
+    else if (/^[A-Za-z0-9_.-]+\s*=\s*/m.test(head)) setFrom('toml')
+    else if (head.split('\n')[0]?.includes('\t')) setFrom('tsv')
+    else setFrom('csv')
+  }, [])
 
   const swap = useCallback(() => {
-    if (!output || error) return
-    setInput(output)
-  }, [output, error])
+    if (output) setInput(output)
+    setFrom(to)
+    setTo(from)
+  }, [output, from, to])
 
   const clear = useCallback(() => setInput(''), [])
 
@@ -263,75 +100,110 @@ export default function DataConverter(): React.JSX.Element {
       await navigator.clipboard.writeText(output)
       setCopied(true)
       setTimeout(() => setCopied(false), 1500)
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }, [output])
+
+  const fromInfo = getFormatInfo(from)
+  const toInfo = getFormatInfo(to)
 
   return (
     <div className="dc-page">
       <div className="dc-card">
         <div className="dc-header">
           <h2 className="dc-title">Data Format Converter</h2>
-          <p className="dc-subtitle">CSV · JSON · XML 互转</p>
+          <p className="dc-subtitle">
+            在 JSON、YAML、TOML、XML、CSV、TSV 之间互转，保留数值与嵌套结构
+          </p>
         </div>
 
-        {/* Mode tabs */}
+        <TextFileBar
+          value={input}
+          onOpened={(file) => openFile(file.content)}
+          onNew={clear}
+          suggestedName={`converted.${toInfo.extension}`}
+        />
+
+        {/* Quick pairs */}
         <div className="dc-tabs">
-          {MODES.map((m) => (
+          {PAIRS.map((pair) => (
             <button
-              key={m.id}
-              className={`dc-tab ${mode === m.id ? 'active' : ''}`}
-              onClick={() => { setMode(m.id); setInput('') }}
+              key={`${pair.from}-${pair.to}`}
+              className={`dc-tab ${from === pair.from && to === pair.to ? 'active' : ''}`}
+              onClick={() => {
+                setFrom(pair.from)
+                setTo(pair.to)
+              }}
             >
-              {m.label}
+              {pair.label}
             </button>
           ))}
         </div>
 
-        {/* Input */}
-        <div className="dc-pane">
-          <div className="dc-pane-header">
-            <span className="dc-pane-label">{modeDef.inputLabel}</span>
-            <button className="dc-btn-ghost" onClick={loadSample}>示例</button>
-          </div>
-          <textarea
-            className="dc-textarea"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder={modeDef.inputPlaceholder}
-            rows={8}
-            spellCheck={false}
-          />
-        </div>
-
-        {/* Actions */}
-        <div className="dc-actions">
-          <button className="dc-btn dc-btn-ghost" onClick={clear}>
-            <RotateCcw size={13} />
-            清空
+        {/* Format row */}
+        <div className="dc-format-row">
+          <FormatSelect value={from} onChange={setFrom} label="源格式" />
+          <button className="dc-swap-btn" onClick={swap} title="交换源格式与目标格式">
+            {output ? <ArrowLeftRight size={15} /> : <ArrowRight size={15} />}
           </button>
-          {output && (
-            <button className="dc-btn dc-btn-ghost" onClick={swap}>
-              <ArrowRightLeft size={13} />
-              替换为输入
-            </button>
-          )}
+          <FormatSelect value={to} onChange={setTo} label="目标格式" exclude={from} />
+          <button className="dc-btn-ghost" onClick={loadSample}>
+            <FileText size={13} />
+            载入示例
+          </button>
         </div>
 
-        {/* Error */}
-        {error && <div className="dc-error">{error}</div>}
+        {from === to && <p className="dc-note">源格式与目标格式相同，输出将与输入一致。</p>}
 
-        {/* Output */}
-        {output && (
+        {/* Panes */}
+        <div className="dc-panes">
           <div className="dc-pane">
             <div className="dc-pane-header">
-              <span className="dc-pane-label">{modeDef.outputLabel}</span>
-              <button className="dc-btn-ghost" onClick={copy}>
-                {copied ? <Check size={13} /> : <Copy size={13} />}
-                {copied ? '已复制' : '复制'}
-              </button>
+              <span className="dc-pane-label">{fromInfo.label}</span>
+              <span className="dc-pane-meta">{input.length} 字符</span>
             </div>
-            <pre className="dc-output">{output}</pre>
+            <textarea
+              className="dc-textarea"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder={SAMPLES[from]}
+              spellCheck={false}
+            />
           </div>
+
+          <div className="dc-pane">
+            <div className="dc-pane-header">
+              <span className="dc-pane-label">{toInfo.label}</span>
+              <div className="dc-pane-actions">
+                <button className="dc-btn-ghost" onClick={clear}>
+                  <RotateCcw size={12} />
+                  清空
+                </button>
+                {output && (
+                  <button className="dc-btn-ghost" onClick={copy}>
+                    {copied ? <Check size={12} /> : <Copy size={12} />}
+                    {copied ? '已复制' : '复制'}
+                  </button>
+                )}
+              </div>
+            </div>
+            {error ? (
+              <div className="dc-error">{error}</div>
+            ) : (
+              <pre className="dc-output">
+                {output || <span className="dc-placeholder">转换结果将显示在这里</span>}
+              </pre>
+            )}
+          </div>
+        </div>
+
+        {warnings.length > 0 && (
+          <ul className="dc-warnings">
+            {warnings.map((warning) => (
+              <li key={warning}>{warning}</li>
+            ))}
+          </ul>
         )}
       </div>
     </div>

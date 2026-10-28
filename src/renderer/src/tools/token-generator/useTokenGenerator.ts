@@ -1,4 +1,9 @@
 import { useState, useCallback } from 'react'
+import {
+  base64UrlEncodeText,
+  randomString,
+  signJwtHmac
+} from '@renderer/lib/crypto-utils'
 
 export type TokenType = 'uuid' | 'jwt' | 'api-key' | 'random-string' | 'secret-key'
 
@@ -33,6 +38,8 @@ export interface TokenConfig {
   }
 }
 
+type JwtAlgorithm = 'HS256' | 'HS384' | 'HS512'
+
 const DEFAULT_CONFIG: TokenConfig = {
   uuid: { count: 1 },
   jwt: {
@@ -59,12 +66,16 @@ const CHARSET_MAP: Record<RandomStringCharset, string> = {
   special: '!@#$%^&*()_+-=[]{}|;:,.<>?'
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+function getJwtAlgorithm(value: unknown): JwtAlgorithm | null {
+  return value === 'HS256' || value === 'HS384' || value === 'HS512' ? value : null
+}
+
 function generateUUID(): string {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0
-    const v = c === 'x' ? r : (r & 0x3) | 0x8
-    return v.toString(16)
-  })
+  return crypto.randomUUID()
 }
 
 function generateRandomString(length: number, charsets: RandomStringCharset[]): string {
@@ -73,14 +84,7 @@ function generateRandomString(length: number, charsets: RandomStringCharset[]): 
     chars += CHARSET_MAP[charset]
   }
   if (!chars) chars = CHARSET_MAP.lowercase + CHARSET_MAP.digits
-
-  let result = ''
-  const array = new Uint32Array(length)
-  crypto.getRandomValues(array)
-  for (let i = 0; i < length; i++) {
-    result += chars[array[i] % chars.length]
-  }
-  return result
+  return randomString(length, chars)
 }
 
 function generateApiKey(prefix: string, length: number): string {
@@ -92,25 +96,21 @@ function generateSecretKey(length: number): string {
   return generateRandomString(length, ['uppercase', 'lowercase', 'digits'])
 }
 
-function base64UrlEncode(str: string): string {
-  return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
-}
-
-function simpleSign(message: string, secret: string): string {
-  let hash = 0
-  const combined = message + secret
-  for (let i = 0; i < combined.length; i++) {
-    const char = combined.charCodeAt(i)
-    hash = ((hash << 5) - hash + char) | 0
-  }
-  const hex = Math.abs(hash).toString(16).padStart(8, '0')
-  return hex + hex + hex + hex + hex + hex + hex + hex
-}
-
-function generateJWT(header: string, payload: string, secret: string, expiration: string): string {
+async function generateJWT(
+  header: string,
+  payload: string,
+  secret: string,
+  expiration: string
+): Promise<string> {
   try {
-    const headerObj = JSON.parse(header)
-    const payloadObj = JSON.parse(payload)
+    const parsedHeader: unknown = JSON.parse(header)
+    const parsedPayload: unknown = JSON.parse(payload)
+    if (!isRecord(parsedHeader) || !isRecord(parsedPayload)) {
+      return 'Invalid JSON in header or payload'
+    }
+
+    const algorithm = getJwtAlgorithm(parsedHeader.alg) ?? 'HS256'
+    parsedHeader.alg = algorithm
 
     const now = Math.floor(Date.now() / 1000)
     let expSeconds = 3600
@@ -120,13 +120,16 @@ function generateJWT(header: string, payload: string, secret: string, expiration
     else if (expiration === '7d') expSeconds = 604800
     else if (expiration === '30d') expSeconds = 2592000
 
-    payloadObj.iat = now
-    payloadObj.exp = now + expSeconds
+    parsedPayload.iat = now
+    parsedPayload.exp = now + expSeconds
 
-    const encodedHeader = base64UrlEncode(JSON.stringify(headerObj))
-    const encodedPayload = base64UrlEncode(JSON.stringify(payloadObj))
-    const signature = simpleSign(`${encodedHeader}.${encodedPayload}`, secret)
-    const encodedSignature = base64UrlEncode(signature)
+    const encodedHeader = base64UrlEncodeText(JSON.stringify(parsedHeader))
+    const encodedPayload = base64UrlEncodeText(JSON.stringify(parsedPayload))
+    const encodedSignature = await signJwtHmac(
+      `${encodedHeader}.${encodedPayload}`,
+      secret,
+      algorithm
+    )
 
     return `${encodedHeader}.${encodedPayload}.${encodedSignature}`
   } catch {
@@ -164,7 +167,7 @@ export function useTokenGenerator() {
     []
   )
 
-  const generate = useCallback(() => {
+  const generate = useCallback(async () => {
     let generated: string[] = []
 
     switch (tokenType) {
@@ -174,7 +177,7 @@ export function useTokenGenerator() {
 
       case 'jwt':
         generated = [
-          generateJWT(
+          await generateJWT(
             config.jwt.header,
             config.jwt.payload,
             config.jwt.secret,

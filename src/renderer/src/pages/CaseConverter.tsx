@@ -1,187 +1,110 @@
-import { useState, useMemo, useCallback } from 'react'
-import { CaseSensitive, Copy, Check, ArrowLeftRight, RotateCcw } from 'lucide-react'
+import { useMemo, useRef, useState } from 'react'
+import { Check, Copy, RotateCcw } from 'lucide-react'
+import TextFileBar from '@renderer/components/TextFileBar'
+import { CASE_FORMATS, splitWords, type CaseFormat } from '@renderer/lib/case-transform'
 
-interface CaseResult {
-  label: string
+type CopyStatus = 'idle' | 'copied' | 'failed'
+
+const COPY_LABEL: Record<CopyStatus, string> = {
+  idle: '复制',
+  copied: '已复制',
+  failed: '复制失败'
+}
+
+const COPY_ALL_LABEL: Record<CopyStatus, string> = {
+  idle: '复制全部',
+  copied: '已复制全部',
+  failed: '复制失败'
+}
+
+const SAMPLES = ['XMLHttpRequest', 'user_profile_id', '你好 world, Hello World']
+
+/** Copy state for one button. Each row owns its own, so feedback never shows on other rows. */
+function useCopy(): [CopyStatus, (text: string) => Promise<void>] {
+  const [status, setStatus] = useState<CopyStatus>('idle')
+  const timer = useRef(0)
+
+  const copy = async (text: string): Promise<void> => {
+    let next: CopyStatus = 'copied'
+    try {
+      await navigator.clipboard.writeText(text)
+    } catch {
+      next = 'failed'
+    }
+    setStatus(next)
+    window.clearTimeout(timer.current)
+    timer.current = window.setTimeout(() => setStatus('idle'), 1500)
+  }
+
+  return [status, copy]
+}
+
+interface ResultRowProps {
+  format: CaseFormat
   value: string
-  hint: string
+  unchanged: boolean
+  onUse: (value: string) => void
 }
 
-function toUpper(text: string): string {
-  return text.toUpperCase()
+function ResultRow({ format, value, unchanged, onUse }: ResultRowProps): React.JSX.Element {
+  const [status, copy] = useCopy()
+
+  return (
+    <div className={unchanged ? 'cc-row cc-row-same' : 'cc-row'}>
+      <div className="cc-row-info">
+        <span className="cc-row-label">{format.label}</span>
+        <span className="cc-row-desc">{format.description}</span>
+      </div>
+      {value ? (
+        <code className="cc-row-value">{value}</code>
+      ) : (
+        <span className="cc-row-empty">（空）</span>
+      )}
+      <div className="cc-row-actions">
+        <button type="button" className="cc-btn" onClick={() => void copy(value)}>
+          {status === 'copied' ? <Check size={13} /> : <Copy size={13} />}
+          {COPY_LABEL[status]}
+        </button>
+        <button type="button" className="cc-btn" onClick={() => onUse(value)}>
+          用作输入
+        </button>
+      </div>
+    </div>
+  )
 }
-
-function toLower(text: string): string {
-  return text.toLowerCase()
-}
-
-function toTitleCase(text: string): string {
-  return text
-    .split(/(\s+)/)
-    .map((word) => {
-      if (/^\s+$/.test(word)) return word
-      return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-    })
-    .join('')
-}
-
-function toSentenceCase(text: string): string {
-  return text
-    .replace(/(^|[.!?]\s+)([a-z])/g, (_match, sep, char) => sep + char.toUpperCase())
-    .replace(/^([a-z])/, (_match, char) => char.toUpperCase())
-}
-
-function toCamelCase(text: string): string {
-  const words = splitWords(text)
-  return words
-    .map((w, i) => {
-      const lower = w.toLowerCase()
-      if (i === 0) return lower
-      return lower.charAt(0).toUpperCase() + lower.slice(1)
-    })
-    .join('')
-}
-
-function toPascalCase(text: string): string {
-  const words = splitWords(text)
-  return words.map((w) => w.toLowerCase().charAt(0).toUpperCase() + w.toLowerCase().slice(1)).join('')
-}
-
-function toSnakeCase(text: string): string {
-  return splitWords(text).map((w) => w.toLowerCase()).join('_')
-}
-
-function toKebabCase(text: string): string {
-  return splitWords(text).map((w) => w.toLowerCase()).join('-')
-}
-
-function toConstantCase(text: string): string {
-  return splitWords(text).map((w) => w.toUpperCase()).join('_')
-}
-
-function toDotCase(text: string): string {
-  return splitWords(text).map((w) => w.toLowerCase()).join('.')
-}
-
-function toToggleCase(text: string): string {
-  return text
-    .split('')
-    .map((c) => (c === c.toUpperCase() ? c.toLowerCase() : c.toUpperCase()))
-    .join('')
-}
-
-function splitWords(text: string): string[] {
-  return text
-    .replace(/([a-z])([A-Z])/g, '$1 $2') // camelCase boundary
-    .replace(/[_\-./]+/g, ' ') // separator chars
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean)
-}
-
-function toAlternatingCase(text: string): string {
-  let index = 0
-  return text
-    .split('')
-    .map((c) => {
-      if (/[a-zA-Z]/.test(c)) {
-        const result = index % 2 === 0 ? c.toLowerCase() : c.toUpperCase()
-        index++
-        return result
-      }
-      return c
-    })
-    .join('')
-}
-
-function toInverseCase(text: string): string {
-  return text
-    .split('')
-    .map((c) => {
-      if (c >= 'A' && c <= 'Z') return c.toLowerCase()
-      if (c >= 'a' && c <= 'z') return c.toUpperCase()
-      return c
-    })
-    .join('')
-}
-
-const CASE_TRANSFORMS: Array<{
-  key: string
-  label: string
-  hint: string
-  fn: (text: string) => string
-}> = [
-  { key: 'upper', label: 'UPPER CASE', hint: '所有字母转大写', fn: toUpper },
-  { key: 'lower', label: 'lower case', hint: '所有字母转小写', fn: toLower },
-  { key: 'title', label: 'Title Case', hint: '每个单词首字母大写', fn: toTitleCase },
-  { key: 'sentence', label: 'Sentence case', hint: '句子首字母大写', fn: toSentenceCase },
-  { key: 'camel', label: 'camelCase', hint: '驼峰命名，首单词小写', fn: toCamelCase },
-  { key: 'pascal', label: 'PascalCase', hint: '大驼峰命名', fn: toPascalCase },
-  { key: 'snake', label: 'snake_case', hint: '下划线分隔，全小写', fn: toSnakeCase },
-  { key: 'kebab', label: 'kebab-case', hint: '短横线分隔，全小写', fn: toKebabCase },
-  { key: 'constant', label: 'CONSTANT_CASE', hint: '下划线分隔，全大写', fn: toConstantCase },
-  { key: 'dot', label: 'dot.case', hint: '点号分隔，全小写', fn: toDotCase },
-  { key: 'alternating', label: 'aLtErNaTiNg', hint: '大小写交替', fn: toAlternatingCase },
-  { key: 'inverse', label: 'iNVERSE cASE', hint: '反转每个字母的大小写', fn: toInverseCase },
-  { key: 'toggle', label: 'tOGGLE cASE', hint: '反转大小写（同 inverse）', fn: toToggleCase }
-]
-
-const SAMPLES = [
-  'Hello World from Dev Tools',
-  'my-variable_name is great',
-  'this is a sample sentence. and here is another.',
-  'dev-tools-app-v2'
-]
 
 export default function CaseConverter(): React.JSX.Element {
   const [input, setInput] = useState('')
-  const [copiedKey, setCopiedKey] = useState<string | null>(null)
+  const [query, setQuery] = useState('')
+  const [onlyChanged, setOnlyChanged] = useState(false)
+  const [allStatus, copyText] = useCopy()
 
-  const results: CaseResult[] = useMemo(() => {
-    if (!input.trim()) return []
-    return CASE_TRANSFORMS.map(({ label, hint, fn }) => ({
-      label,
-      hint,
-      value: fn(input)
-    }))
-  }, [input])
+  const hasText = input.trim() !== ''
 
-  const clear = useCallback(() => {
-    setInput('')
-  }, [])
-
-  const loadSample = useCallback((sample: string) => {
-    setInput(sample)
-  }, [])
-
-  const copyToClipboard = useCallback(async (key: string, text: string) => {
-    try {
-      await navigator.clipboard.writeText(text)
-      setCopiedKey(key)
-      setTimeout(() => setCopiedKey(null), 1500)
-    } catch {
-      // ignore
-    }
-  }, [])
-
-  const copyAll = useCallback(async () => {
-    if (!results.length) return
-    const all = results.map((r) => `${r.label}: ${r.value}`).join('\n')
-    try {
-      await navigator.clipboard.writeText(all)
-      setCopiedKey('all')
-      setTimeout(() => setCopiedKey(null), 1500)
-    } catch {
-      // ignore
-    }
-  }, [results])
-
-  const swapToInput = useCallback(
-    (value: string) => {
-      setInput(value)
-    },
-    []
+  const rows = useMemo(
+    () => (hasText ? CASE_FORMATS.map((format) => ({ format, value: format.convert(input) })) : []),
+    [hasText, input]
   )
+
+  const visible = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    return rows.filter(
+      ({ format, value }) =>
+        (!onlyChanged || value !== input) &&
+        (q === '' ||
+          format.label.toLowerCase().includes(q) ||
+          format.description.toLowerCase().includes(q))
+    )
+  }, [rows, query, onlyChanged, input])
+
+  const charCount = [...input].length
+  const wordCount = hasText ? splitWords(input).length : 0
+  const lineCount = input === '' ? 0 : input.split('\n').length
+
+  const copyVisible = (): void => {
+    const text = visible.map(({ format, value }) => `${format.label}: ${value}`).join('\n')
+    void copyText(text)
+  }
 
   return (
     <div className="cc-page">
@@ -191,76 +114,106 @@ export default function CaseConverter(): React.JSX.Element {
           <p className="cc-subtitle">实时转换文本大小写与命名格式</p>
         </div>
 
+        <TextFileBar
+          value={input}
+          onOpened={(file) => setInput(file.content)}
+          onNew={() => setInput('')}
+          suggestedName="case-converted.txt"
+        />
+
         <div className="cc-input-area">
-          <div className="cc-input-header">
-            <span className="cc-input-label">输入文本</span>
-            <div className="cc-samples">
-              {SAMPLES.map((s, i) => (
-                <button key={i} className="cc-sample-btn" onClick={() => loadSample(s)}>
-                  示例 {i + 1}
-                </button>
-              ))}
-            </div>
+          <div className="cc-input-head">
+            <label className="cc-label" htmlFor="cc-input">
+              输入文本
+            </label>
+            <span className="cc-stats">
+              字符 {charCount} · 词 {wordCount} · 行 {lineCount}
+            </span>
+            <button
+              type="button"
+              className="cc-btn cc-btn-quiet"
+              onClick={() => setInput('')}
+              disabled={input === ''}
+            >
+              <RotateCcw size={13} />
+              清空
+            </button>
           </div>
           <textarea
+            id="cc-input"
             className="cc-textarea"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="输入要转换的文本..."
+            placeholder="输入要转换的文本，例如 XMLHttpRequest 或 user_profile_id"
             rows={3}
+            spellCheck={false}
             autoFocus
           />
         </div>
 
-        <div className="cc-actions-bar">
-          <button className="cc-btn cc-btn-ghost" onClick={clear}>
-            <RotateCcw size={14} />
-            清空
-          </button>
-          {results.length > 0 && (
-            <button className="cc-btn cc-btn-primary" onClick={copyAll}>
-              {copiedKey === 'all' ? <Check size={14} /> : <Copy size={14} />}
-              {copiedKey === 'all' ? '已复制全部' : '复制全部'}
-            </button>
-          )}
-        </div>
+        {hasText ? (
+          <>
+            <div className="cc-toolbar">
+              <input
+                type="search"
+                className="cc-search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="筛选格式名称或说明"
+                aria-label="筛选格式"
+              />
+              <label className="cc-check">
+                <input
+                  type="checkbox"
+                  checked={onlyChanged}
+                  onChange={(e) => setOnlyChanged(e.target.checked)}
+                />
+                只显示有变化的格式
+              </label>
+              <button
+                type="button"
+                className="cc-btn cc-btn-primary"
+                onClick={copyVisible}
+                disabled={visible.length === 0}
+              >
+                {allStatus === 'copied' ? <Check size={13} /> : <Copy size={13} />}
+                {COPY_ALL_LABEL[allStatus]}
+              </button>
+            </div>
 
-        {results.length > 0 && (
-          <div className="cc-results">
-            {results.map(({ label, value, hint }) => (
-              <div key={label} className="cc-result-row">
-                <div className="cc-result-info">
-                  <span className="cc-result-label">{label}</span>
-                  <span className="cc-result-hint">{hint}</span>
-                </div>
-                <div className="cc-result-value-wrap">
-                  <code className="cc-result-value">{value}</code>
-                  <div className="cc-result-actions">
-                    <button
-                      className="cc-icon-btn"
-                      title="复制"
-                      onClick={() => copyToClipboard(label, value)}
-                    >
-                      {copiedKey === label ? <Check size={13} /> : <Copy size={13} />}
-                    </button>
-                    <button
-                      className="cc-icon-btn"
-                      title="替换为输入"
-                      onClick={() => swapToInput(value)}
-                    >
-                      <ArrowLeftRight size={13} />
-                    </button>
-                  </div>
-                </div>
+            {visible.length > 0 ? (
+              <div className="cc-results">
+                {visible.map(({ format, value }) => (
+                  <ResultRow
+                    key={format.key}
+                    format={format}
+                    value={value}
+                    unchanged={value === input}
+                    onUse={setInput}
+                  />
+                ))}
               </div>
-            ))}
-          </div>
-        )}
-
-        {input && (
-          <div className="cc-hint-footer">
-            <CaseSensitive size={14} />
-            <span>输入 {input.length} 字符 · 拆分 {splitWords(input).length} 个单词 · {results.length} 种格式</span>
+            ) : (
+              <p className="cc-no-match">
+                没有符合条件的格式，可以清除筛选或关闭“只显示有变化的格式”。
+              </p>
+            )}
+          </>
+        ) : (
+          <div className="cc-empty">
+            <p>在上方输入文本，或选一个示例开始转换。</p>
+            <div className="cc-chips">
+              {SAMPLES.map((sample) => (
+                <button
+                  key={sample}
+                  type="button"
+                  className="cc-chip"
+                  onClick={() => setInput(sample)}
+                >
+                  {sample}
+                </button>
+              ))}
+            </div>
           </div>
         )}
       </div>

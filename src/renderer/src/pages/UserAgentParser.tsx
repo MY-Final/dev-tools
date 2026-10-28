@@ -88,12 +88,13 @@ function parseUA(ua: string): UAResult | null {
     osName = 'iOS'
     const m = s.match(/(?:iPhone OS|iPad OS|CPU OS) ([\d_]+)/)
     if (m) osVersion = m[1].replace(/_/g, '.')
-  } else if (/Linux/.test(s)) {
-    osName = 'Linux'
   } else if (/CrOS/.test(s)) {
     osName = 'ChromeOS'
+    const m = s.match(/CrOS [^ ]+ ([\d.]+)/)
+    if (m) osVersion = m[1]
+  } else if (/Linux/.test(s)) {
+    osName = 'Linux'
   }
-
   // Device type
   let deviceType = '桌面'
   let deviceVendor = ''
@@ -153,19 +154,26 @@ function parseUA(ua: string): UAResult | null {
   }
 }
 
+interface InfoRowProps {
+  label: string
+  value: string
+}
+
+function InfoRow({ label, value }: InfoRowProps): React.JSX.Element {
+  return (
+    <div className="uap-info-row">
+      <span className="uap-info-label">{label}</span>
+      <span className="uap-info-value">{value || '-'}</span>
+    </div>
+  )
+}
+
 export default function UserAgentParser(): React.JSX.Element {
-  const [input, setInput] = useState('')
+  const [input, setInput] = useState(() => (typeof navigator !== 'undefined' ? navigator.userAgent : ''))
   const [copied, setCopied] = useState(false)
 
   const result = useMemo(() => parseUA(input), [input])
 
-  // Pre-fill with current UA on mount
-  useMemo(() => {
-    if (typeof navigator !== 'undefined' && !input) {
-      setInput(navigator.userAgent)
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
 
   const handleClear = (): void => {
     setInput(typeof navigator !== 'undefined' ? navigator.userAgent : '')
@@ -185,12 +193,6 @@ export default function UserAgentParser(): React.JSX.Element {
     })
   }
 
-  const InfoRow = ({ label, value }: { label: string; value: string }): React.JSX.Element => (
-    <div className="uap-info-row">
-      <span className="uap-info-label">{label}</span>
-      <span className="uap-info-value">{value || '-'}</span>
-    </div>
-  )
 
   return (
     <div className="uap-page">

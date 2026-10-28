@@ -1,10 +1,6 @@
-import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { Copy, Check, Search, ExternalLink, Globe, Loader } from 'lucide-react'
-import {
-  searchMavenArtifacts,
-  getArtifactVersions,
-  type MavenDoc
-} from '@renderer/lib/maven-api'
+import type { MavenDoc } from '@renderer/lib/maven-api'
 import ElectronOnlyPage from '@renderer/components/ElectronOnlyPage'
 
 interface MavenMirror {
@@ -50,6 +46,86 @@ const MAVEN_MIRRORS: MavenMirror[] = [
 type OutputFormat = 'maven' | 'gradle' | 'gradle-kotlin' | 'sbt'
 type TabType = 'dependency' | 'mirror'
 
+interface MavenSolrDoc {
+  g: string
+  a: string
+  latestVersion: string
+  versionCount: number
+  p: string
+  timestamp: number
+}
+
+function toMavenDoc(doc: MavenSolrDoc): MavenDoc {
+  return {
+    groupId: doc.g,
+    artifactId: doc.a,
+    latestVersion: doc.latestVersion,
+    versionCount: doc.versionCount,
+    packaging: doc.p,
+    timestamp: doc.timestamp
+  }
+}
+
+function parseMavenSearchResponse(data: unknown): MavenDoc[] {
+  const response = (data as { response?: { docs?: MavenSolrDoc[] } }).response
+  return (response?.docs ?? []).map(toMavenDoc)
+}
+
+function parseMavenVersionsResponse(data: unknown): string[] {
+  const response = (data as { response?: { docs?: { v: string }[] } }).response
+  const versions = (response?.docs ?? []).map((doc) => doc.v)
+  return versions.sort((a, b) => {
+    const ap = a.split('.').map(Number)
+    const bp = b.split('.').map(Number)
+    for (let i = 0; i < Math.max(ap.length, bp.length); i++) {
+      const av = ap[i] ?? 0
+      const bv = bp[i] ?? 0
+      if (av !== bv) return bv - av
+    }
+    return a.localeCompare(b)
+  })
+}
+
+const REQUEST_TIMEOUT_MS = 15000
+
+function createNamedError(name: 'AbortError' | 'TimeoutError'): Error {
+  const error = new Error(name)
+  error.name = name
+  return error
+}
+
+function isTimeoutError(error: unknown): boolean {
+  return error instanceof Error && error.name === 'TimeoutError'
+}
+
+function withRequestTimeout<T>(promise: Promise<T>, controller: AbortController): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      reject(createNamedError('TimeoutError'))
+      controller.abort()
+    }, REQUEST_TIMEOUT_MS)
+
+    const handleAbort = (): void => {
+      clearTimeout(timeout)
+      reject(createNamedError('AbortError'))
+    }
+
+    controller.signal.addEventListener('abort', handleAbort, { once: true })
+    promise.then(
+      (value) => {
+        clearTimeout(timeout)
+        controller.signal.removeEventListener('abort', handleAbort)
+        resolve(value)
+      },
+      (error: unknown) => {
+        clearTimeout(timeout)
+        controller.signal.removeEventListener('abort', handleAbort)
+        reject(error)
+      }
+    )
+  })
+}
+
 export default function MavenDependency(): React.JSX.Element {
   const [activeTab, setActiveTab] = useState<TabType>('dependency')
   const [search, setSearch] = useState('')
@@ -60,48 +136,145 @@ export default function MavenDependency(): React.JSX.Element {
   const [selectedVersion, setSelectedVersion] = useState('')
   const [versions, setVersions] = useState<string[]>([])
   const [versionsLoading, setVersionsLoading] = useState(false)
+  const [versionsError, setVersionsError] = useState('')
   const [format, setFormat] = useState<OutputFormat>('maven')
   const [copied, setCopied] = useState(false)
   const [selectedMirror, setSelectedMirror] = useState<MavenMirror>(MAVEN_MIRRORS[0])
   const [mirrorCopied, setMirrorCopied] = useState(false)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  const searchRequestRef = useRef(0)
+  const versionsRequestRef = useRef(0)
+  const searchAbortRef = useRef<AbortController | null>(null)
+  const versionsAbortRef = useRef<AbortController | null>(null)
 
   // Debounced search
   const doSearch = useCallback(async (query: string) => {
-    if (!query.trim()) { setDeps([]); setError(''); return }
-    setLoading(true); setError('')
-    const docs = await searchMavenArtifacts(query)
-    setDeps(docs)
-    setLoading(false)
-    if (docs.length === 0) setError('未找到匹配的依赖，请检查关键词或网络连接')
+    if (!query.trim()) {
+      searchAbortRef.current?.abort()
+      searchAbortRef.current = null
+      searchRequestRef.current += 1
+      setDeps([])
+      setError('')
+      setLoading(false)
+      setSelectedDep(null)
+      setSelectedVersion('')
+      setVersions([])
+      setVersionsError('')
+      setVersionsLoading(false)
+      return
+    }
+    searchAbortRef.current?.abort()
+    const controller = new AbortController()
+    searchAbortRef.current = controller
+    const requestId = ++searchRequestRef.current
+    setDeps([])
+    setSelectedDep(null)
+    setSelectedVersion('')
+    setVersions([])
+    setVersionsError('')
+    setVersionsLoading(false)
+    setLoading(true)
+    setError('')
+    try {
+      const data = await withRequestTimeout(window.maven.searchArtifacts(query, 20), controller)
+      if (requestId !== searchRequestRef.current || controller.signal.aborted) return
+      setDeps(parseMavenSearchResponse(data))
+    } catch (error) {
+      if (isTimeoutError(error)) {
+        if (requestId === searchRequestRef.current) setError('搜索超时 — Maven 仓库在 15 秒内没有响应')
+        return
+      }
+      if (controller.signal.aborted || requestId !== searchRequestRef.current) return
+      setError('搜索失败 — 网络请求失败，请稍后重试')
+    } finally {
+      if (requestId === searchRequestRef.current) {
+        setLoading(false)
+        if (searchAbortRef.current === controller) searchAbortRef.current = null
+      }
+    }
+  }, [])
+
+  const handleSearchChange = useCallback((value: string) => {
+    searchRequestRef.current += 1
+    searchAbortRef.current?.abort()
+    searchAbortRef.current = null
+    versionsRequestRef.current += 1
+    versionsAbortRef.current?.abort()
+    versionsAbortRef.current = null
+    setSearch(value)
+    setDeps([])
+    setError('')
+    setSelectedDep(null)
+    setSelectedVersion('')
+    setVersions([])
+    setVersionsError('')
+    setVersionsLoading(false)
+    if (!value.trim()) {
+      setLoading(false)
+      return
+    }
+    setLoading(true)
   }, [])
 
   // Debounced search effect
   useEffect(() => {
-    if (!search.trim()) { setDeps([]); return }
     if (debounceRef.current) clearTimeout(debounceRef.current)
+    if (!search.trim()) return
     debounceRef.current = setTimeout(() => doSearch(search), 200)
-    return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+    }
   }, [search, doSearch])
+
+  useEffect(() => () => {
+    searchAbortRef.current?.abort()
+    versionsAbortRef.current?.abort()
+  }, [])
 
   const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>): void => {
     if (e.key === 'Enter') {
       if (debounceRef.current) clearTimeout(debounceRef.current)
-      doSearch(search)
+      void doSearch(search)
     }
   }
 
   // Fetch versions when a dep is selected
   const selectDep = useCallback(async (dep: MavenDoc) => {
+    versionsAbortRef.current?.abort()
+    const controller = new AbortController()
+    versionsAbortRef.current = controller
+    const requestId = ++versionsRequestRef.current
     setSelectedDep(dep)
     setSelectedVersion(dep.latestVersion)
+    setVersions([])
+    setVersionsError('')
     setVersionsLoading(true)
-    const vs = await getArtifactVersions(dep.groupId, dep.artifactId)
-    setVersions(vs.length > 0 ? vs : [dep.latestVersion])
-    setVersionsLoading(false)
+    try {
+      const data = await withRequestTimeout(
+        window.maven.getVersions(dep.groupId, dep.artifactId),
+        controller
+      )
+      if (requestId !== versionsRequestRef.current || controller.signal.aborted) return
+      const vs = parseMavenVersionsResponse(data)
+      setVersions(vs.length > 0 ? vs : [dep.latestVersion])
+    } catch (error) {
+      if (isTimeoutError(error)) {
+        if (requestId === versionsRequestRef.current) {
+          setVersions([dep.latestVersion])
+          setVersionsError('版本列表加载超时，已使用最新版本')
+        }
+        return
+      }
+      if (controller.signal.aborted || requestId !== versionsRequestRef.current) return
+      setVersions([dep.latestVersion])
+      setVersionsError('版本列表加载失败，已使用最新版本')
+    } finally {
+      if (requestId === versionsRequestRef.current) {
+        setVersionsLoading(false)
+        if (versionsAbortRef.current === controller) versionsAbortRef.current = null
+      }
+    }
   }, [])
-
-  const filteredDeps = useMemo(() => deps, [deps])
 
   const generateOutput = useCallback(
     (dep: MavenDoc, version: string, fmt: OutputFormat): string => {
@@ -185,58 +358,61 @@ export default function MavenDependency(): React.JSX.Element {
                 type="text"
                 className="mvn-search-input"
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => handleSearchChange(e.target.value)}
                 onKeyDown={handleSearchKeyDown}
                 placeholder="搜索 Maven 依赖 (spring, lombok, jackson...)"
+                aria-label="搜索 Maven 依赖"
               />
             </div>
 
             <div className="mvn-content">
-              <div className="mvn-dep-list">
-                {loading ? (
-                  <div className="mvn-dep-empty">
+              <div className="mvn-dep-list" aria-busy={loading}>
+                {loading && (
+                  <div className="mvn-dep-empty" role="status" aria-live="polite">
                     <Loader size={20} className="updater-spin" />
-                    <span>加载中...</span>
+                    <span>{deps.length > 0 ? '正在刷新依赖列表...' : '搜索中...'}</span>
                   </div>
-                ) : error ? (
-                  <div className="npm-error">{error}</div>
-                ) : filteredDeps.length === 0 ? (
-                  <div className="mvn-dep-empty">未找到匹配的依赖</div>
-                ) : (
-                  filteredDeps.slice(0, 30).map((dep) => (
-                    <div
-                      key={`${dep.groupId}:${dep.artifactId}`}
-                      className={`mvn-dep-item ${selectedDep === dep ? 'active' : ''}`}
-                      onClick={() => selectDep(dep)}
-                    >
-                      <div className="mvn-dep-main">
-                        <code className="mvn-dep-artifact">{dep.artifactId}</code>
-                        <span className="mvn-dep-version">{dep.latestVersion}</span>
-                      </div>
-                      <span className="mvn-dep-group">{dep.groupId}</span>
-                    </div>
-                  ))
                 )}
+                {error && <div className="npm-error" role="alert">{error}</div>}
+                {!loading && !error && deps.length === 0 && search.trim() && (
+                  <div className="mvn-dep-empty">未找到匹配的依赖</div>
+                )}
+                {deps.slice(0, 30).map((dep) => (
+                  <div
+                    key={`${dep.groupId}:${dep.artifactId}`}
+                    className={`mvn-dep-item ${selectedDep === dep ? 'active' : ''}`}
+                    onClick={() => selectDep(dep)}
+                  >
+                    <div className="mvn-dep-main">
+                      <code className="mvn-dep-artifact">{dep.artifactId}</code>
+                      <span className="mvn-dep-version">{dep.latestVersion}</span>
+                    </div>
+                    <span className="mvn-dep-group">{dep.groupId}</span>
+                  </div>
+                ))}
               </div>
 
               {selectedDep && (
                 <div className="mvn-output-area">
-                  <div className="mvn-version-selector">
+                  <div className="mvn-version-selector" aria-busy={versionsLoading}>
                     <span className="mvn-section-label">版本</span>
                     {versionsLoading ? (
-                      <Loader size={16} className="updater-spin" />
+                      <Loader size={16} className="updater-spin" role="status" aria-label="正在加载版本" />
                     ) : (
-                      <div className="mvn-versions">
-                        {versions.map((v) => (
-                          <button
-                            key={v}
-                            className={`mvn-version-btn ${selectedVersion === v ? 'active' : ''}`}
-                            onClick={() => setSelectedVersion(v)}
-                          >
-                            {v}
-                          </button>
-                        ))}
-                      </div>
+                      <>
+                        {versionsError && <div className="npm-error" role="alert">{versionsError}</div>}
+                        <div className="mvn-versions">
+                          {versions.map((v) => (
+                            <button
+                              key={v}
+                              className={`mvn-version-btn ${selectedVersion === v ? 'active' : ''}`}
+                              onClick={() => setSelectedVersion(v)}
+                            >
+                              {v}
+                            </button>
+                          ))}
+                        </div>
+                      </>
                     )}
                   </div>
 

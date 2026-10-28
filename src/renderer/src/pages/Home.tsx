@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { Search, Zap, Layers, ArrowRight, Star } from 'lucide-react'
+import { Search, Layers, Star } from 'lucide-react'
 import { tools } from '@renderer/tools/registry'
 import type { ToolItem } from '@renderer/types/tool'
 import { useSettings } from '@renderer/lib/contexts'
@@ -9,17 +9,19 @@ import '../styles/home.css'
 
 const ALL_TAGS = ['前端', '后端', '运维', '通用', '安全', '网络']
 
-// ── Category accent colors ─────────────────────────────────────
+// ── Category tones ────────────────────────────────────────────
+// 分类色只做标识，不参与交互；同一分类在首页与侧栏保持一致。
 
-const CATEGORY_ACCENTS: Record<string, string> = {
-  '换算工具': 'accent-blue',
-  '网络工具': 'accent-green',
-  '系统工具': 'accent-purple',
-  '编码/加密': 'accent-orange',
-  '开发工具': 'accent-cyan',
-  '文本工具': 'accent-pink',
-  '速查表': 'accent-yellow',
-  '备忘录': 'accent-purple'
+const CATEGORY_TONE: Record<string, number> = {
+  换算工具: 1,
+  网络工具: 2,
+  系统工具: 3,
+  '编码/加密': 4,
+  开发工具: 5,
+  文本工具: 6,
+  速查表: 7,
+  资源搜索: 8,
+  备忘录: 9
 }
 
 interface HomeProps {
@@ -65,130 +67,118 @@ export default function Home({ onSelectTool }: HomeProps): React.JSX.Element {
 
   return (
     <div className="home-page">
-      {/* Hero */}
-      <section className="home-hero">
-        <div className="home-hero-glow" />
-        <div className="home-hero-content">
-          <div className="home-hero-badge">
-            <Zap size={12} />
-            <span>{totalTools}+ 开发工具</span>
-          </div>
-          <h1 className="home-hero-title">
-            开发者的
-            <span className="home-hero-highlight"> 瑞士军刀</span>
-          </h1>
-          <p className="home-hero-subtitle">
-            一站式开发工具箱 — 格式化、编码、转换、生成、调试，应有尽有
-          </p>
-
-          {/* Stats */}
-          <div className="home-stats">
-            <div className="home-stat">
-              <span className="home-stat-value">{totalTools}</span>
-              <span className="home-stat-label">工具总数</span>
-            </div>
-            <div className="home-stat-divider" />
-            <div className="home-stat">
-              <span className="home-stat-value">{totalCategories}</span>
-              <span className="home-stat-label">分类</span>
-            </div>
-            <div className="home-stat-divider" />
-            <div className="home-stat">
-              <span className="home-stat-value">{totalTools - tools.filter(t => t.category === '速查表').length}</span>
-              <span className="home-stat-label">功能工具</span>
-            </div>
-          </div>
-
-          {/* Search */}
-          <div className="home-search-wrap">
-            <Search size={18} className="home-search-icon" />
-            <input
-              className="home-search-input"
-              type="text"
-              placeholder="搜索工具..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-            {search && (
-              <span className="home-search-result">
-                {filteredTools.length} 个结果
-              </span>
-            )}
-          </div>
-
-          {/* Tag filter */}
-          <div className="home-tags">
-            <button
-              className={`home-tag ${selectedTag === null ? 'active' : ''}`}
-              onClick={() => setSelectedTag(null)}
-            >
-              全部
-            </button>
-            {ALL_TAGS.map((tag) => (
-              <button
-                key={tag}
-                className={`home-tag ${selectedTag === tag ? 'active' : ''}`}
-                onClick={() => setSelectedTag(selectedTag === tag ? null : tag)}
-              >
-                {tag}
-              </button>
-            ))}
-          </div>
+      <header className="home-masthead">
+        <div className="home-masthead-row">
+          <h1 className="home-title">Dev Tools</h1>
+          <span className="home-meta">
+            {totalTools} 个工具，{totalCategories} 个分类
+          </span>
         </div>
-      </section>
 
-      {/* Tool grid */}
+        <div className="home-search-wrap">
+          <Search size={16} className="home-search-icon" aria-hidden="true" />
+          <input
+            className="home-search-input"
+            type="text"
+            placeholder="搜索工具"
+            aria-label="搜索工具"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+          {search ? (
+            <span className="home-search-result">{filteredTools.length} 个结果</span>
+          ) : (
+            <kbd className="home-search-kbd">Ctrl K</kbd>
+          )}
+        </div>
+
+        <div className="home-tags" role="group" aria-label="按场景筛选">
+          <button
+            type="button"
+            className={`home-tag ${selectedTag === null ? 'active' : ''}`}
+            aria-pressed={selectedTag === null}
+            onClick={() => setSelectedTag(null)}
+          >
+            全部
+          </button>
+          {ALL_TAGS.map((tag) => (
+            <button
+              key={tag}
+              type="button"
+              className={`home-tag ${selectedTag === tag ? 'active' : ''}`}
+              aria-pressed={selectedTag === tag}
+              onClick={() => setSelectedTag(selectedTag === tag ? null : tag)}
+            >
+              {tag}
+            </button>
+          ))}
+        </div>
+      </header>
+
       <section className="home-tools-section">
-        {[...categories.entries()].map(
-          ([category, { tools: categoryTools }]) => {
-            const accentClass = CATEGORY_ACCENTS[category] || ''
-            return (
-              <div key={category} className="home-category">
-                <div className="home-category-header">
-                  <h3 className="home-category-title">{category}</h3>
-                  <span className="home-category-count">{categoryTools.length}</span>
-                </div>
-                <div className="home-tool-grid">
-                  {categoryTools.map((t) => {
-                    const Icon = t.icon
-                    return (
+        {[...categories.entries()].map(([category, { tools: categoryTools }]) => {
+          const tone = CATEGORY_TONE[category] ?? 1
+          return (
+            <div key={category} className={`home-category home-tone-${tone}`}>
+              <div className="home-category-header">
+                <span className="home-category-mark" aria-hidden="true" />
+                <h2 className="home-category-title">{category}</h2>
+                <span className="home-category-count">{categoryTools.length}</span>
+              </div>
+              <div className="home-tool-grid">
+                {categoryTools.map((t) => {
+                  const Icon = t.icon
+                  const isFavorite = favorites.includes(t.id)
+                  return (
+                    <div key={t.id} className="home-tool-card">
                       <button
-                        key={t.id}
-                        className={`home-tool-card ${accentClass}`}
+                        type="button"
+                        className="home-tool-card-main"
                         onClick={() => onSelectTool(t.id)}
                       >
-                        <div className="home-tool-icon">
-                          <Icon size={18} />
-                        </div>
-                        <div className="home-tool-body">
-                          <span className="home-tool-name">{t.name}</span>
+                        <span className="home-tool-icon" aria-hidden="true">
+                          <Icon size={17} />
+                        </span>
+                        <span className="home-tool-body">
+                          <span className="home-tool-title-row">
+                            <span className="home-tool-name">{t.name}</span>
+                            {t.isNew && <span className="home-tool-badge">新</span>}
+                          </span>
                           <span className="home-tool-desc">{t.desc}</span>
-                        </div>
-                        <ArrowRight size={14} className="home-tool-arrow" />
-                        <button
-                          className={`home-tool-star ${favorites.includes(t.id) ? 'active' : ''}`}
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            updateFavorites(t.id)
-                          }}
-                          title={favorites.includes(t.id) ? '取消收藏' : '收藏'}
-                        >
-                          <Star size={14} fill={favorites.includes(t.id) ? 'currentColor' : 'none'} />
-                        </button>
-                        {t.isNew && <span className="home-tool-badge">NEW</span>}
+                        </span>
                       </button>
-                    )
-                  })}
-                </div>
+                      <button
+                        type="button"
+                        className={`home-tool-star ${isFavorite ? 'active' : ''}`}
+                        onClick={() => updateFavorites(t.id)}
+                        title={isFavorite ? '取消收藏' : '收藏'}
+                        aria-pressed={isFavorite}
+                        aria-label={isFavorite ? `取消收藏${t.name}` : `收藏${t.name}`}
+                      >
+                        <Star size={13} fill={isFavorite ? 'currentColor' : 'none'} />
+                      </button>
+                    </div>
+                  )
+                })}
               </div>
-            )
-          }
-        )}
+            </div>
+          )
+        })}
 
         {filteredTools.length === 0 && (
           <div className="home-empty">
-            <Layers size={32} className="home-empty-icon" />
+            <Layers size={28} className="home-empty-icon" aria-hidden="true" />
             <span>没有找到匹配的工具</span>
+            <button
+              type="button"
+              className="home-empty-reset"
+              onClick={() => {
+                setSearch('')
+                setSelectedTag(null)
+              }}
+            >
+              清除筛选
+            </button>
           </div>
         )}
       </section>

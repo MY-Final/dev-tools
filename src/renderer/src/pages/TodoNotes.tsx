@@ -88,22 +88,23 @@ export default function TodoNotes(): React.JSX.Element {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
-  const loadItems = useCallback(async () => {
-    setLoading(true)
-    setError('')
-    try {
-      const nextItems = await window.todos.getItems()
-      setItems(nextItems)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : '读取待办失败')
-    } finally {
-      setLoading(false)
+  useEffect(() => {
+    let active = true
+    window.todos
+      .getItems()
+      .then((nextItems) => {
+        if (active) setItems(nextItems)
+      })
+      .catch((err) => {
+        if (active) setError(err instanceof Error ? err.message : '读取待办失败')
+      })
+      .finally(() => {
+        if (active) setLoading(false)
+      })
+    return () => {
+      active = false
     }
   }, [])
-
-  useEffect(() => {
-    void loadItems()
-  }, [loadItems])
 
   const visibleItems = items.filter((item) => {
     if (filter === 'today') return item.date === selectedDate
@@ -190,25 +191,28 @@ export default function TodoNotes(): React.JSX.Element {
     }
   }, [filter, selectedDate])
 
-  const handleSubmit = useCallback((event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    void createItem()
-  }, [createItem])
+  const handleSubmit = useCallback(
+    (event: React.FormEvent<HTMLFormElement>) => {
+      event.preventDefault()
+      void createItem()
+    },
+    [createItem]
+  )
 
   return (
     <div className="tn-page">
       <div className="tn-card">
         <div className="tn-header">
-          <div className="tn-kicker">
-            <ListTodo size={14} />
-            本地保存
-          </div>
           <h2 className="tn-title">Todo Notes</h2>
-          <p className="tn-subtitle">每日待办 · 编辑 · 勾选完成</p>
+          <p className="tn-subtitle">按日记录待办，本地保存。支持编辑、勾选与清理已完成项。</p>
         </div>
 
         <div className="tn-datebar">
-          <button className="tn-icon-btn" onClick={() => setSelectedDate((date) => shiftDate(date, -1))} title="前一天">
+          <button
+            className="tn-icon-btn"
+            onClick={() => setSelectedDate((date) => shiftDate(date, -1))}
+            title="前一天"
+          >
             <ChevronLeft size={16} />
           </button>
           <div className="tn-date-display">
@@ -218,7 +222,11 @@ export default function TodoNotes(): React.JSX.Element {
               <span className="tn-date-sub">{selectedDate}</span>
             </div>
           </div>
-          <button className="tn-icon-btn" onClick={() => setSelectedDate((date) => shiftDate(date, 1))} title="后一天">
+          <button
+            className="tn-icon-btn"
+            onClick={() => setSelectedDate((date) => shiftDate(date, 1))}
+            title="后一天"
+          >
             <ChevronRight size={16} />
           </button>
           <Popover>
@@ -311,7 +319,11 @@ export default function TodoNotes(): React.JSX.Element {
               const isEditing = editing?.id === item.id
               return (
                 <div key={item.id} className={`tn-item ${item.completed ? 'completed' : ''}`}>
-                  <button className="tn-check" onClick={() => void toggleItem(item)} title="完成状态">
+                  <button
+                    className="tn-check"
+                    onClick={() => void toggleItem(item)}
+                    title="完成状态"
+                  >
                     {item.completed ? <Check size={16} /> : <Circle size={16} />}
                   </button>
 
@@ -321,7 +333,9 @@ export default function TodoNotes(): React.JSX.Element {
                         <input
                           className="tn-edit-title"
                           value={editing.title}
-                          onChange={(event) => setEditing({ ...editing, title: event.target.value })}
+                          onChange={(event) =>
+                            setEditing({ ...editing, title: event.target.value })
+                          }
                         />
                         <textarea
                           className="tn-edit-note"
@@ -342,10 +356,18 @@ export default function TodoNotes(): React.JSX.Element {
                   <div className="tn-item-actions">
                     {isEditing ? (
                       <>
-                        <button className="tn-action-btn primary" onClick={() => void saveEdit()} title="保存">
+                        <button
+                          className="tn-action-btn primary"
+                          onClick={() => void saveEdit()}
+                          title="保存"
+                        >
                           <Check size={14} />
                         </button>
-                        <button className="tn-action-btn" onClick={() => setEditing(null)} title="取消">
+                        <button
+                          className="tn-action-btn"
+                          onClick={() => setEditing(null)}
+                          title="取消"
+                        >
                           <X size={14} />
                         </button>
                       </>
@@ -353,12 +375,18 @@ export default function TodoNotes(): React.JSX.Element {
                       <>
                         <button
                           className="tn-action-btn"
-                          onClick={() => setEditing({ id: item.id, title: item.title, note: item.note })}
+                          onClick={() =>
+                            setEditing({ id: item.id, title: item.title, note: item.note })
+                          }
                           title="编辑"
                         >
                           <Edit3 size={14} />
                         </button>
-                        <button className="tn-action-btn danger" onClick={() => void deleteItem(item.id)} title="删除">
+                        <button
+                          className="tn-action-btn danger"
+                          onClick={() => void deleteItem(item.id)}
+                          title="删除"
+                        >
                           <Trash2 size={14} />
                         </button>
                       </>

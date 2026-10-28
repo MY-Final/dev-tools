@@ -1,6 +1,6 @@
 import ElectronOnlyPage from '@renderer/components/ElectronOnlyPage'
 import { useEffect, useRef } from 'react'
-import { Copy, Check, RefreshCw, Wifi } from 'lucide-react'
+import { Copy, Check, RefreshCw } from 'lucide-react'
 import { useMyIp } from '@renderer/tools/my-ip/useMyIp'
 
 export default function MyIp(): React.JSX.Element {
@@ -18,70 +18,74 @@ export default function MyIp(): React.JSX.Element {
 
   return (
     <ElectronOnlyPage toolName="内网 IP">
-      <div className="myip-page">
-      <div className="myip-bg-decoration" />
-
-      <div className="myip-card">
-        <div className="myip-header">
-          <h2 className="myip-title">内网 IP</h2>
-          <p className="myip-subtitle">查看本机内网 IP 地址</p>
-        </div>
-
-        <div className="myip-address-section">
-          <div className="myip-address-label">本机内网地址</div>
-          <div className="myip-address-value">
-            {loading ? (
-              <div className="myip-loading">
-                <RefreshCw size={20} className="myip-loading-icon" />
-                <span>检测中...</span>
-              </div>
-            ) : error ? (
-              <div className="myip-error">{error}</div>
-            ) : ipInfo && ipInfo.ips.length > 0 ? (
-              <div className="myip-ips-list">
-                {ipInfo.ips.map((ip, index) => (
-                  <div key={ip} className="myip-ip-item">
-                    <div className="myip-ip-info">
-                      <Wifi size={16} className="myip-ip-icon" />
-                      <span className="myip-ip">{ip}</span>
-                    </div>
-                    <button
-                      className="myip-copy-btn"
-                      onClick={() => handleCopyIp(ip, index)}
-                      title="复制 IP"
-                    >
-                      {copiedIndex === index ? <Check size={14} /> : <Copy size={14} />}
-                    </button>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="myip-placeholder">点击下方按钮检测</div>
+      <div className="myip-page tool-page">
+        <header className="tool-page-header">
+          <div className="tool-page-heading">
+            <h2 className="tool-page-title">内网 IP</h2>
+            <p className="tool-page-desc">检测本机各网络接口的内网地址，点击地址即可复制。</p>
+          </div>
+          <div className="tool-page-actions">
+            <button
+              type="button"
+              className="tool-btn tool-btn--outline"
+              onClick={fetchLocalIp}
+              disabled={loading}
+            >
+              <RefreshCw size={14} className={loading ? 'spinning' : ''} aria-hidden="true" />
+              {loading ? '检测中…' : '重新检测'}
+            </button>
+            {ipInfo && ipInfo.ips.length > 0 && (
+              <button type="button" className="tool-btn" onClick={handleCopyAll}>
+                <Copy size={14} aria-hidden="true" />
+                复制全部
+              </button>
             )}
           </div>
-        </div>
+        </header>
 
-        <div className="myip-actions">
-          <button className="myip-refresh-btn" onClick={fetchLocalIp} disabled={loading}>
-            <RefreshCw size={14} className={loading ? 'spinning' : ''} />
-            {loading ? '检测中...' : '重新检测'}
-          </button>
+        <section className="tool-panel myip-panel">
+          <div className="tool-panel-head">
+            <h3 className="tool-panel-title">本机内网地址</h3>
+            {ipInfo && ipInfo.ips.length > 0 && (
+              <span className="myip-count">{ipInfo.ips.length} 个地址</span>
+            )}
+          </div>
 
-          {ipInfo && ipInfo.ips.length > 0 && (
-            <button className="myip-copy-all-btn" onClick={handleCopyAll}>
-              <Copy size={14} />
-              复制全部
-            </button>
+          {loading ? (
+            <div className="myip-state">
+              <RefreshCw size={18} className="myip-loading-icon" aria-hidden="true" />
+              <span>检测中…</span>
+            </div>
+          ) : error ? (
+            <div className="myip-state myip-state--error">{error}</div>
+          ) : ipInfo && ipInfo.ips.length > 0 ? (
+            <div className="myip-ips-list">
+              {ipInfo.ips.map((ip, index) => (
+                <button
+                  key={ip}
+                  type="button"
+                  className="myip-ip-item"
+                  onClick={() => handleCopyIp(ip, index)}
+                  title={`复制 ${ip}`}
+                >
+                  <span className="myip-ip">{ip}</span>
+                  <span className="myip-copy-icon" aria-hidden="true">
+                    {copiedIndex === index ? <Check size={14} /> : <Copy size={14} />}
+                  </span>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="myip-state">未检测到内网地址，点击「重新检测」重试。</div>
           )}
-        </div>
-      </div>
+        </section>
 
-      {toast && (
-        <div className="myip-toast">
-          <Check size={14} />
-          {toast}
-        </div>
-      )}
+        {toast && (
+          <div className="myip-toast">
+            <Check size={14} aria-hidden="true" />
+            {toast}
+          </div>
+        )}
       </div>
     </ElectronOnlyPage>
   )

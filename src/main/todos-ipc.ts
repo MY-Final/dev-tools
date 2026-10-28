@@ -1,14 +1,14 @@
-import { ipcMain } from 'electron'
 import { todoStore, type CreateTodoInput, type UpdateTodoInput } from './todos'
+import { registerGuardedHandler } from './ipc-security'
 
 export function registerTodoHandlers(): void {
-  ipcMain.handle('todos:get', () => todoStore.getItems())
-  ipcMain.handle('todos:create', (_event, input: CreateTodoInput) => todoStore.createItem(input))
-  ipcMain.handle('todos:update', (_event, id: string, updates: UpdateTodoInput) =>
+  registerGuardedHandler('todos:get', () => todoStore.getItems())
+  registerGuardedHandler('todos:create', (_event, input: CreateTodoInput) => todoStore.createItem(input))
+  registerGuardedHandler('todos:update', (_event, id: string, updates: UpdateTodoInput) =>
     todoStore.updateItem(id, updates)
   )
-  ipcMain.handle('todos:delete', (_event, id: string) => todoStore.deleteItem(id))
-  ipcMain.handle('todos:clear-completed', (_event, date?: string) =>
+  registerGuardedHandler('todos:delete', (_event, id: string) => todoStore.deleteItem(id))
+  registerGuardedHandler('todos:clear-completed', (_event, date?: string) =>
     todoStore.clearCompleted(date)
   )
 }

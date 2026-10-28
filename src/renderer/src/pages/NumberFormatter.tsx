@@ -2,7 +2,15 @@ import { useState, useCallback } from 'react'
 import { Copy, Check } from 'lucide-react'
 import '../styles/number-formatter.css'
 
-type Style = 'decimal' | 'currency' | 'percent' | 'scientific' | 'engineering' | 'hex' | 'octal' | 'binary'
+type Style =
+  | 'decimal'
+  | 'currency'
+  | 'percent'
+  | 'scientific'
+  | 'engineering'
+  | 'hex'
+  | 'octal'
+  | 'binary'
 
 interface ResultItem {
   id: Style
@@ -10,19 +18,39 @@ interface ResultItem {
   value: string
 }
 
-function formatNumber(value: string, style: Style, locale: string, currency: string, fractionDigits: number): string {
-  const n = parseFloat(value)
-  if (isNaN(n)) return '—'
+function parseNumericInput(input: string): number | null {
+  const trimmed = input.trim()
+  if (!trimmed) return null
+  if (!/^[+-]?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?$/i.test(trimmed)) return null
+  const value = Number(trimmed)
+  return Number.isFinite(value) ? value : null
+}
 
+function formatNumber(
+  n: number,
+  style: Style,
+  locale: string,
+  currency: string,
+  fractionDigits: number
+): string {
   switch (style) {
     case 'decimal':
-      return new Intl.NumberFormat(locale, { minimumFractionDigits: fractionDigits, maximumFractionDigits: fractionDigits }).format(n)
+      return new Intl.NumberFormat(locale, {
+        minimumFractionDigits: fractionDigits,
+        maximumFractionDigits: fractionDigits
+      }).format(n)
     case 'currency':
       try {
         return new Intl.NumberFormat(locale, { style: 'currency', currency }).format(n)
-      } catch { return `${currency} ${n.toFixed(2)}` }
+      } catch {
+        return `${currency} ${n.toFixed(2)}`
+      }
     case 'percent':
-      return new Intl.NumberFormat(locale, { style: 'percent', minimumFractionDigits: fractionDigits, maximumFractionDigits: fractionDigits }).format(n / 100)
+      return new Intl.NumberFormat(locale, {
+        style: 'percent',
+        minimumFractionDigits: fractionDigits,
+        maximumFractionDigits: fractionDigits
+      }).format(n / 100)
     case 'scientific':
       return n.toExponential(fractionDigits)
     case 'engineering': {
@@ -33,7 +61,25 @@ function formatNumber(value: string, style: Style, locale: string, currency: str
       const engExp = Math.floor(exp / 3) * 3
       const mantissa = abs / Math.pow(10, engExp)
       const sign = negative ? '-' : ''
-      const suffixes: Record<string, string> = { '-24': 'y', '-21': 'z', '-18': 'a', '-15': 'f', '-12': 'p', '-9': 'n', '-6': 'µ', '-3': 'm', '0': '', '3': 'k', '6': 'M', '9': 'G', '12': 'T', '15': 'P', '18': 'E', '21': 'Z', '24': 'Y' }
+      const suffixes: Record<string, string> = {
+        '-24': 'y',
+        '-21': 'z',
+        '-18': 'a',
+        '-15': 'f',
+        '-12': 'p',
+        '-9': 'n',
+        '-6': 'µ',
+        '-3': 'm',
+        '0': '',
+        '3': 'k',
+        '6': 'M',
+        '9': 'G',
+        '12': 'T',
+        '15': 'P',
+        '18': 'E',
+        '21': 'Z',
+        '24': 'Y'
+      }
       const suffix = suffixes[engExp.toString()] || `e${engExp}`
       return `${sign}${mantissa.toFixed(fractionDigits)} ${suffix}`
     }
@@ -78,79 +124,130 @@ export default function NumberFormatter(): React.JSX.Element {
   const [fractionDigits, setFractionDigits] = useState(2)
   const [copiedId, setCopiedId] = useState<string | null>(null)
 
-  const n = parseFloat(input)
-  const hasInput = input.trim() && !isNaN(n)
+  const n = parseNumericInput(input)
+  const hasInput = n !== null
 
   const results: ResultItem[] = hasInput
     ? ALL_STYLES.map((s) => ({
         id: s.id,
         label: s.label,
-        value: formatNumber(input, s.id, locale, currency, fractionDigits)
+        value: formatNumber(n, s.id, locale, currency, fractionDigits)
       }))
     : []
 
   const copyResult = useCallback(async (id: string, value: string) => {
     if (value === '—') return
-    try { await navigator.clipboard.writeText(value); setCopiedId(id); setTimeout(() => setCopiedId(null), 1500) } catch { /* ignore */ }
+    try {
+      await navigator.clipboard.writeText(value)
+      setCopiedId(id)
+      setTimeout(() => setCopiedId(null), 1500)
+    } catch {
+      /* ignore */
+    }
   }, [])
 
   return (
-    <div className="nfm-page">
-      <div className="nfm-card">
-        <div className="nfm-header">
-          <h2 className="nfm-title">Number Formatter</h2>
-          <p className="nfm-subtitle">数字格式化（千分位/货币/百分比/科学计数）</p>
+    <div className="nfm-page tool-page">
+      <header className="tool-page-header">
+        <div className="tool-page-heading">
+          <h2 className="tool-page-title">Number Formatter</h2>
+          <p className="tool-page-desc">
+            按地区与精度输出千分位、货币、百分比、科学计数等常见格式。
+          </p>
         </div>
+      </header>
 
-        <div className="nfm-input-area">
+      <section className="tool-panel nfm-input-panel">
+        <div className="nfm-input-row">
           <input
-            className="nfm-input"
+            className="tool-input tool-input--lg tool-input--mono nfm-input"
+            aria-label="输入数字"
+            inputMode="decimal"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="输入数字..."
+            placeholder="输入数字"
           />
         </div>
 
         <div className="nfm-options">
-          <div className="nfm-option">
+          <label className="nfm-option">
             <span className="nfm-option-label">地区</span>
-            <select className="nfm-select" value={locale} onChange={(e) => setLocale(e.target.value)}>
-              {LOCALES.map((l) => (<option key={l.id} value={l.id}>{l.label}</option>))}
+            <select
+              className="tool-select"
+              value={locale}
+              onChange={(e) => setLocale(e.target.value)}
+            >
+              {LOCALES.map((l) => (
+                <option key={l.id} value={l.id}>
+                  {l.label}
+                </option>
+              ))}
             </select>
-          </div>
-          <div className="nfm-option">
+          </label>
+          <label className="nfm-option">
             <span className="nfm-option-label">货币</span>
-            <select className="nfm-select" value={currency} onChange={(e) => setCurrency(e.target.value)}>
-              {CURRENCIES.map((c) => (<option key={c} value={c}>{c}</option>))}
+            <select
+              className="tool-select"
+              value={currency}
+              onChange={(e) => setCurrency(e.target.value)}
+            >
+              {CURRENCIES.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
             </select>
-          </div>
-          <div className="nfm-option">
+          </label>
+          <label className="nfm-option">
             <span className="nfm-option-label">小数位</span>
-            <input className="nfm-digits" type="number" min={0} max={20} value={fractionDigits} onChange={(e) => setFractionDigits(parseInt(e.target.value) || 0)} />
-          </div>
+            <input
+              className="tool-input nfm-digits"
+              type="number"
+              min={0}
+              max={20}
+              value={fractionDigits}
+              onChange={(e) => setFractionDigits(parseInt(e.target.value) || 0)}
+            />
+          </label>
         </div>
 
-        {hasInput && (
-          <div className="nfm-results">
+        {input && !hasInput && (
+          <div className="nfm-error" role="alert">
+            请输入有效数字
+          </div>
+        )}
+      </section>
+
+      {hasInput && (
+        <section className="tool-panel nfm-results">
+          <div className="tool-panel-head">
+            <h3 className="tool-panel-title">格式化结果</h3>
+          </div>
+          <div className="nfm-result-grid">
             {results.map((r) => (
               <div key={r.id} className="nfm-result-item">
                 <div className="nfm-result-header">
                   <span className="nfm-result-label">{r.label}</span>
-                  <button className="nfm-copy-btn" onClick={() => copyResult(r.id, r.value)}>
-                    {copiedId === r.id ? <Check size={13} /> : <Copy size={13} />}
-                    {copiedId === r.id ? '已复制' : '复制'}
+                  <button
+                    type="button"
+                    className="tool-icon-btn"
+                    onClick={() => copyResult(r.id, r.value)}
+                    title={`复制 ${r.label}`}
+                    aria-label={`复制 ${r.label}`}
+                  >
+                    {copiedId === r.id ? (
+                      <Check size={14} aria-hidden="true" />
+                    ) : (
+                      <Copy size={14} aria-hidden="true" />
+                    )}
                   </button>
                 </div>
                 <div className="nfm-result-value">{r.value}</div>
               </div>
             ))}
           </div>
-        )}
-
-        {input && !hasInput && (
-          <div className="nfm-error">请输入有效数字</div>
-        )}
-      </div>
+        </section>
+      )}
     </div>
   )
 }

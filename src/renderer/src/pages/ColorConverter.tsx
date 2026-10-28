@@ -5,7 +5,13 @@ import '../styles/color-converter.css'
 
 // ── Component ──────────────────────────────────────────────────
 
-const SAMPLES = ['#6366F1', 'rgb(59, 130, 246)', 'hsl(270, 70%, 50%)', '#22C55E', 'rgb(245, 158, 11)']
+const SAMPLES = [
+  '#6366F1',
+  'rgb(59, 130, 246)',
+  'hsl(270, 70%, 50%)',
+  '#22C55E',
+  'rgb(245, 158, 11)'
+]
 
 // Helper for sample preview (not in hook because it's UI-specific)
 function parseColorForPreview(input: string): string | null {
@@ -33,112 +39,131 @@ export default function ColorConverter(): React.JSX.Element {
     }
   }, [])
 
-  return (
-    <div className="cv-page">
-      <div className="cv-card">
-        <div className="cv-header">
-          <h2 className="cv-title">Color Converter</h2>
-          <p className="cv-subtitle">颜色格式转换 · HEX ↔ RGB ↔ HSL</p>
-        </div>
+  const formatRows = color
+    ? [
+        { key: 'hex', label: 'HEX', value: color.hex },
+        { key: 'rgb', label: 'RGB', value: formatRgb(color.rgb) },
+        { key: 'hsl', label: 'HSL', value: formatHsl(color.hsl) }
+      ]
+    : []
 
-        <div className="cv-input-area">
-          <div className="cv-input-header">
-            <span className="cv-input-label">输入颜色值</span>
+  return (
+    <div className="cv-page tool-page">
+      <header className="tool-page-header">
+        <div className="tool-page-heading">
+          <h2 className="tool-page-title">Color Converter</h2>
+          <p className="tool-page-desc">HEX、RGB、HSL 之间实时互转，点选示例即可载入。</p>
+        </div>
+      </header>
+
+      <div className="tool-split cv-layout">
+        <div className="cv-main">
+          <section className="tool-panel cv-input-panel">
+            <div className="cv-input-row">
+              <span
+                className="cv-input-swatch"
+                style={{ background: color?.hex ?? 'transparent' }}
+                aria-hidden="true"
+              />
+              <input
+                className="cv-input tool-input tool-input--lg tool-input--mono"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="#6366F1 / rgb(99, 102, 241) / hsl(239, 84%, 67%)"
+                aria-label="颜色值"
+                autoFocus
+                spellCheck={false}
+              />
+              <button
+                type="button"
+                className="tool-btn"
+                onClick={clear}
+                disabled={!input}
+                title="清空输入"
+              >
+                <RotateCcw size={14} aria-hidden="true" />
+                清空
+              </button>
+            </div>
+
             <div className="cv-samples">
-              {SAMPLES.map((s, i) => (
-                <button
-                  key={i}
-                  className="cv-sample-btn"
-                  onClick={() => loadSample(s)}
-                  style={{
-                    borderLeft:
-                      i < 3 ? `3px solid ${parseColorForPreview(s) ?? 'transparent'}` : undefined
-                  }}
-                >
+              <span className="cv-samples-label">示例</span>
+              {SAMPLES.map((s) => (
+                <button key={s} className="cv-sample-btn" onClick={() => loadSample(s)}>
+                  <span
+                    className="cv-sample-dot"
+                    style={{ background: parseColorForPreview(s) ?? 'transparent' }}
+                    aria-hidden="true"
+                  />
                   {s}
                 </button>
               ))}
             </div>
-          </div>
-          <textarea
-            className="cv-textarea"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="输入颜色值，支持 HEX / RGB / HSL 格式..."
-            rows={2}
-            autoFocus
-          />
-        </div>
 
-        <div className="cv-actions-bar">
-          <button className="cv-btn cv-btn-ghost" onClick={clear}>
-            <RotateCcw size={14} />
-            清空
-          </button>
+            {input && !color && (
+              <div className="cv-error" role="alert">
+                <Palette size={15} aria-hidden="true" />
+                <span>
+                  无法识别该格式，请输入 HEX (#6366F1)、RGB (rgb(99,102,241)) 或 HSL
+                  (hsl(239,84%,67%))
+                </span>
+              </div>
+            )}
+          </section>
+
+          {color && (
+            <section className="tool-panel cv-results">
+              <div className="tool-panel-head">
+                <h3 className="tool-panel-title">转换结果</h3>
+              </div>
+              <div className="tool-rows">
+                {formatRows.map((row) => (
+                  <div className="tool-row" key={row.key}>
+                    <div className="tool-row-meta cv-result-meta">
+                      <span className="tool-row-label">{row.label}</span>
+                      {color.format === row.key && <span className="cv-source-tag">来源</span>}
+                    </div>
+                    <code className="tool-row-value">{row.value}</code>
+                    <button
+                      type="button"
+                      className="tool-icon-btn"
+                      onClick={() => copyToClipboard(row.key, row.value)}
+                      title={`复制 ${row.label}`}
+                      aria-label={`复制 ${row.label}`}
+                    >
+                      {copiedKey === row.key ? (
+                        <Check size={14} aria-hidden="true" />
+                      ) : (
+                        <Copy size={14} aria-hidden="true" />
+                      )}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
         </div>
 
         {color && (
-          <div className="cv-result-area">
-            {/* Color preview */}
-            <div className="cv-preview" style={{ background: color.hex }}>
-              <div className="cv-preview-hex">{color.hex}</div>
+          <section className="tool-panel cv-preview-panel" aria-label="颜色预览">
+            <div className="cv-preview-large" style={{ background: color.hex }}>
+              <span className="cv-preview-large-hex">{color.hex}</span>
             </div>
-
-            {/* Result cards */}
-            <div className="cv-results">
-              <div className={`cv-result-card ${color.format === 'hex' ? 'cv-result-source' : ''}`}>
-                <div className="cv-result-header">
-                  <span className="cv-result-badge">HEX</span>
-                  {color.format === 'hex' && <span className="cv-result-tag">输入</span>}
-                </div>
-                <code className="cv-result-value">{color.hex}</code>
-                <button
-                  className="cv-icon-btn"
-                  title="复制 HEX"
-                  onClick={() => copyToClipboard('hex', color.hex)}
-                >
-                  {copiedKey === 'hex' ? <Check size={14} /> : <Copy size={14} />}
-                </button>
+            <dl className="cv-preview-meta">
+              <div>
+                <dt>R</dt>
+                <dd>{color.rgb.r}</dd>
               </div>
-
-              <div className={`cv-result-card ${color.format === 'rgb' ? 'cv-result-source' : ''}`}>
-                <div className="cv-result-header">
-                  <span className="cv-result-badge">RGB</span>
-                  {color.format === 'rgb' && <span className="cv-result-tag">输入</span>}
-                </div>
-                <code className="cv-result-value">{formatRgb(color.rgb)}</code>
-                <button
-                  className="cv-icon-btn"
-                  title="复制 RGB"
-                  onClick={() => copyToClipboard('rgb', formatRgb(color.rgb))}
-                >
-                  {copiedKey === 'rgb' ? <Check size={14} /> : <Copy size={14} />}
-                </button>
+              <div>
+                <dt>G</dt>
+                <dd>{color.rgb.g}</dd>
               </div>
-
-              <div className={`cv-result-card ${color.format === 'hsl' ? 'cv-result-source' : ''}`}>
-                <div className="cv-result-header">
-                  <span className="cv-result-badge">HSL</span>
-                  {color.format === 'hsl' && <span className="cv-result-tag">输入</span>}
-                </div>
-                <code className="cv-result-value">{formatHsl(color.hsl)}</code>
-                <button
-                  className="cv-icon-btn"
-                  title="复制 HSL"
-                  onClick={() => copyToClipboard('hsl', formatHsl(color.hsl))}
-                >
-                  {copiedKey === 'hsl' ? <Check size={14} /> : <Copy size={14} />}
-                </button>
+              <div>
+                <dt>B</dt>
+                <dd>{color.rgb.b}</dd>
               </div>
-            </div>
-          </div>
-        )}
-
-        {input && !color && (
-          <div className="cv-error">
-            <Palette size={16} />
-            <span>无法识别颜色格式，请输入 HEX (#6366F1)、RGB (rgb(99,102,241)) 或 HSL (hsl(239,84%,67%))</span>
-          </div>
+            </dl>
+          </section>
         )}
       </div>
     </div>

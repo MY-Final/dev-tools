@@ -9,3 +9,4 @@ web-dist
 .reasonix/
 *.tsbuildinfo
 reasonix.toml
+.playwright-mcp/

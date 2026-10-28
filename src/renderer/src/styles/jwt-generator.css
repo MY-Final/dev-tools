@@ -1,574 +1,280 @@
 /* ========================================
-   JWT Generator 页面 - Soft Minimalism
+   JWT Generator
+   工具条 + 配置/结果双栏
    ======================================== */
 
-.jwt-page {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  padding: 32px 24px;
-  overflow-y: auto;
-  position: relative;
+.jwt-toolbar {
+  overflow: hidden;
 }
 
-.jwt-bg-decoration {
-  position: fixed;
-  top: -200px;
-  right: -200px;
-  width: 500px;
-  height: 500px;
-  background: radial-gradient(circle, var(--color-accent-soft-subtle) 0%, transparent 70%);
-  pointer-events: none;
-  z-index: 0;
-}
-
-.jwt-container {
-  position: relative;
-  z-index: 1;
-  width: 100%;
-  max-width: 1200px;
-}
-
-.jwt-header {
-  text-align: center;
-  margin-bottom: 28px;
-}
-
-.jwt-title {
-  font-size: 24px;
-  font-weight: 700;
-  color: var(--color-text);
-  font-family: 'JetBrains Mono', monospace;
-  letter-spacing: -0.5px;
-  margin-bottom: 6px;
-}
-
-.jwt-subtitle {
-  font-size: 14px;
-  color: var(--color-text-muted);
-}
-
-/* 左右布局 */
-.jwt-content {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 24px;
-}
-
-/* 左侧配置面板 */
-.jwt-config-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.jwt-section {
-  padding: 20px;
-  background: var(--glass-bg);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--glass-border);
-  border-radius: 16px;
-  box-shadow: var(--shadow-lg);
-}
-
-.jwt-section-header {
+.jwt-toolbar-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 10px 24px;
+  padding: 10px 14px;
 }
 
-.jwt-section-label {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--color-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.jwt-error {
-  font-size: 11px;
-  color: var(--color-danger);
-  font-family: 'JetBrains Mono', monospace;
-}
-
-/* 算法选择 */
-.jwt-algorithms {
+.jwt-toolbar-group {
   display: flex;
+  align-items: center;
   gap: 8px;
 }
 
-.jwt-alg-btn {
-  flex: 1;
-  padding: 10px 12px;
-  background: var(--color-editor-bg);
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  color: var(--color-text-secondary);
-  font-size: 13px;
-  font-weight: 600;
-  font-family: 'JetBrains Mono', monospace;
-  cursor: pointer;
-  transition: all 0.2s ease;
+.jwt-toolbar-group .tool-select {
+  height: 30px;
+  min-height: 30px;
+  font-size: var(--text-sm);
 }
 
-.jwt-alg-btn:hover {
-  border-color: var(--color-border-hover);
-  color: var(--color-text);
+.jwt-field-label {
+  color: var(--color-text-muted);
+  font-size: var(--text-2xs);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
 }
 
-.jwt-alg-btn.active {
-  background: var(--color-accent-soft-subtle);
-  border-color: var(--color-accent-soft);
-  color: var(--color-accent-soft);
+/* ── 配置列 ─────────────────────────────────── */
+
+.jwt-config,
+.jwt-output {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
 }
 
-/* 文本区域 */
+.jwt-editor {
+  overflow: hidden;
+}
+
+.jwt-inline-error {
+  color: var(--color-danger);
+  font-size: var(--text-2xs);
+}
+
 .jwt-textarea {
+  display: block;
   width: 100%;
   padding: 12px 14px;
+  border: 0;
   background: var(--color-editor-bg);
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
   color: var(--color-text);
-  font-size: 12px;
   font-family: 'JetBrains Mono', monospace;
-  line-height: 1.5;
-  resize: vertical;
-  transition: all 0.2s ease;
+  font-size: var(--text-sm);
+  line-height: 1.6;
   outline: none;
-}
-
-.jwt-textarea:focus {
-  border-color: var(--color-accent-soft);
-}
-
-.jwt-textarea.error {
-  border-color: var(--color-danger);
+  resize: vertical;
 }
 
 .jwt-textarea::placeholder {
   color: var(--color-text-muted);
 }
 
-/* 快捷 Claim */
-.jwt-claims {
+.jwt-editor:focus-within {
+  box-shadow: inset 0 0 0 1px var(--color-accent);
+}
+
+.jwt-textarea.error {
+  color: var(--color-danger);
+}
+
+.jwt-quick {
   display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 12px;
-}
-
-.jwt-claims-label,
-.jwt-templates-label {
-  font-size: 11px;
-  color: var(--color-text-muted);
-  margin-right: 4px;
-}
-
-.jwt-claim-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  padding: 4px 8px;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-  color: var(--color-text-muted);
-  font-size: 11px;
-  font-family: 'JetBrains Mono', monospace;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.jwt-claim-btn:hover {
-  border-color: var(--color-border-hover);
-  color: var(--color-text-secondary);
-}
-
-/* 模板按钮 */
-.jwt-templates {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 10px;
-}
-
-.jwt-template-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 6px 10px;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  color: var(--color-text-secondary);
-  font-size: 11px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.jwt-template-btn:hover {
-  border-color: var(--color-accent-soft);
-  color: var(--color-accent-soft);
-  background: var(--color-accent-soft-subtle);
-}
-
-.jwt-random-btn {
-  background: var(--color-accent-soft-subtle);
-  border-color: var(--color-accent-soft);
-  color: var(--color-accent-soft);
-}
-
-.jwt-random-btn:hover {
-  background: var(--color-accent-soft);
-  color: var(--color-text-inverse);
-}
-
-/* 过期时间 */
-.jwt-expiration {
-  margin-top: 16px;
-  padding-top: 16px;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
   border-top: 1px solid var(--color-border);
 }
 
-.jwt-expiration-label {
+.jwt-quick-row {
   display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--color-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 10px;
+  align-items: flex-start;
+  gap: 10px;
 }
 
-.jwt-expiration-options {
+.jwt-quick-row .jwt-field-label {
+  padding-top: 3px;
+  width: 64px;
+  flex-shrink: 0;
+}
+
+.jwt-chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 4px;
 }
 
-.jwt-exp-btn {
-  padding: 6px 12px;
-  background: var(--color-editor-bg);
+.jwt-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 24px;
+  padding: 0 8px;
   border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: var(--radius-xs);
+  background: var(--color-surface);
   color: var(--color-text-secondary);
-  font-size: 12px;
-  font-weight: 500;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: var(--text-2xs);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition:
+    background-color 0.12s ease,
+    border-color 0.12s ease,
+    color 0.12s ease;
 }
 
-.jwt-exp-btn:hover {
+.jwt-chip:hover {
   border-color: var(--color-border-hover);
+  background: var(--color-surface-hover);
   color: var(--color-text);
 }
 
-.jwt-exp-btn.active {
-  background: var(--color-accent-soft-subtle);
-  border-color: var(--color-accent-soft);
-  color: var(--color-accent-soft);
+.jwt-chip:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
 }
 
-/* Secret 输入 */
+/* 密钥 */
+
 .jwt-secret-actions {
   display: flex;
-  gap: 6px;
+  align-items: center;
+  gap: 2px;
 }
 
-.jwt-icon-btn {
+.jwt-secret-body {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+}
+
+.jwt-secret-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.jwt-secret-hint {
+  color: var(--color-text-muted);
+  font-size: var(--text-2xs);
+  white-space: nowrap;
+}
+
+/* ── 结果列 ─────────────────────────────────── */
+
+.jwt-token {
+  overflow: hidden;
+}
+
+.jwt-token-text {
+  margin: 0;
+  padding: 14px;
+  background: var(--color-editor-bg);
+  color: var(--color-text);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: var(--text-sm);
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  user-select: all;
+}
+
+.jwt-empty {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 30px;
-  height: 30px;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
+  min-height: 120px;
+  padding: 20px;
   color: var(--color-text-muted);
-  cursor: pointer;
-  transition: all 0.2s ease;
+  font-size: var(--text-sm);
+  line-height: 1.6;
+  text-align: center;
 }
 
-.jwt-icon-btn:hover {
-  border-color: var(--color-accent-soft);
-  color: var(--color-accent-soft);
+.jwt-preview {
+  overflow: hidden;
 }
 
-.jwt-secret-input-wrapper {
-  position: relative;
-}
-
-.jwt-input {
-  width: 100%;
-  padding: 10px 14px;
-  background: var(--color-editor-bg);
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  color: var(--color-text);
-  font-size: 13px;
-  font-family: 'JetBrains Mono', monospace;
-  transition: all 0.2s ease;
-  outline: none;
-}
-
-.jwt-input:focus {
-  border-color: var(--color-accent-soft);
-}
-
-.jwt-input::placeholder {
-  color: var(--color-text-muted);
-}
-
-/* 右侧结果面板 */
-.jwt-result-panel {
+.jwt-preview-body {
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  position: sticky;
-  top: 32px;
-  align-self: flex-start;
 }
 
-/* JWT Token 区域 */
-.jwt-token-section {
-  padding: 20px;
-  background: var(--glass-bg);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--glass-border);
-  border-radius: 16px;
-  box-shadow: var(--shadow-lg);
+.jwt-preview-block {
+  border-top: 1px solid var(--color-border);
 }
 
-.jwt-token-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 14px;
+.jwt-preview-block:first-child {
+  border-top: 0;
 }
 
-.jwt-token-label {
-  font-size: 11px;
-  font-weight: 600;
+.jwt-preview-label {
+  display: block;
+  padding: 8px 14px 0;
   color: var(--color-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  font-size: var(--text-2xs);
+  font-weight: 500;
+  letter-spacing: 0.02em;
 }
 
-.jwt-copy-btn {
+.jwt-preview-code {
+  margin: 0;
+  padding: 6px 14px 12px;
+  color: var(--color-text-secondary);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: var(--text-xs);
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.jwt-preview-signature {
+  color: var(--color-text-muted);
+}
+
+/* 复制提示 */
+
+.jwt-toast {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  z-index: 100;
   display: flex;
   align-items: center;
   gap: 6px;
   padding: 8px 14px;
-  background: var(--color-accent-soft);
-  border: none;
-  border-radius: 10px;
-  color: var(--color-text-inverse);
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.jwt-copy-btn:hover:not(:disabled) {
-  background: var(--color-accent-soft-hover);
-}
-
-.jwt-copy-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.jwt-token-content {
-  padding: 16px;
-  background: var(--color-editor-bg);
   border: 1px solid var(--color-border);
-  border-radius: 12px;
-  min-height: 120px;
-  max-height: 200px;
-  overflow-y: auto;
-}
-
-.jwt-token-text {
-  font-size: 12px;
-  font-family: 'JetBrains Mono', monospace;
-  color: var(--color-accent-soft);
-  word-break: break-all;
-  line-height: 1.6;
-}
-
-.jwt-token-placeholder {
-  font-size: 13px;
-  color: var(--color-text-muted);
-  text-align: center;
-  padding: 40px 0;
-}
-
-/* JWT 预览 */
-.jwt-preview {
-  padding: 20px;
-  background: var(--glass-bg);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--glass-border);
-  border-radius: 16px;
-  box-shadow: var(--shadow-lg);
-}
-
-.jwt-preview-header {
-  margin-bottom: 14px;
-}
-
-.jwt-preview-label {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--color-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.jwt-preview-sections {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.jwt-preview-section {
-  background: var(--color-editor-bg);
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  overflow: hidden;
-}
-
-.jwt-preview-section-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 14px;
+  border-radius: var(--radius-md);
   background: var(--color-surface);
-  border-bottom: 1px solid var(--color-border);
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--color-text-secondary);
+  box-shadow: var(--shadow-md);
+  color: var(--color-text);
+  font-size: var(--text-sm);
+  transform: translateX(-50%);
+  pointer-events: none;
 }
 
-.jwt-preview-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-}
+/* ── 窄容器 ─────────────────────────────────── */
 
-.jwt-preview-dot.header {
-  background: #3b82f6;
-}
-
-.jwt-preview-dot.payload {
-  background: #10b981;
-}
-
-.jwt-preview-dot.signature {
-  background: #f59e0b;
-}
-
-.jwt-preview-code {
-  padding: 12px 14px;
-  font-size: 11px;
-  font-family: 'JetBrains Mono', monospace;
-  color: var(--color-text-secondary);
-  line-height: 1.5;
-  overflow-x: auto;
-  white-space: pre;
-  margin: 0;
-}
-
-.jwt-preview-code.signature {
-  color: var(--color-accent-soft);
-  word-break: break-all;
-  white-space: normal;
-}
-
-/* Toast */
-.jwt-toast {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 18px;
-  background: var(--glass-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid var(--glass-border);
-  border-radius: 12px;
-  box-shadow: var(--shadow-lg);
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--color-success);
-  z-index: 1000;
-  animation: toast-slide-in 0.2s ease;
-}
-
-@keyframes toast-slide-in {
-  from {
-    opacity: 0;
-    transform: translateX(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-/* 响应式 */
-@media (max-width: 1024px) {
-  .jwt-content {
-    grid-template-columns: 1fr;
+@container tool (max-width: 640px) {
+  .jwt-secret-body {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 6px;
   }
 
-  .jwt-result-panel {
-    position: static;
-  }
-}
-
-@media (max-width: 600px) {
-  .jwt-page {
-    padding: 20px 16px;
+  .jwt-secret-hint {
+    white-space: normal;
   }
 
-  .jwt-title {
-    font-size: 20px;
-  }
-
-  .jwt-section {
-    padding: 16px;
-  }
-
-  .jwt-algorithms {
-    flex-wrap: wrap;
-  }
-
-  .jwt-alg-btn {
-    min-width: 80px;
-  }
-
-  .jwt-expiration-options {
+  .jwt-quick-row {
+    flex-direction: column;
     gap: 4px;
   }
 
-  .jwt-exp-btn {
-    padding: 5px 10px;
-    font-size: 11px;
+  .jwt-quick-row .jwt-field-label {
+    padding-top: 0;
+    width: auto;
   }
 }

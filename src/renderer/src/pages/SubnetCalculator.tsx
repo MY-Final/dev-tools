@@ -85,6 +85,8 @@ function calculateSubnet(ip: string, cidr: number): SubnetInfo | null {
   }
 }
 
+const PREFIX_PRESETS = [8, 16, 24, 25]
+
 function ResultRow({
   label,
   value,
@@ -101,12 +103,20 @@ function ResultRow({
   return (
     <div className="sc-result-row">
       <span className="sc-result-label">{label}</span>
-      <div className="sc-result-value-row">
-        <code className="sc-result-value">{value}</code>
-        <button className="sc-copy-btn" onClick={() => onCopy(String(value), copyKey)}>
-          {copied === copyKey ? <Check size={12} /> : <Copy size={12} />}
-        </button>
-      </div>
+      <code className="sc-result-value">{value}</code>
+      <button
+        type="button"
+        className="tool-icon-btn sc-copy-btn"
+        onClick={() => onCopy(String(value), copyKey)}
+        aria-label={`复制${label}`}
+        title={`复制${label}`}
+      >
+        {copied === copyKey ? (
+          <Check size={12} aria-hidden="true" />
+        ) : (
+          <Copy size={12} aria-hidden="true" />
+        )}
+      </button>
     </div>
   )
 }
@@ -145,156 +155,171 @@ export default function SubnetCalculator(): React.JSX.Element {
   }, [])
 
   return (
-    <div className="sc-page">
-      <div className="sc-card">
-        <div className="sc-header">
-          <h2 className="sc-title">IPv4 Subnet Calculator</h2>
-          <p className="sc-subtitle">计算 IPv4 子网信息</p>
+    <div className="sc-page tool-page">
+      <header className="tool-page-header">
+        <div className="tool-page-heading">
+          <h2 className="tool-page-title">IPv4 Subnet Calculator</h2>
+          <p className="tool-page-desc">
+            输入 IP 与前缀长度，实时计算网络地址、掩码、主机范围与二进制形式。
+          </p>
         </div>
+      </header>
 
-        <div className="sc-input-area">
-          <div className="sc-input-group">
-            <label className="sc-input-label">CIDR 表示法</label>
+      <section className="tool-panel sc-input-panel">
+        <div className="sc-input-row">
+          <label className="sc-input-group sc-input-ip">
+            <span>IP 地址 / CIDR</span>
             <input
               type="text"
-              className="sc-input sc-input-cidr"
-              placeholder="192.168.1.100/24"
+              className="tool-input tool-input--mono"
+              value={ipInput}
+              onChange={(e) => setIpInput(e.target.value)}
               onBlur={(e) => parseCIDR(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') parseCIDR((e.target as HTMLInputElement).value)
               }}
+              placeholder="192.168.1.100 或 192.168.1.100/24"
+              spellCheck={false}
             />
-          </div>
+          </label>
 
-          <div className="sc-inputs-row">
-            <div className="sc-input-group">
-              <label className="sc-input-label">IP Address</label>
-              <input
-                type="text"
-                className="sc-input"
-                value={ipInput}
-                onChange={(e) => setIpInput(e.target.value)}
-                placeholder="192.168.1.100"
-              />
-            </div>
-            <div className="sc-input-group sc-input-cidr-small">
-              <label className="sc-input-label">CIDR</label>
-              <input
-                type="number"
-                className="sc-input"
-                value={cidrInput}
-                onChange={(e) => setCidrInput(e.target.value)}
-                min={0}
-                max={32}
-                placeholder="24"
-              />
-            </div>
+          <span className="sc-slash" aria-hidden="true">
+            /
+          </span>
+
+          <label className="sc-input-group sc-input-prefix">
+            <span>前缀</span>
+            <input
+              type="number"
+              className="tool-input tool-input--mono"
+              value={cidrInput}
+              onChange={(e) => setCidrInput(e.target.value)}
+              min={0}
+              max={32}
+              aria-label="CIDR 前缀长度"
+            />
+          </label>
+
+          <div className="sc-presets">
+            {PREFIX_PRESETS.map((p) => (
+              <button
+                key={p}
+                type="button"
+                className={`sc-preset ${cidr === p ? 'active' : ''}`}
+                onClick={() => setCidrInput(String(p))}
+                aria-pressed={cidr === p}
+              >
+                /{p}
+              </button>
+            ))}
           </div>
         </div>
-
-        {info ? (
-          <>
-            <div className="sc-section">
-              <span className="sc-section-label">计算结果</span>
-              <div className="sc-results">
-                <ResultRow
-                  label="Network Address"
-                  value={info.networkAddress}
-                  copyKey="network"
-                  copied={copied}
-                  onCopy={copyValue}
-                />
-                <ResultRow
-                  label="Broadcast Address"
-                  value={info.broadcastAddress}
-                  copyKey="broadcast"
-                  copied={copied}
-                  onCopy={copyValue}
-                />
-                <ResultRow
-                  label="Subnet Mask"
-                  value={info.subnetMask}
-                  copyKey="mask"
-                  copied={copied}
-                  onCopy={copyValue}
-                />
-                <ResultRow
-                  label="Wildcard Mask"
-                  value={info.wildcardMask}
-                  copyKey="wildcard"
-                  copied={copied}
-                  onCopy={copyValue}
-                />
-                <ResultRow
-                  label="First Host"
-                  value={info.firstHost}
-                  copyKey="first"
-                  copied={copied}
-                  onCopy={copyValue}
-                />
-                <ResultRow
-                  label="Last Host"
-                  value={info.lastHost}
-                  copyKey="last"
-                  copied={copied}
-                  onCopy={copyValue}
-                />
-                <ResultRow
-                  label="Usable Hosts"
-                  value={info.usableHosts.toLocaleString()}
-                  copyKey="usable"
-                  copied={copied}
-                  onCopy={copyValue}
-                />
-                <ResultRow
-                  label="Total Hosts"
-                  value={info.totalHosts.toLocaleString()}
-                  copyKey="total"
-                  copied={copied}
-                  onCopy={copyValue}
-                />
-              </div>
-            </div>
-
-            <div className="sc-section">
-              <span className="sc-section-label">IP 信息</span>
-              <div className="sc-info-grid">
-                <div className="sc-info-item">
-                  <span className="sc-info-label">CIDR Prefix</span>
-                  <span className="sc-info-value">/{info.cidr}</span>
-                </div>
-                <div className="sc-info-item">
-                  <span className="sc-info-label">IP Class</span>
-                  <span className="sc-info-value">{info.ipClass}</span>
-                </div>
-                <div className="sc-info-item">
-                  <span className="sc-info-label">Type</span>
-                  <span className="sc-info-value">{info.isPrivate ? 'Private' : 'Public'}</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="sc-section">
-              <span className="sc-section-label">Binary</span>
-              <div className="sc-binary-list">
-                <div className="sc-binary-item">
-                  <span className="sc-binary-label">IP Address</span>
-                  <code className="sc-binary-value">{info.ipBinary}</code>
-                </div>
-                <div className="sc-binary-item">
-                  <span className="sc-binary-label">Subnet Mask</span>
-                  <code className="sc-binary-value">{info.binaryMask}</code>
-                </div>
-              </div>
-            </div>
-          </>
-        ) : (
-          <div className="sc-empty">
-            <Network size={32} />
-            <span>输入有效的 IPv4 地址和 CIDR</span>
-          </div>
+        {!info && (
+          <p className="sc-error" role="status">
+            请输入有效的 IPv4 地址，前缀长度需在 0–32 之间。
+          </p>
         )}
-      </div>
+      </section>
+
+      {info ? (
+        <>
+          <section className="tool-panel sc-results-panel">
+            <div className="tool-panel-head">
+              <h3 className="tool-panel-title">计算结果</h3>
+            </div>
+            <div className="sc-results">
+              <ResultRow
+                label="网络地址"
+                value={info.networkAddress}
+                copyKey="network"
+                copied={copied}
+                onCopy={copyValue}
+              />
+              <ResultRow
+                label="广播地址"
+                value={info.broadcastAddress}
+                copyKey="broadcast"
+                copied={copied}
+                onCopy={copyValue}
+              />
+              <ResultRow
+                label="子网掩码"
+                value={info.subnetMask}
+                copyKey="mask"
+                copied={copied}
+                onCopy={copyValue}
+              />
+              <ResultRow
+                label="通配符掩码"
+                value={info.wildcardMask}
+                copyKey="wildcard"
+                copied={copied}
+                onCopy={copyValue}
+              />
+              <ResultRow
+                label="首个可用主机"
+                value={info.firstHost}
+                copyKey="first"
+                copied={copied}
+                onCopy={copyValue}
+              />
+              <ResultRow
+                label="最后可用主机"
+                value={info.lastHost}
+                copyKey="last"
+                copied={copied}
+                onCopy={copyValue}
+              />
+              <ResultRow
+                label="可用主机数"
+                value={info.usableHosts.toLocaleString()}
+                copyKey="usable"
+                copied={copied}
+                onCopy={copyValue}
+              />
+              <ResultRow
+                label="地址总数"
+                value={info.totalHosts.toLocaleString()}
+                copyKey="total"
+                copied={copied}
+                onCopy={copyValue}
+              />
+            </div>
+          </section>
+
+          <section className="tool-panel sc-meta-panel">
+            <div className="sc-info-grid">
+              <div className="sc-info-item">
+                <span className="sc-info-label">IP 类别</span>
+                <span className="sc-info-value">{info.ipClass}</span>
+              </div>
+              <div className="sc-info-item">
+                <span className="sc-info-label">地址类型</span>
+                <span className="sc-info-value">{info.isPrivate ? 'Private' : 'Public'}</span>
+              </div>
+              <div className="sc-info-item">
+                <span className="sc-info-label">前缀长度</span>
+                <span className="sc-info-value">/{info.cidr}</span>
+              </div>
+            </div>
+            <div className="sc-binary-list">
+              <div className="sc-binary-item">
+                <span className="sc-binary-label">IP Address</span>
+                <code className="sc-binary-value">{info.ipBinary}</code>
+              </div>
+              <div className="sc-binary-item">
+                <span className="sc-binary-label">Subnet Mask</span>
+                <code className="sc-binary-value">{info.binaryMask}</code>
+              </div>
+            </div>
+          </section>
+        </>
+      ) : (
+        <section className="tool-panel sc-empty">
+          <Network size={26} aria-hidden="true" />
+          <span>输入有效的 IPv4 地址和 CIDR 后显示结果</span>
+        </section>
+      )}
     </div>
   )
 }

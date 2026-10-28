@@ -1,5 +1,4 @@
 import { contextBridge, ipcRenderer } from 'electron'
-import { electronAPI } from '@electron-toolkit/preload'
 import type {
   AppSettings,
   UpdateStatus,
@@ -9,8 +8,45 @@ import type {
   DockerTagResult,
   CreateTodoInput,
   UpdateTodoInput,
-  TodoItem
+  TodoItem,
+  RuntimeVersions,
+  OpenedFile,
+  FileEncoding,
+  SaveFileOptions,
+  SaveFileResult
 } from './index.d'
+
+function getRuntimeVersions(): RuntimeVersions {
+  return {
+    electron: process.versions.electron ?? '',
+    chrome: process.versions.chrome ?? '',
+    node: process.versions.node ?? ''
+  }
+}
+
+const runtimeAPI = {
+  getVersions: (): RuntimeVersions => getRuntimeVersions()
+}
+
+const COMMAND_PALETTE_TOGGLE_CHANNEL = 'command-palette:toggle'
+
+// Compatibility surface used by existing renderer components. Keep it narrowly scoped:
+// no generic invoke/send methods and no direct process.env access.
+const electronCompatAPI = {
+  process: {
+    platform: process.platform,
+    versions: getRuntimeVersions()
+  },
+  ipcRenderer: {
+    on: (channel: string, callback: () => void): (() => void) => {
+      if (channel !== COMMAND_PALETTE_TOGGLE_CHANNEL) return () => undefined
+
+      const handler = (): void => callback()
+      ipcRenderer.on(channel, handler)
+      return () => ipcRenderer.removeListener(channel, handler)
+    }
+  }
+}
 
 // Settings API
 const settingsAPI = {
@@ -30,12 +66,10 @@ const settingsAPI = {
     ipcRenderer.invoke('settings:get-translator'),
   updateTranslator: (updates: Partial<AppSettings['translator']>): Promise<AppSettings> =>
     ipcRenderer.invoke('settings:update-translator', updates),
-  getNpmRegistry: (): Promise<string> =>
-    ipcRenderer.invoke('settings:get-npm-registry'),
+  getNpmRegistry: (): Promise<string> => ipcRenderer.invoke('settings:get-npm-registry'),
   updateNpmRegistry: (npmRegistry: string): Promise<AppSettings> =>
     ipcRenderer.invoke('settings:update-npm-registry', npmRegistry),
-  getMavenSearchUrl: (): Promise<string> =>
-    ipcRenderer.invoke('settings:get-maven-search-url'),
+  getMavenSearchUrl: (): Promise<string> => ipcRenderer.invoke('settings:get-maven-search-url'),
   updateMavenSearchUrl: (url: string): Promise<AppSettings> =>
     ipcRenderer.invoke('settings:update-maven-search-url', url),
   getProxy: (): Promise<{ enabled: boolean; url: string }> =>
@@ -46,8 +80,7 @@ const settingsAPI = {
     ipcRenderer.invoke('settings:update-shortcuts', updates),
   updateFavorites: (toolId: string): Promise<AppSettings> =>
     ipcRenderer.invoke('settings:update-favorites', toolId),
-  getSettingsPath: (): Promise<string> =>
-    ipcRenderer.invoke('settings:get-path'),
+  getSettingsPath: (): Promise<string> => ipcRenderer.invoke('settings:get-path'),
   onSettingsChanged: (callback: (settings: AppSettings) => void): (() => void) => {
     const handler = (_event: Electron.IpcRendererEvent, settings: AppSettings): void =>
       callback(settings)
@@ -86,10 +119,28 @@ const envAPI = {
 
 // Translator API (proxied through main process)
 const translatorAPI = {
-  translate: (text: string, sourceLang: string, targetLang: string): Promise<{ translation?: string; error?: string }> =>
+  translate: (
+    text: string,
+    sourceLang: string,
+    targetLang: string
+  ): Promise<{ translation?: string; error?: string; truncated?: boolean; cancelled?: boolean }> =>
     ipcRenderer.invoke('translator:translate', text, sourceLang, targetLang),
+  cancel: (): Promise<void> => ipcRenderer.invoke('translator:cancel'),
   testConnection: (): Promise<{ success?: boolean; models?: string[]; error?: string }> =>
     ipcRenderer.invoke('translator:test-connection')
+}
+
+// File access for text tools. Reads and writes are only allowed for paths the
+// user picked through a native dialog; the main process enforces that rule.
+const fileAPI = {
+  open: (encoding?: FileEncoding): Promise<OpenedFile | null> =>
+    ipcRenderer.invoke('file:open', encoding),
+  read: (filePath: string, encoding?: FileEncoding): Promise<OpenedFile> =>
+    ipcRenderer.invoke('file:read', filePath, encoding),
+  save: (options: SaveFileOptions): Promise<SaveFileResult> =>
+    ipcRenderer.invoke('file:save', options),
+  recent: (): Promise<string[]> => ipcRenderer.invoke('file:recent'),
+  reveal: (filePath: string): Promise<boolean> => ipcRenderer.invoke('file:reveal', filePath)
 }
 
 // npm API (proxied through main process)
@@ -110,29 +161,42 @@ const dockerAPI = {
 
 // WebSocket Proxy API
 const wsProxyAPI = {
-  connect: (opts: { url: string; headers?: Record<string, string>; protocols?: string[] }): Promise<{ id: number; error?: string }> =>
-    ipcRenderer.invoke('ws-proxy:connect', opts),
+  connect: (opts: {
+    url: string
+    headers?: Record<string, string>
+    protocols?: string[]
+  }): Promise<{ id: number; error?: string }> => ipcRenderer.invoke('ws-proxy:connect', opts),
   send: (opts: { id: number; message: string }): Promise<{ ok?: boolean; error?: string }> =>
     ipcRenderer.invoke('ws-proxy:send', opts),
   disconnect: (id: number): Promise<{ ok: boolean }> =>
     ipcRenderer.invoke('ws-proxy:disconnect', id),
   onOpen: (callback: (data: { id: number }) => void): (() => void) => {
-    const handler = (_event: Electron.IpcRendererEvent, data: { id: number }): void => callback(data)
+    const handler = (_event: Electron.IpcRendererEvent, data: { id: number }): void =>
+      callback(data)
     ipcRenderer.on('ws-proxy:open', handler)
     return () => ipcRenderer.removeListener('ws-proxy:open', handler)
   },
   onMessage: (callback: (data: { id: number; data: string }) => void): (() => void) => {
-    const handler = (_event: Electron.IpcRendererEvent, data: { id: number; data: string }): void => callback(data)
+    const handler = (_event: Electron.IpcRendererEvent, data: { id: number; data: string }): void =>
+      callback(data)
     ipcRenderer.on('ws-proxy:message', handler)
     return () => ipcRenderer.removeListener('ws-proxy:message', handler)
   },
-  onClose: (callback: (data: { id: number; code: number; reason: string }) => void): (() => void) => {
-    const handler = (_event: Electron.IpcRendererEvent, data: { id: number; code: number; reason: string }): void => callback(data)
+  onClose: (
+    callback: (data: { id: number; code: number; reason: string }) => void
+  ): (() => void) => {
+    const handler = (
+      _event: Electron.IpcRendererEvent,
+      data: { id: number; code: number; reason: string }
+    ): void => callback(data)
     ipcRenderer.on('ws-proxy:close', handler)
     return () => ipcRenderer.removeListener('ws-proxy:close', handler)
   },
   onError: (callback: (data: { id: number; error: string }) => void): (() => void) => {
-    const handler = (_event: Electron.IpcRendererEvent, data: { id: number; error: string }): void => callback(data)
+    const handler = (
+      _event: Electron.IpcRendererEvent,
+      data: { id: number; error: string }
+    ): void => callback(data)
     ipcRenderer.on('ws-proxy:error', handler)
     return () => ipcRenderer.removeListener('ws-proxy:error', handler)
   }
@@ -155,7 +219,8 @@ const todosAPI = {
 // just add to the DOM global.
 if (process.contextIsolated) {
   try {
-    contextBridge.exposeInMainWorld('electron', electronAPI)
+    contextBridge.exposeInMainWorld('runtime', runtimeAPI)
+    contextBridge.exposeInMainWorld('electron', electronCompatAPI)
     contextBridge.exposeInMainWorld('api', settingsAPI)
     contextBridge.exposeInMainWorld('updater', updaterAPI)
     contextBridge.exposeInMainWorld('maven', mavenAPI)
@@ -165,19 +230,22 @@ if (process.contextIsolated) {
     contextBridge.exposeInMainWorld('docker', dockerAPI)
     contextBridge.exposeInMainWorld('wsProxy', wsProxyAPI)
     contextBridge.exposeInMainWorld('todos', todosAPI)
+    contextBridge.exposeInMainWorld('file', fileAPI)
   } catch (error) {
     console.error(error)
   }
 } else {
-  // Fallback for non-isolated context (development mode)
-  ;(window as any).electron = electronAPI
-  ;(window as any).api = settingsAPI
-  ;(window as any).updater = updaterAPI
-  ;(window as any).maven = mavenAPI
-  ;(window as any).env = envAPI
-  ;(window as any).translator = translatorAPI
-  ;(window as any).npm = npmAPI
-  ;(window as any).docker = dockerAPI
-  ;(window as any).wsProxy = wsProxyAPI
-  ;(window as any).todos = todosAPI
+  const target = window as unknown as Record<string, unknown>
+  target.runtime = runtimeAPI
+  target.electron = electronCompatAPI
+  target.api = settingsAPI
+  target.updater = updaterAPI
+  target.maven = mavenAPI
+  target.env = envAPI
+  target.translator = translatorAPI
+  target.npm = npmAPI
+  target.docker = dockerAPI
+  target.wsProxy = wsProxyAPI
+  target.todos = todosAPI
+  target.file = fileAPI
 }

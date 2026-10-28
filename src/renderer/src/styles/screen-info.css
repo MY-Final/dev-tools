@@ -1,222 +1,166 @@
 /* ========================================
-   Screen Info 页面
+   Screen Info
+   顶部四项摘要 + 多列参数表
    ======================================== */
 
-.si-page {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  padding: 40px 24px;
-  overflow-y: auto;
-}
-
-.si-card {
-  width: 100%;
-  max-width: 600px;
-  background: var(--glass-bg);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--glass-border);
-  border-radius: 20px;
-  padding: 32px;
-  box-shadow: var(--shadow-xl);
-}
-
-.si-header {
-  text-align: center;
-  margin-bottom: 28px;
-}
-
-.si-title {
-  font-size: 24px;
-  font-weight: 700;
-  color: var(--color-text);
-  font-family: 'JetBrains Mono', monospace;
-  letter-spacing: -0.5px;
-  margin-bottom: 6px;
-}
-
-.si-subtitle {
-  font-size: 14px;
-  color: var(--color-text-muted);
-}
-
-/* 摘要横幅 */
 .si-summary {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 24px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  overflow: hidden;
+  background: var(--color-border);
+}
+
+@container tool (min-width: 720px) {
+  .si-summary {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
 }
 
 .si-summary-item {
-  flex: 1;
-  padding: 16px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  padding: 12px 14px;
   background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 14px;
-  text-align: center;
 }
 
 .si-summary-label {
-  font-size: 11px;
-  font-weight: 600;
   color: var(--color-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 6px;
+  font-size: var(--text-2xs);
 }
 
 .si-summary-value {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--color-accent-soft);
-}
-
-.si-mono {
+  overflow: hidden;
+  color: var(--color-text);
   font-family: 'JetBrains Mono', monospace;
+  font-size: var(--text-xl);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-/* 字段列表 */
+.si-summary-value--sm {
+  font-size: var(--text-md);
+}
+
+/* ── 参数表 ─────────────────────────────────── */
+
+.si-fields-panel {
+  overflow: hidden;
+}
+
+.si-field-count {
+  margin-left: auto;
+  color: var(--color-text-muted);
+  font-size: var(--text-2xs);
+  font-variant-numeric: tabular-nums;
+}
+
 .si-fields {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-bottom: 20px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1px;
+  background: var(--color-border);
+}
+
+@container tool (min-width: 720px) {
+  .si-fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@container tool (min-width: 1080px) {
+  .si-fields {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 
 .si-field {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) 24px;
   align-items: center;
-  gap: 10px;
-  padding: 10px 14px;
+  gap: 12px;
+  min-width: 0;
+  min-height: 44px;
+  padding: 7px 12px;
   background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  transition: all 0.2s ease;
 }
 
 .si-field:hover {
-  border-color: var(--color-border-hover);
+  background: var(--color-surface-hover);
 }
 
 .si-field-label {
-  flex-shrink: 0;
-  min-width: 130px;
-  font-size: 12px;
-  font-weight: 600;
   color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  white-space: nowrap;
 }
 
 .si-field-value {
-  flex: 1;
-  font-size: 13px;
+  overflow: hidden;
   color: var(--color-text);
-  word-break: break-all;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: var(--text-2xs);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .si-field-copy {
-  display: flex;
-  align-items: center;
-  justify-content: center;
   width: 24px;
   height: 24px;
-  background: transparent;
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
   color: var(--color-text-muted);
-  cursor: pointer;
-  transition: all 0.15s ease;
-  flex-shrink: 0;
 }
 
 .si-field-copy:hover {
-  border-color: var(--color-accent-soft);
-  color: var(--color-accent-soft);
+  color: var(--color-text);
 }
 
-/* 操作按钮 */
-.si-actions {
-  display: flex;
-  gap: 10px;
-  justify-content: center;
-}
-
-.si-copy-all-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 10px 18px;
-  background: var(--color-accent-soft-subtle);
-  border: 1px solid var(--color-accent-soft);
-  border-radius: 10px;
-  color: var(--color-accent-soft);
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.si-copy-all-btn:hover {
-  background: var(--color-accent-soft);
-  color: var(--color-text-inverse);
-}
-
-.si-refresh-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 10px 18px;
-  background: transparent;
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  color: var(--color-text-muted);
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.si-refresh-btn:hover {
-  border-color: var(--color-border-hover);
-  color: var(--color-text-secondary);
-}
-
-/* 响应式 */
-@media (max-width: 600px) {
-  .si-page {
-    padding: 24px 16px;
+/* 最后一格跨列补齐，避免网格末端露出底色 */
+@container tool (min-width: 720px) {
+  .si-field:last-child:nth-child(2n + 1) {
+    grid-column: span 2;
   }
+}
 
-  .si-card {
-    padding: 24px 20px;
-    border-radius: 16px;
+@container tool (min-width: 1080px) {
+  .si-field:last-child:nth-child(3n + 2) {
+    grid-column: span 2;
   }
+}
 
-  .si-title {
-    font-size: 20px;
-  }
+/* ── 窄容器 ─────────────────────────────────── */
 
+@container tool (max-width: 560px) {
   .si-summary {
-    flex-direction: column;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .si-summary-value {
+    font-size: var(--text-lg);
   }
 
   .si-field {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 4px;
-    position: relative;
+    grid-template-columns: minmax(0, 1fr) 24px;
+    row-gap: 2px;
   }
 
   .si-field-label {
-    min-width: auto;
+    grid-column: 1;
+  }
+
+  .si-field-value {
+    grid-column: 1;
+    text-align: left;
   }
 
   .si-field-copy {
-    position: absolute;
-    right: 14px;
-    top: 10px;
+    grid-row: 1 / span 2;
+    grid-column: 2;
   }
 }

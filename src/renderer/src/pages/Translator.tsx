@@ -1,5 +1,5 @@
-import { useState, useCallback } from 'react'
-import { Languages, ArrowLeftRight, Copy, Check, Trash2, Loader2 } from 'lucide-react'
+import { useState, useCallback, useRef } from 'react'
+import { Languages, ArrowLeftRight, Copy, Check, Trash2, Loader2, X } from 'lucide-react'
 import { useSettings } from '@renderer/lib/contexts'
 import '../styles/translator.css'
 
@@ -33,45 +33,76 @@ export default function Translator(): React.JSX.Element {
   const [result, setResult] = useState('')
   const [translating, setTranslating] = useState(false)
   const [error, setError] = useState('')
+  const [notice, setNotice] = useState('')
+  const [truncated, setTruncated] = useState(false)
   const [copied, setCopied] = useState(false)
   const [elapsed, setElapsed] = useState(0)
+  // Bumped on every new request and on cancel, so responses to stale requests are ignored.
+  const requestSeq = useRef(0)
 
-  const hasConfig = !!(settings.translator.baseUrl && settings.translator.apiKey && settings.translator.model)
+  const hasConfig = !!(
+    settings.translator.baseUrl &&
+    settings.translator.apiKey &&
+    settings.translator.model
+  )
+  const sameLang = sourceLang === targetLang
 
   let configHint = ''
-  if (!settings.translator.baseUrl) configHint = '请先在 设置 → AI 翻译 中配置 Base URL、API Key 和 Model'
+  if (!settings.translator.baseUrl)
+    configHint = '请先在 设置 → AI 翻译 中配置 Base URL、API Key 和 Model'
   else if (!settings.translator.apiKey) configHint = '请先在 设置 → AI 翻译 中配置 API Key'
-  else if (!settings.translator.model) configHint = '请先在 设置 → AI 翻译 中配置 Model（可先测试连接获取模型列表）'
+  else if (!settings.translator.model)
+    configHint = '请先在 设置 → AI 翻译 中配置 Model（可先测试连接获取模型列表）'
 
   const swap = useCallback(() => {
     setSourceLang(targetLang)
     setTargetLang(sourceLang)
-    setSourceText(result || sourceText)
-    setResult(sourceText)
+    // Only exchange texts when there is a usable translation; otherwise just flip the direction.
+    if (result.trim()) {
+      setSourceText(result)
+      setResult(sourceText)
+      setTruncated(false)
+      setCopied(false)
+    }
   }, [sourceLang, targetLang, sourceText, result])
 
   const translate = useCallback(async () => {
-    if (!sourceText.trim()) return
+    if (!sourceText.trim() || sameLang) return
+    const seq = ++requestSeq.current
     setTranslating(true)
     setError('')
+    setNotice('')
     setResult('')
+    setTruncated(false)
     setCopied(false)
+    setElapsed(0)
 
     const start = performance.now()
     try {
       const res = await window.translator.translate(sourceText, sourceLang, targetLang)
+      if (seq !== requestSeq.current) return
       setElapsed(Math.round(performance.now() - start))
       if (res.error) {
         setError(res.error)
       } else if (res.translation) {
         setResult(res.translation)
+        setTruncated(!!res.truncated)
       }
     } catch (err) {
+      if (seq !== requestSeq.current) return
       setError((err as Error).message || '翻译失败')
     } finally {
-      setTranslating(false)
+      if (seq === requestSeq.current) setTranslating(false)
     }
-  }, [sourceText, sourceLang, targetLang])
+  }, [sourceText, sourceLang, targetLang, sameLang])
+
+  const cancel = useCallback(() => {
+    requestSeq.current++
+    setTranslating(false)
+    setError('')
+    setNotice('已取消')
+    void window.translator.cancel()
+  }, [])
 
   const copy = useCallback(async () => {
     if (!result) return
@@ -85,10 +116,17 @@ export default function Translator(): React.JSX.Element {
   }, [result])
 
   const clear = useCallback(() => {
+    if (translating) {
+      requestSeq.current++
+      setTranslating(false)
+      void window.translator.cancel()
+    }
     setSourceText('')
     setResult('')
     setError('')
-  }, [])
+    setNotice('')
+    setTruncated(false)
+  }, [translating])
 
   return (
     <div className="tr-page">
@@ -98,11 +136,7 @@ export default function Translator(): React.JSX.Element {
           <p className="tr-subtitle">基于 OpenAI 兼容 API 的多语言翻译</p>
         </div>
 
-        {!hasConfig && (
-          <div className="tr-config-warning">
-            {configHint}
-          </div>
-        )}
+        {!hasConfig && <div className="tr-config-warning">{configHint}</div>}
 
         {/* Language selectors */}
         <div className="tr-lang-row">
@@ -117,7 +151,7 @@ export default function Translator(): React.JSX.Element {
               </option>
             ))}
           </select>
-          <button className="tr-swap-btn" onClick={swap} title="交换语言">
+          <button className="tr-swap-btn" onClick={swap} disabled={translating} title="交换语言">
             <ArrowLeftRight size={14} />
           </button>
           <select
@@ -132,6 +166,7 @@ export default function Translator(): React.JSX.Element {
             ))}
           </select>
         </div>
+        {sameLang && <div className="tr-notice">源语言与目标语言相同，请选择不同的语言</div>}
 
         {/* Source text */}
         <div className="tr-text-area">
@@ -142,9 +177,7 @@ export default function Translator(): React.JSX.Element {
             placeholder="输入要翻译的文本..."
             rows={5}
           />
-          <div className="tr-text-meta">
-            {sourceText.length} 字符
-          </div>
+          <div className="tr-text-meta">{sourceText.length} 字符</div>
         </div>
 
         {/* Actions */}
@@ -152,7 +185,7 @@ export default function Translator(): React.JSX.Element {
           <button
             className="tr-translate-btn"
             onClick={translate}
-            disabled={!hasConfig || translating || !sourceText.trim()}
+            disabled={!hasConfig || translating || !sourceText.trim() || sameLang}
           >
             {translating ? (
               <>
@@ -166,6 +199,12 @@ export default function Translator(): React.JSX.Element {
               </>
             )}
           </button>
+          {translating && (
+            <button className="tr-cancel-btn" onClick={cancel}>
+              <X size={14} />
+              取消
+            </button>
+          )}
           {result && (
             <button className="tr-copy-btn" onClick={copy}>
               {copied ? <Check size={14} /> : <Copy size={14} />}
@@ -181,19 +220,21 @@ export default function Translator(): React.JSX.Element {
         {/* Error */}
         {error && <div className="tr-error">{error}</div>}
 
+        {/* Notice (cancelled) */}
+        {notice && <div className="tr-notice">{notice}</div>}
+
         {/* Result */}
         {result && !error && (
           <div className="tr-result-area">
             <div className="tr-result-header">
-              <span className="tr-result-label">
-                {targetLang} 翻译结果
-              </span>
+              <span className="tr-result-label">{targetLang} 翻译结果</span>
               {elapsed > 0 && (
                 <span className="tr-elapsed">
                   耗时 {(elapsed / 1000).toFixed(1)}s · {result.length} 字符
                 </span>
               )}
             </div>
+            {truncated && <div className="tr-notice">译文达到长度上限被截断，建议分段翻译</div>}
             <div className="tr-result-text">{result}</div>
           </div>
         )}

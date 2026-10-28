@@ -11,7 +11,7 @@ import type { ComponentType } from 'react'
 
 const pageMap: Record<string, React.LazyExoticComponent<ComponentType>> = {
   'data-size-converter': lazy(() => import('./Converter')),
-  'my-ip': lazy(() => import('./MyIp')),
+  'my-ip': lazy(() => import('./MyIP')),
   'device-info': lazy(() => import('./DeviceInfo')),
   'token-generator': lazy(() => import('./TokenGenerator')),
   'jwt-generator': lazy(() => import('./JWTGenerator')),
@@ -72,7 +72,7 @@ const pageMap: Record<string, React.LazyExoticComponent<ComponentType>> = {
   'timezone-converter': lazy(() => import('./TimezoneConverter')),
   'date-format-converter': lazy(() => import('./DateFormatConverter')),
   'number-formatter': lazy(() => import('./NumberFormatter')),
-  'translator': lazy(() => import('./Translator')),
+  translator: lazy(() => import('./Translator')),
   'npm-search': lazy(() => import('./NpmSearch')),
   'dockerhub-search': lazy(() => import('./DockerHubSearch')),
   'websocket-tester': lazy(() => import('./WebSocketTester')),

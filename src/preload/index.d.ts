@@ -1,4 +1,22 @@
-import { ElectronAPI } from '@electron-toolkit/preload'
+export interface RuntimeVersions {
+  electron: string
+  chrome: string
+  node: string
+}
+
+export interface RuntimeAPI {
+  getVersions: () => RuntimeVersions
+}
+
+export interface ElectronCompatAPI {
+  process: {
+    platform: string
+    versions: RuntimeVersions
+  }
+  ipcRenderer: {
+    on: (channel: string, callback: () => void) => () => void
+  }
+}
 
 export interface AppSettings {
   appearance: {
@@ -120,8 +138,22 @@ export interface EnvAPI {
   getEnvVars: () => Promise<Record<string, string>>
 }
 
+export type {
+  OpenedFile,
+  FileEncoding,
+  SaveFileOptions,
+  SaveFileResult,
+  FileAPI
+} from '../shared/contracts'
+import type { FileAPI } from '../shared/contracts'
+
 export interface TranslatorAPI {
-  translate: (text: string, sourceLang: string, targetLang: string) => Promise<{ translation?: string; error?: string }>
+  translate: (
+    text: string,
+    sourceLang: string,
+    targetLang: string
+  ) => Promise<{ translation?: string; error?: string; truncated?: boolean; cancelled?: boolean }>
+  cancel: () => Promise<void>
   testConnection: () => Promise<{ success?: boolean; models?: string[]; error?: string }>
 }
 
@@ -167,7 +199,11 @@ export interface DockerAPI {
 }
 
 export interface WsProxyAPI {
-  connect: (opts: { url: string; headers?: Record<string, string>; protocols?: string[] }) => Promise<{ id: number; error?: string }>
+  connect: (opts: {
+    url: string
+    headers?: Record<string, string>
+    protocols?: string[]
+  }) => Promise<{ id: number; error?: string }>
   send: (opts: { id: number; message: string }) => Promise<{ ok?: boolean; error?: string }>
   disconnect: (id: number) => Promise<{ ok: boolean }>
   onOpen: (callback: (data: { id: number }) => void) => () => void
@@ -188,7 +224,8 @@ export interface DockerTagResult {
 
 declare global {
   interface Window {
-    electron: ElectronAPI
+    runtime: RuntimeAPI
+    electron: ElectronCompatAPI
     api: SettingsAPI
     updater: UpdaterAPI
     maven: MavenAPI
@@ -198,5 +235,6 @@ declare global {
     docker: DockerAPI
     wsProxy: WsProxyAPI
     todos: TodosAPI
+    file: FileAPI
   }
 }

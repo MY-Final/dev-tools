@@ -9,7 +9,12 @@ import 'react-day-picker/style.css'
 
 export type CalendarProps = DayPickerProps
 
-function Calendar({ className, classNames, showOutsideDays = true, ...props }: CalendarProps): React.JSX.Element {
+function Calendar({
+  className,
+  classNames,
+  showOutsideDays = true,
+  ...props
+}: CalendarProps): React.JSX.Element {
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
@@ -32,8 +37,12 @@ function Calendar({ className, classNames, showOutsideDays = true, ...props }: C
         [UI.Weekdays]: 'flex',
         [UI.Weekday]: 'text-muted-foreground rounded-md w-9 font-normal text-[0.8rem]',
         [UI.Week]: 'flex w-full mt-2',
-        [UI.Day]: 'h-9 w-9 text-center text-sm p-0 relative focus-within:relative focus-within:z-20',
-        [UI.DayButton]: cn(buttonVariants({ variant: 'ghost' }), 'h-9 w-9 p-0 font-normal aria-selected:opacity-100'),
+        [UI.Day]:
+          'h-9 w-9 text-center text-sm p-0 relative focus-within:relative focus-within:z-20',
+        [UI.DayButton]: cn(
+          buttonVariants({ variant: 'ghost' }),
+          'h-9 w-9 p-0 font-normal aria-selected:opacity-100'
+        ),
         [SelectionState.range_end]: 'day-range-end',
         [SelectionState.selected]:
           'bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground',
@@ -41,13 +50,18 @@ function Calendar({ className, classNames, showOutsideDays = true, ...props }: C
         [DayFlag.outside]:
           'day-outside text-muted-foreground opacity-50 aria-selected:bg-accent/50 aria-selected:text-muted-foreground aria-selected:opacity-30',
         [DayFlag.disabled]: 'text-muted-foreground opacity-50',
-        [SelectionState.range_middle]: 'aria-selected:bg-accent aria-selected:text-accent-foreground',
+        [SelectionState.range_middle]:
+          'aria-selected:bg-accent aria-selected:text-accent-foreground',
         [DayFlag.hidden]: 'invisible',
         ...classNames
       }}
       components={{
-        Chevron: ({ orientation }) =>
-          orientation === 'left' ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />
+        Chevron: ({ orientation }: { orientation?: 'up' | 'down' | 'left' | 'right' }) =>
+          orientation === 'left' ? (
+            <ChevronLeft className="h-4 w-4" />
+          ) : (
+            <ChevronRight className="h-4 w-4" />
+          )
       }}
       {...props}
     />

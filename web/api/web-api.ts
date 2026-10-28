@@ -10,121 +10,78 @@
  */
 
 import pkg from '../../package.json'
+import {
+  createDefaultSettings,
+  normalizeSettings,
+  TODOS_VERSION,
+  type AppSettings,
+  type CreateTodoInput,
+  type SettingsAPI,
+  type TodoItem,
+  type TodosAPI,
+  type UpdateStatus,
+  type UpdateTodoInput,
+  type UpdaterAPI,
+  type OpenedFile,
+  type SaveFileOptions,
+  type SaveFileResult
+} from '../../src/shared/contracts'
 
 // ── Helpers ──────────────────────────────────────────────────────
 
-const STORAGE_KEY = 'dev-tools-settings'
+const SETTINGS_STORAGE_KEY = 'dev-tools-settings'
+const TODOS_STORAGE_KEY = 'dev-tools-todos'
 
-const DEFAULT_SETTINGS: AppSettings = {
-  appearance: {
-    theme: 'dark',
-    fontSize: 'medium',
-    sidebarCollapsed: false,
-    showSidebarShortDesc: true
-  },
-  editor: {
-    jsonIndent: 2,
-    autoCopy: false,
-    timestampFormat: 'seconds'
-  },
-  updater: {
-    autoCheck: false
-  },
-  translator: {
-    baseUrl: '',
-    apiKey: '',
-    model: 'gpt-3.5-turbo',
-    systemPrompt:
-      'You are a professional translator. Translate the following text from {sourceLang} to {targetLang}. Only output the translated text, nothing else. Do not add explanations, notes, or quotation marks.',
-    temperature: 0.3,
-    maxTokens: 4096
-  },
-  npmRegistry: '',
-  mavenSearchUrl: '',
-  proxy: { enabled: false, url: '' },
-  shortcuts: {
-    toggleSidebar: 'Alt+b',
-    openSettings: 'Ctrl+,',
-    goHome: 'Escape'
-  },
-  favorites: []
-}
+type SettingsListener = (settings: AppSettings) => void
+
+const settingsListeners = new Set<SettingsListener>()
+let settingsStorageListenerAttached = false
 
 function loadSettings(): AppSettings {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (raw) return JSON.parse(raw) as AppSettings
+    const raw = localStorage.getItem(SETTINGS_STORAGE_KEY)
+    if (raw) {
+      const parsed: unknown = JSON.parse(raw)
+      return normalizeSettings(parsed)
+    }
   } catch {
-    /* ignore */
+    /* ignore unavailable or corrupted storage */
   }
-  return structuredClone(DEFAULT_SETTINGS)
+  return createDefaultSettings()
+}
+
+function notifySettingsListeners(settings: AppSettings): void {
+  for (const listener of settingsListeners) {
+    try {
+      listener(settings)
+    } catch {
+      /* isolate consumer failures */
+    }
+  }
+}
+
+function handleSettingsStorage(event: StorageEvent): void {
+  if (event.key !== SETTINGS_STORAGE_KEY) return
+  notifySettingsListeners(loadSettings())
+}
+
+function ensureSettingsStorageListener(): void {
+  if (settingsStorageListenerAttached) return
+  window.addEventListener('storage', handleSettingsStorage)
+  settingsStorageListenerAttached = true
 }
 
 function saveSettings(settings: AppSettings): void {
+  const normalized = normalizeSettings(settings)
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(settings))
+    localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(normalized))
   } catch {
-    /* ignore */
+    /* keep the in-memory result usable even if persistence is unavailable */
   }
-}
-
-function deepMerge<T extends Record<string, unknown>>(base: T, updates: Partial<T>): T {
-  const result = { ...base }
-  for (const key of Object.keys(updates) as (keyof T)[]) {
-    const val = updates[key]
-    if (val !== undefined && typeof val === 'object' && !Array.isArray(val) && val !== null) {
-      result[key] = deepMerge(result[key] as Record<string, unknown>, val as Record<string, unknown>) as T[typeof key]
-    } else if (val !== undefined) {
-      result[key] = val
-    }
-  }
-  return result
+  notifySettingsListeners(normalized)
 }
 
 // ── Type declarations (mirrors src/preload/index.d.ts) ───────────
-
-interface AppSettings {
-  appearance: {
-    theme: 'light' | 'dark' | 'system'
-    fontSize: 'small' | 'medium' | 'large'
-    sidebarCollapsed: boolean
-    showSidebarShortDesc: boolean
-  }
-  editor: {
-    jsonIndent: 2 | 4
-    autoCopy: boolean
-    timestampFormat: 'seconds' | 'milliseconds'
-  }
-  updater: {
-    autoCheck: boolean
-  }
-  translator: {
-    baseUrl: string
-    apiKey: string
-    model: string
-    systemPrompt: string
-    temperature: number
-    maxTokens: number
-  }
-  npmRegistry: string
-  mavenSearchUrl: string
-  proxy: { enabled: boolean; url: string }
-  shortcuts: {
-    toggleSidebar: string
-    openSettings: string
-    goHome: string
-  }
-  favorites: string[]
-}
-
-type UpdateStatus =
-  | { type: 'idle' }
-  | { type: 'checking' }
-  | { type: 'not-available' }
-  | { type: 'available'; version: string; releaseDate?: string; releaseNotes?: string }
-  | { type: 'downloading'; percent: number }
-  | { type: 'downloaded'; version: string }
-  | { type: 'error'; message: string }
 
 interface NpmSearchResult {
   name: string
@@ -178,89 +135,102 @@ const webSettingsAPI = {
   getEditor: (): Promise<AppSettings['editor']> => Promise.resolve(loadSettings().editor),
 
   async updateAppearance(updates: Partial<AppSettings['appearance']>): Promise<AppSettings> {
-    const s = loadSettings()
-    s.appearance = { ...s.appearance, ...updates }
-    saveSettings(s)
-    return s
+    const settings = loadSettings()
+    settings.appearance = { ...settings.appearance, ...updates }
+    saveSettings(settings)
+    return settings
   },
 
   async updateEditor(updates: Partial<AppSettings['editor']>): Promise<AppSettings> {
-    const s = loadSettings()
-    s.editor = { ...s.editor, ...updates }
-    saveSettings(s)
-    return s
+    const settings = loadSettings()
+    settings.editor = { ...settings.editor, ...updates }
+    saveSettings(settings)
+    return settings
   },
 
   async updateUpdater(updates: Partial<AppSettings['updater']>): Promise<AppSettings> {
-    const s = loadSettings()
-    s.updater = { ...s.updater, ...updates }
-    saveSettings(s)
-    return s
+    const settings = loadSettings()
+    settings.updater = { ...settings.updater, ...updates }
+    saveSettings(settings)
+    return settings
+  },
+
+  async updateWindow(updates: Partial<AppSettings['window']>): Promise<AppSettings> {
+    const settings = loadSettings()
+    settings.window = { ...settings.window, ...updates }
+    saveSettings(settings)
+    return settings
   },
 
   async updateTranslator(updates: Partial<AppSettings['translator']>): Promise<AppSettings> {
-    const s = loadSettings()
-    s.translator = { ...s.translator, ...updates }
-    saveSettings(s)
-    return s
+    const settings = loadSettings()
+    settings.translator = { ...settings.translator, ...updates }
+    saveSettings(settings)
+    return settings
   },
 
-  getTranslator: (): Promise<AppSettings['translator']> => Promise.resolve(loadSettings().translator),
+  getTranslator: (): Promise<AppSettings['translator']> =>
+    Promise.resolve(loadSettings().translator),
 
   getNpmRegistry: (): Promise<string> => Promise.resolve(loadSettings().npmRegistry),
 
   async updateNpmRegistry(npmRegistry: string): Promise<AppSettings> {
-    const s = loadSettings()
-    s.npmRegistry = npmRegistry
-    saveSettings(s)
-    return s
+    const settings = loadSettings()
+    settings.npmRegistry = npmRegistry
+    saveSettings(settings)
+    return settings
   },
 
   getMavenSearchUrl: (): Promise<string> => Promise.resolve(loadSettings().mavenSearchUrl),
 
   async updateMavenSearchUrl(url: string): Promise<AppSettings> {
-    const s = loadSettings()
-    s.mavenSearchUrl = url
-    saveSettings(s)
-    return s
+    const settings = loadSettings()
+    settings.mavenSearchUrl = url
+    saveSettings(settings)
+    return settings
   },
 
-  getProxy: (): Promise<{ enabled: boolean; url: string }> => Promise.resolve(loadSettings().proxy),
+  getProxy: (): Promise<AppSettings['proxy']> => Promise.resolve(loadSettings().proxy),
 
-  async updateProxy(updates: Partial<{ enabled: boolean; url: string }>): Promise<AppSettings> {
-    const s = loadSettings()
-    s.proxy = { ...s.proxy, ...updates }
-    saveSettings(s)
-    return s
+  async updateProxy(updates: Partial<AppSettings['proxy']>): Promise<AppSettings> {
+    const settings = loadSettings()
+    settings.proxy = { ...settings.proxy, ...updates }
+    saveSettings(settings)
+    return settings
   },
 
   async updateShortcuts(updates: Partial<AppSettings['shortcuts']>): Promise<AppSettings> {
-    const s = loadSettings()
-    s.shortcuts = { ...s.shortcuts, ...updates }
-    saveSettings(s)
-    return s
+    const settings = loadSettings()
+    settings.shortcuts = { ...settings.shortcuts, ...updates }
+    saveSettings(settings)
+    return settings
   },
 
   async updateFavorites(toolId: string): Promise<AppSettings> {
-    const s = loadSettings()
-    const idx = s.favorites.indexOf(toolId)
-    if (idx >= 0) {
-      s.favorites.splice(idx, 1)
-    } else {
-      s.favorites.push(toolId)
-    }
-    saveSettings(s)
-    return s
+    const settings = loadSettings()
+    const index = settings.favorites.indexOf(toolId)
+    settings.favorites =
+      index >= 0
+        ? settings.favorites.filter((id) => id !== toolId)
+        : [...settings.favorites, toolId]
+    saveSettings(settings)
+    return settings
   },
 
   getSettingsPath: (): Promise<string> => Promise.resolve('localStorage'),
 
+  onSettingsChanged(callback: (settings: AppSettings) => void): () => void {
+    ensureSettingsStorageListener()
+    settingsListeners.add(callback)
+    return () => settingsListeners.delete(callback)
+  },
+
   async resetToDefaults(): Promise<AppSettings> {
-    const s = structuredClone(DEFAULT_SETTINGS)
-    saveSettings(s)
-    return s
+    const settings = createDefaultSettings()
+    saveSettings(settings)
+    return settings
   }
-}
+} satisfies SettingsAPI
 
 // ── 2. Updater API (degraded — no auto-update in browser) ───────
 
@@ -269,13 +239,12 @@ const webUpdaterAPI = {
   downloadUpdate: (): Promise<void> => Promise.resolve(),
   quitAndInstall: (): Promise<void> => Promise.resolve(),
   getVersion: (): Promise<string> => Promise.resolve(pkg.version ?? '0.0.0'),
-  onUpdateStatus: (_callback: (status: UpdateStatus) => void): (() => void) => {
-    // No updates in web mode — never fire.
-    return () => {
-      /* noop */
+  onUpdateStatus:
+    (_callback: (status: UpdateStatus) => void): (() => void) =>
+    () => {
+      /* no updates in web mode */
     }
-  }
-}
+} satisfies UpdaterAPI
 
 // ── 3. Maven API (direct fetch) ──────────────────────────────────
 
@@ -339,12 +308,16 @@ const webEnvAPI = {
 
 // ── 5. Translator API (direct fetch) ─────────────────────────────
 
+// Mirrors the main-process cancellation contract so the page can call
+// window.translator.cancel() in both builds.
+let webTranslatorController: AbortController | null = null
+
 const webTranslatorAPI = {
   async translate(
     text: string,
     sourceLang: string,
     targetLang: string
-  ): Promise<{ translation?: string; error?: string }> {
+  ): Promise<{ translation?: string; error?: string; truncated?: boolean; cancelled?: boolean }> {
     try {
       const stored = loadSettings()
       const config = stored.translator
@@ -360,6 +333,7 @@ const webTranslatorAPI = {
       const maxTokens = config.maxTokens ?? 4096
 
       const controller = new AbortController()
+      webTranslatorController = controller
       const timeout = setTimeout(() => controller.abort(), 30000)
 
       const res = await fetch(`${baseUrl}/chat/completions`, {
@@ -391,17 +365,27 @@ const webTranslatorAPI = {
       }
 
       const data = await res.json()
-      const content = data?.choices?.[0]?.message?.content
+      const choice = data?.choices?.[0]
+      const content = choice?.message?.content
       if (!content) {
         return { error: 'API 响应格式异常，未获取到翻译结果' }
+      }
+      if (choice.finish_reason === 'length') {
+        return { translation: content.trim(), truncated: true }
       }
       return { translation: content.trim() }
     } catch (err) {
       if ((err as Error).name === 'AbortError') {
-        return { error: '请求超时 (30s)，请检查网络或 Base URL' }
+        return { error: '请求超时或已取消 (30s)，请检查网络或 Base URL' }
       }
       return { error: `网络请求失败: ${(err as Error).message}` }
+    } finally {
+      webTranslatorController = null
     }
+  },
+
+  async cancel(): Promise<void> {
+    webTranslatorController?.abort()
   },
 
   async testConnection(): Promise<{ success?: boolean; models?: string[]; error?: string }> {
@@ -440,7 +424,74 @@ const webTranslatorAPI = {
   }
 }
 
-// ── 6. npm API (direct fetch with mirrors) ───────────────────────
+// ── 6. File API (browser fallback) ──────────────────────────────
+// The web build has no filesystem access, so the pickers are emulated with an
+// <input type=file> and a Blob download. Callers get the same shape as the
+// Electron bridge so tool pages do not need two code paths.
+
+function pickBrowserFile(accept: string): Promise<File | null> {
+  return new Promise((resolve) => {
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = accept
+    input.style.display = 'none'
+    let settled = false
+    const finish = (file: File | null): void => {
+      if (settled) return
+      settled = true
+      input.remove()
+      resolve(file)
+    }
+    input.addEventListener('change', () => finish(input.files?.[0] ?? null))
+    input.addEventListener('cancel', () => finish(null))
+    document.body.appendChild(input)
+    input.click()
+  })
+}
+
+const webFileAPI = {
+  async open(): Promise<OpenedFile | null> {
+    const file = await pickBrowserFile(
+      '.txt,.md,.markdown,.json,.yaml,.yml,.toml,.xml,.csv,.tsv,.log,.html,.css,.js,.ts,.jsx,.tsx'
+    )
+    if (!file) return null
+    const content = await file.text()
+    return {
+      path: '',
+      name: file.name,
+      content,
+      bytes: file.size,
+      truncated: false,
+      encoding: 'utf-8'
+    }
+  },
+
+  async read(): Promise<OpenedFile> {
+    throw new Error('Web 版不支持按路径读取文件，请使用「打开文件」')
+  },
+
+  async save(options: SaveFileOptions): Promise<SaveFileResult> {
+    const name = options.suggestedName || 'untitled.txt'
+    const blob = new Blob([options.content], { type: 'text/plain;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = name
+    link.click()
+    URL.revokeObjectURL(url)
+    return { path: '', name, bytes: blob.size, canceled: false }
+  },
+
+  async recent(): Promise<string[]> {
+    return []
+  },
+
+  async reveal(): Promise<boolean> {
+    return false
+  }
+}
+
+// ── 7. npm API (direct fetch with mirrors) ───────────────────────
 
 const DEFAULT_REGISTRIES = ['https://registry.npmjs.org', 'https://registry.npmmirror.com']
 
@@ -598,9 +649,7 @@ const webDockerAPI = {
   async getTags(imageName: string): Promise<DockerTagResult[]> {
     try {
       const path = imageName.includes('/') ? imageName : 'library/' + imageName
-      const res = await fetch(
-        `https://hub.docker.com/v2/repositories/${path}/tags?page_size=50`
-      )
+      const res = await fetch(`https://hub.docker.com/v2/repositories/${path}/tags?page_size=50`)
       if (!res.ok) return []
       const data = await res.json()
       return (
@@ -631,10 +680,7 @@ const webDockerAPI = {
 
 let wsProxyIdCounter = 0
 const wsProxyConnections = new Map<number, WebSocket>()
-const wsProxyListeners = new Map<
-  string,
-  Set<(...args: unknown[]) => void>
->()
+const wsProxyListeners = new Map<string, Set<(...args: unknown[]) => void>>()
 
 function emitWsEvent(event: string, data: unknown): void {
   const handlers = wsProxyListeners.get(event)
@@ -711,7 +757,8 @@ const webWsProxyAPI = {
   },
 
   onMessage(callback: (data: { id: number; data: string }) => void): () => void {
-    if (!wsProxyListeners.has('ws-proxy:message')) wsProxyListeners.set('ws-proxy:message', new Set())
+    if (!wsProxyListeners.has('ws-proxy:message'))
+      wsProxyListeners.set('ws-proxy:message', new Set())
     wsProxyListeners.get('ws-proxy:message')!.add(callback as (...args: unknown[]) => void)
     return () => {
       wsProxyListeners.get('ws-proxy:message')?.delete(callback as (...args: unknown[]) => void)
@@ -735,7 +782,152 @@ const webWsProxyAPI = {
   }
 }
 
-// ── 9. Electron API mock (for Versions.tsx, CommandPalette.tsx) ──
+// ── 9. Todo Notes API (localStorage) ─────────────────────────
+
+interface TodosData {
+  version: number
+  items: TodoItem[]
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+function isDateString(value: string): boolean {
+  return /^\d{4}-\d{2}-\d{2}$/.test(value)
+}
+
+function isTodoItem(value: unknown): value is TodoItem {
+  if (!isRecord(value)) return false
+  return (
+    typeof value.id === 'string' &&
+    typeof value.title === 'string' &&
+    typeof value.note === 'string' &&
+    typeof value.date === 'string' &&
+    typeof value.completed === 'boolean' &&
+    typeof value.createdAt === 'string' &&
+    typeof value.updatedAt === 'string'
+  )
+}
+
+function loadTodos(): TodosData {
+  try {
+    const raw = localStorage.getItem(TODOS_STORAGE_KEY)
+    if (raw) {
+      const parsed: unknown = JSON.parse(raw)
+      if (isRecord(parsed) && Array.isArray(parsed.items)) {
+        return {
+          version: TODOS_VERSION,
+          items: parsed.items.filter(isTodoItem)
+        }
+      }
+    }
+  } catch {
+    /* ignore unavailable or corrupted storage */
+  }
+  return { version: TODOS_VERSION, items: [] }
+}
+
+function saveTodos(data: TodosData): void {
+  try {
+    localStorage.setItem(TODOS_STORAGE_KEY, JSON.stringify(data))
+  } catch {
+    /* keep the in-memory operation usable if persistence is unavailable */
+  }
+}
+
+function createTodoId(): string {
+  const randomPart =
+    typeof crypto.randomUUID === 'function'
+      ? crypto.randomUUID().slice(0, 8)
+      : Math.random().toString(36).slice(2, 10)
+  return `todo_${Date.now()}_${randomPart}`
+}
+
+const webTodosAPI = {
+  getItems(): Promise<TodoItem[]> {
+    return Promise.resolve(
+      [...loadTodos().items].sort((a, b) => a.createdAt.localeCompare(b.createdAt))
+    )
+  },
+
+  createItem(input: CreateTodoInput): Promise<TodoItem> {
+    const title = input.title.trim()
+    if (!title) throw new Error('Todo title is required')
+    if (!isDateString(input.date)) throw new Error('Invalid todo date')
+
+    const now = new Date().toISOString()
+    const item: TodoItem = {
+      id: createTodoId(),
+      title,
+      note: input.note?.trim() || '',
+      date: input.date,
+      completed: false,
+      createdAt: now,
+      updatedAt: now
+    }
+
+    const data = loadTodos()
+    data.items = [...data.items, item]
+    saveTodos(data)
+    return Promise.resolve(item)
+  },
+
+  updateItem(id: string, updates: UpdateTodoInput): Promise<TodoItem | null> {
+    const data = loadTodos()
+    const itemIndex = data.items.findIndex((item) => item.id === id)
+    if (itemIndex === -1) return Promise.resolve(null)
+
+    const current = data.items[itemIndex]
+    const nextTitle = updates.title === undefined ? current.title : updates.title.trim()
+    const nextDate = updates.date ?? current.date
+
+    if (!nextTitle) throw new Error('Todo title is required')
+    if (!isDateString(nextDate)) throw new Error('Invalid todo date')
+
+    const next: TodoItem = {
+      ...current,
+      ...updates,
+      title: nextTitle,
+      note: updates.note === undefined ? current.note : updates.note.trim(),
+      date: nextDate,
+      updatedAt: new Date().toISOString()
+    }
+
+    data.items = [...data.items.slice(0, itemIndex), next, ...data.items.slice(itemIndex + 1)]
+    saveTodos(data)
+    return Promise.resolve(next)
+  },
+
+  deleteItem(id: string): Promise<boolean> {
+    const data = loadTodos()
+    const nextItems = data.items.filter((item) => item.id !== id)
+    const changed = nextItems.length !== data.items.length
+    if (changed) {
+      data.items = nextItems
+      saveTodos(data)
+    }
+    return Promise.resolve(changed)
+  },
+
+  clearCompleted(date?: string): Promise<number> {
+    if (date && !isDateString(date)) throw new Error('Invalid todo date')
+
+    const data = loadTodos()
+    const nextItems = data.items.filter((item) => {
+      if (!item.completed) return true
+      return date ? item.date !== date : false
+    })
+    const removed = data.items.length - nextItems.length
+    if (removed > 0) {
+      data.items = nextItems
+      saveTodos(data)
+    }
+    return Promise.resolve(removed)
+  }
+} satisfies TodosAPI
+
+// ── 10. Electron API mock (for Versions.tsx, CommandPalette.tsx) ──
 
 const webElectronAPI = {
   ipcRenderer: {
@@ -816,4 +1008,6 @@ export function injectWebAPI(): void {
   w.npm = webNpmAPI
   w.docker = webDockerAPI
   w.wsProxy = webWsProxyAPI
+  w.todos = webTodosAPI
+  w.file = webFileAPI
 }

@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react'
-import { Fingerprint, Copy, Check, RotateCcw } from 'lucide-react'
+import { Copy, Check, RotateCcw } from 'lucide-react'
 import '../styles/hmac-generator.css'
+import { hexToBytes, toArrayBuffer } from '../lib/crypto-utils'
 
 type Algorithm = 'SHA-1' | 'SHA-256' | 'SHA-384' | 'SHA-512'
 type InputFormat = 'text' | 'hex' | 'base64'
@@ -13,25 +14,29 @@ const ALGORITHMS: { id: Algorithm; label: string; bits: number }[] = [
   { id: 'SHA-512', label: 'HMAC-SHA-512', bits: 512 }
 ]
 
+const INPUT_FORMATS: { id: InputFormat; label: string }[] = [
+  { id: 'text', label: '文本' },
+  { id: 'hex', label: 'HEX' },
+  { id: 'base64', label: 'Base64' }
+]
+
 // ── Helpers ────────────────────────────────────────────────────
 
 function parseInput(input: string, format: InputFormat): Uint8Array {
-  if (!input) return new Uint8Array(0)
   switch (format) {
     case 'text':
       return new TextEncoder().encode(input)
-    case 'hex': {
-      const hex = input.replace(/\s/g, '')
-      const bytes = new Uint8Array(hex.length / 2)
-      for (let i = 0; i < hex.length; i += 2)
-        bytes[i / 2] = parseInt(hex.substring(i, i + 2), 16)
-      return bytes
-    }
+    case 'hex':
+      return hexToBytes(input)
     case 'base64': {
-      const binary = atob(input)
-      const bytes = new Uint8Array(binary.length)
-      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
-      return bytes
+      try {
+        const binary = atob(input)
+        const bytes = new Uint8Array(binary.length)
+        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
+        return bytes
+      } catch {
+        throw new Error('无效的 Base64 字符串')
+      }
     }
   }
 }
@@ -60,19 +65,21 @@ export default function HmacGenerator(): React.JSX.Element {
   const [result, setResult] = useState('')
   const [error, setError] = useState('')
   const [copied, setCopied] = useState(false)
-  const [copiedAll, setCopiedAll] = useState(false)
 
   // Real-time computation
   useEffect(() => {
-    if (!keyInput || !messageInput) {
-      setResult('')
-      setError('')
-      return
-    }
-
     let cancelled = false
 
     const run = async (): Promise<void> => {
+      await Promise.resolve()
+      if (cancelled) return
+
+      if (!keyInput) {
+        setResult('')
+        setError('')
+        return
+      }
+
       try {
         const keyBytes = parseInput(keyInput, keyFormat)
         const messageBytes = parseInput(messageInput, messageFormat)
@@ -85,13 +92,13 @@ export default function HmacGenerator(): React.JSX.Element {
 
         const cryptoKey = await crypto.subtle.importKey(
           'raw',
-          keyBytes.buffer as ArrayBuffer,
+          toArrayBuffer(keyBytes),
           { name: 'HMAC', hash: algorithm },
           false,
           ['sign']
         )
 
-        const signature = await crypto.subtle.sign('HMAC', cryptoKey, messageBytes.buffer as ArrayBuffer)
+        const signature = await crypto.subtle.sign('HMAC', cryptoKey, toArrayBuffer(messageBytes))
         const bytes = new Uint8Array(signature)
 
         if (!cancelled) {
@@ -106,7 +113,7 @@ export default function HmacGenerator(): React.JSX.Element {
       }
     }
 
-    run()
+    void run()
     return () => {
       cancelled = true
     }
@@ -123,19 +130,6 @@ export default function HmacGenerator(): React.JSX.Element {
     }
   }, [result])
 
-  const copyAll = useCallback(async () => {
-    if (!result) return
-    const currentAlgo = ALGORITHMS.find((a) => a.id === algorithm)
-    const text = `${currentAlgo?.label}: ${result}`
-    try {
-      await navigator.clipboard.writeText(text)
-      setCopiedAll(true)
-      setTimeout(() => setCopiedAll(false), 1500)
-    } catch {
-      /* ignore */
-    }
-  }, [result, algorithm])
-
   const clear = useCallback(() => {
     setKeyInput('')
     setMessageInput('')
@@ -143,192 +137,202 @@ export default function HmacGenerator(): React.JSX.Element {
     setError('')
   }, [])
 
-  const loadSample = useCallback(
-    (key: string, message: string) => {
-      setKeyInput(key)
-      setKeyFormat('text')
-      setMessageInput(message)
-      setMessageFormat('text')
-    },
-    []
-  )
+  const loadSample = useCallback((key: string, message: string) => {
+    setKeyInput(key)
+    setKeyFormat('text')
+    setMessageInput(message)
+    setMessageFormat('text')
+  }, [])
 
-  const bits = result
-    ? outputFormat === 'hex'
-      ? result.length * 4
-      : atob(result).length * 8
-    : 0
+  const currentAlgo = ALGORITHMS.find((a) => a.id === algorithm)
+  const bits = result ? (outputFormat === 'hex' ? result.length * 4 : atob(result).length * 8) : 0
 
   return (
-    <div className="hmac-page">
-      <div className="hmac-card">
-        <div className="hmac-header">
-          <h2 className="hmac-title">HMAC Generator</h2>
-          <p className="hmac-subtitle">HMAC-SHA256/512 签名生成</p>
+    <div className="hmac-page tool-page">
+      <header className="tool-page-header">
+        <div className="tool-page-heading">
+          <h2 className="tool-page-title">HMAC Generator</h2>
+          <p className="tool-page-desc">使用密钥对消息生成 HMAC 签名，输入变化时实时计算。</p>
         </div>
-
-        {/* Algorithm selector */}
-        <div className="hmac-algo-selector">
-          {ALGORITHMS.map(({ id, label }) => (
-            <button
-              key={id}
-              className={`hmac-algo-btn ${algorithm === id ? 'active' : ''}`}
-              onClick={() => setAlgorithm(id)}
-            >
-              {label}
-            </button>
-          ))}
+        <div className="tool-page-actions">
+          <button type="button" className="tool-btn tool-btn--outline" onClick={clear}>
+            <RotateCcw size={14} aria-hidden="true" />
+            清空
+          </button>
         </div>
+      </header>
 
-        {/* Key input */}
-        <div className="hmac-input-area">
-          <div className="hmac-input-header">
-            <span className="hmac-input-label">密钥 (Secret Key)</span>
-            <div className="hmac-format-group">
-              {(['text', 'hex', 'base64'] as InputFormat[]).map((f) => (
-                <button
-                  key={f}
-                  className={`hmac-format-btn ${keyFormat === f ? 'active' : ''}`}
-                  onClick={() => setKeyFormat(f)}
-                >
-                  {f === 'text' ? '文本' : f.toUpperCase()}
-                </button>
-              ))}
-            </div>
+      <section className="tool-panel hmac-toolbar">
+        <div className="hmac-toolbar-row">
+          <div className="tool-segmented" role="group" aria-label="签名算法">
+            {ALGORITHMS.map(({ id, label }) => (
+              <button
+                key={id}
+                type="button"
+                className={`tool-seg ${algorithm === id ? 'active' : ''}`}
+                onClick={() => setAlgorithm(id)}
+                aria-pressed={algorithm === id}
+              >
+                {label.replace('HMAC-', '')}
+              </button>
+            ))}
           </div>
-          <textarea
-            className="hmac-textarea"
-            value={keyInput}
-            onChange={(e) => setKeyInput(e.target.value)}
-            placeholder={
-              keyFormat === 'text'
-                ? '输入密钥...'
-                : keyFormat === 'hex'
-                  ? '输入十六进制密钥 (例: 4a6f686e)...'
-                  : '输入 Base64 密钥...'
-            }
-            rows={2}
-          />
-        </div>
-
-        {/* Message input */}
-        <div className="hmac-input-area">
-          <div className="hmac-input-header">
-            <span className="hmac-input-label">消息 (Message)</span>
-            <div className="hmac-format-group">
-              {(['text', 'hex', 'base64'] as InputFormat[]).map((f) => (
-                <button
-                  key={f}
-                  className={`hmac-format-btn ${messageFormat === f ? 'active' : ''}`}
-                  onClick={() => setMessageFormat(f)}
-                >
-                  {f === 'text' ? '文本' : f.toUpperCase()}
-                </button>
-              ))}
-            </div>
-          </div>
-          <textarea
-            className="hmac-textarea"
-            value={messageInput}
-            onChange={(e) => setMessageInput(e.target.value)}
-            placeholder={
-              messageFormat === 'text'
-                ? '输入要签名的消息...'
-                : messageFormat === 'hex'
-                  ? '输入十六进制消息...'
-                  : '输入 Base64 消息...'
-            }
-            rows={3}
-          />
-        </div>
-
-        {/* Output format + actions */}
-        <div className="hmac-options">
-          <div className="hmac-option-group">
-            <span className="hmac-option-label">输出格式</span>
-            <div className="hmac-format-group">
+          <div className="hmac-output-format">
+            <span className="hmac-field-label">输出</span>
+            <div className="tool-segmented" role="group" aria-label="输出格式">
               {(['hex', 'base64'] as OutputFormat[]).map((f) => (
                 <button
                   key={f}
-                  className={`hmac-format-btn ${outputFormat === f ? 'active' : ''}`}
+                  type="button"
+                  className={`tool-seg ${outputFormat === f ? 'active' : ''}`}
                   onClick={() => setOutputFormat(f)}
+                  aria-pressed={outputFormat === f}
                 >
                   {f.toUpperCase()}
                 </button>
               ))}
             </div>
           </div>
-          <div className="hmac-option-actions">
-            {result && (
-              <button className="hmac-copy-all-btn" onClick={copyAll}>
-                {copiedAll ? <Check size={14} /> : <Copy size={14} />}
-                {copiedAll ? '已复制' : '复制全部'}
+        </div>
+      </section>
+
+      <div className="tool-split hmac-layout">
+        <section className="tool-panel hmac-input">
+          <div className="tool-panel-head">
+            <h3 className="tool-panel-title">输入</h3>
+            <div className="hmac-samples">
+              <span className="hmac-field-label">示例</span>
+              <button
+                type="button"
+                className="hmac-sample-btn"
+                onClick={() => loadSample('secret-key', 'Hello, World!')}
+              >
+                1
               </button>
-            )}
-            <button className="hmac-clear-btn" onClick={clear}>
-              <RotateCcw size={14} />
-              清空
+              <button
+                type="button"
+                className="hmac-sample-btn"
+                onClick={() =>
+                  loadSample('my-api-secret-2024', '{"user":"admin","action":"login"}')
+                }
+              >
+                2
+              </button>
+              <button
+                type="button"
+                className="hmac-sample-btn"
+                onClick={() => loadSample('The quick brown fox', 'jumps over the lazy dog')}
+              >
+                3
+              </button>
+            </div>
+          </div>
+
+          <div className="hmac-field">
+            <div className="hmac-field-head">
+              <label className="hmac-field-label" htmlFor="hmac-key">
+                密钥 Secret Key
+              </label>
+              <div className="tool-segmented" role="group" aria-label="密钥格式">
+                {INPUT_FORMATS.map((f) => (
+                  <button
+                    key={f.id}
+                    type="button"
+                    className={`tool-seg ${keyFormat === f.id ? 'active' : ''}`}
+                    onClick={() => setKeyFormat(f.id)}
+                    aria-pressed={keyFormat === f.id}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <textarea
+              id="hmac-key"
+              className="hmac-textarea"
+              value={keyInput}
+              onChange={(e) => setKeyInput(e.target.value)}
+              placeholder={
+                keyFormat === 'text'
+                  ? '输入密钥…'
+                  : keyFormat === 'hex'
+                    ? '输入十六进制密钥，如 4a6f686e'
+                    : '输入 Base64 密钥'
+              }
+              rows={2}
+              spellCheck={false}
+            />
+          </div>
+
+          <div className="hmac-field hmac-field--message">
+            <div className="hmac-field-head">
+              <label className="hmac-field-label" htmlFor="hmac-message">
+                消息 Message
+              </label>
+              <div className="tool-segmented" role="group" aria-label="消息格式">
+                {INPUT_FORMATS.map((f) => (
+                  <button
+                    key={f.id}
+                    type="button"
+                    className={`tool-seg ${messageFormat === f.id ? 'active' : ''}`}
+                    onClick={() => setMessageFormat(f.id)}
+                    aria-pressed={messageFormat === f.id}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <textarea
+              id="hmac-message"
+              className="hmac-textarea hmac-textarea--message"
+              value={messageInput}
+              onChange={(e) => setMessageInput(e.target.value)}
+              placeholder={
+                messageFormat === 'text'
+                  ? '输入要签名的消息…'
+                  : messageFormat === 'hex'
+                    ? '输入十六进制消息'
+                    : '输入 Base64 消息'
+              }
+              rows={5}
+              spellCheck={false}
+            />
+          </div>
+        </section>
+
+        <section className="tool-panel hmac-result">
+          <div className="tool-panel-head">
+            <h3 className="tool-panel-title">签名</h3>
+            <button type="button" className="tool-btn" onClick={copyResult} disabled={!result}>
+              {copied ? (
+                <Check size={13} aria-hidden="true" />
+              ) : (
+                <Copy size={13} aria-hidden="true" />
+              )}
+              {copied ? '已复制' : '复制'}
             </button>
           </div>
-        </div>
 
-        {/* Samples */}
-        <div className="hmac-samples">
-          <span className="hmac-samples-label">示例:</span>
-          <button
-            className="hmac-sample-btn"
-            onClick={() => loadSample('secret-key', 'Hello, World!')}
-          >
-            示例 1
-          </button>
-          <button
-            className="hmac-sample-btn"
-            onClick={() =>
-              loadSample(
-                'my-api-secret-2024',
-                '{"user":"admin","action":"login"}'
-              )
-            }
-          >
-            示例 2
-          </button>
-          <button
-            className="hmac-sample-btn"
-            onClick={() =>
-              loadSample(
-                'The quick brown fox',
-                'jumps over the lazy dog'
-              )
-            }
-          >
-            示例 3
-          </button>
-        </div>
-
-        {/* Error */}
-        {error && <div className="hmac-error">{error}</div>}
-
-        {/* Result */}
-        {result && !error && (
-          <div className="hmac-result">
-            <div className="hmac-result-header">
-              <div className="hmac-result-algo">
-                <Fingerprint size={14} />
-                <span>
-                  {ALGORITHMS.find((a) => a.id === algorithm)?.label}
-                </span>
+          {error ? (
+            <div className="hmac-error" role="status">
+              {error}
+            </div>
+          ) : result ? (
+            <>
+              <div className="hmac-result-meta">
+                <span className="hmac-result-algo">{currentAlgo?.label}</span>
+                <span className="hmac-result-bits">{bits} bit</span>
               </div>
-              <button className="hmac-copy-btn" onClick={copyResult}>
-                {copied ? <Check size={13} /> : <Copy size={13} />}
-                {copied ? '已复制' : '复制'}
-              </button>
-            </div>
-            <div className="hmac-result-hash">{result}</div>
-            <div className="hmac-result-length">
-              {bits} bits / {result.length} chars
-            </div>
-          </div>
-        )}
+              <div className="hmac-result-hash">{result}</div>
+              <p className="hmac-result-note">
+                {bits / 8} 字节 · {result.length} 字符 · {outputFormat.toUpperCase()} 输出
+              </p>
+            </>
+          ) : (
+            <div className="hmac-empty">输入密钥后立即生成签名，无需点击按钮。</div>
+          )}
+        </section>
       </div>
     </div>
   )
