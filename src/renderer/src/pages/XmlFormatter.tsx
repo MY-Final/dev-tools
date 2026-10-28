@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback } from 'react'
 import { Code, Copy, Check, RotateCcw, Indent, Shrink } from 'lucide-react'
+import TextFileBar from '@renderer/components/TextFileBar'
 import '../styles/xml-formatter.css'
 
 type XmlToken =
@@ -128,19 +129,36 @@ function formatXML(xml: string, indent: number): string {
 
   const indentStr = ' '.repeat(indent)
   const lines: string[] = []
+  const tokens = tokenizeXML(trimmed)
   let depth = 0
 
-  for (const token of tokenizeXML(trimmed)) {
+  for (let i = 0; i < tokens.length; i++) {
+    const token = tokens[i]
     switch (token.kind) {
       case 'text': {
         const text = token.raw.trim()
         if (text) lines.push(indentStr.repeat(depth) + text)
         break
       }
-      case 'open':
+      case 'open': {
+        // Text-only elements stay on one line, which is how people write XML.
+        const text = tokens[i + 1]
+        const close = tokens[i + 2]
+        if (
+          !token.selfClosing &&
+          text?.kind === 'text' &&
+          text.raw.trim() !== '' &&
+          close?.kind === 'close' &&
+          close.name === token.name
+        ) {
+          lines.push(indentStr.repeat(depth) + token.raw + text.raw.trim() + close.raw)
+          i += 2
+          break
+        }
         lines.push(indentStr.repeat(depth) + token.raw)
         if (!token.selfClosing) depth++
         break
+      }
       case 'close':
         depth = Math.max(0, depth - 1)
         lines.push(indentStr.repeat(depth) + token.raw)
@@ -252,6 +270,13 @@ export default function XmlFormatter(): React.JSX.Element {
           <h1 className="xf-title">XML Formatter</h1>
           <p className="xf-subtitle">XML 格式化 · 压缩 · 校验</p>
         </div>
+
+        <TextFileBar
+          value={input}
+          onOpened={(file) => setInput(file.content)}
+          onNew={() => setInput('')}
+          suggestedName="formatted.xml"
+        />
 
         {/* Controls */}
         <div className="xf-controls">
