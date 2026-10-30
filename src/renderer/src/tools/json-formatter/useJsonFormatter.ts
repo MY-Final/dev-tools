@@ -1,5 +1,7 @@
 import { useState, useCallback, useMemo } from 'react'
 import stringify from 'json-stringify-pretty-compact'
+import { copyText } from '@renderer/lib/clipboard'
+import { describeJsonParseError } from '@renderer/lib/json-error'
 
 export type ViewMode = 'editor' | 'tree'
 export type Indent = 2 | 4 | 6 | 8
@@ -46,12 +48,17 @@ function parseJson(input: string): { data: unknown; error: JsonError | null } {
       const lines = input.substring(0, pos).split('\n')
       line = lines.length
       column = lines[lines.length - 1].length + 1
+    } else if (/Unexpected end of JSON input/i.test(err.message)) {
+      // V8 对“输入提前结束”不带 position，定位到文本末尾更符合直觉。
+      const lines = input.split('\n')
+      line = lines.length
+      column = lines[lines.length - 1].length + 1
     }
 
     return {
       data: null,
       error: {
-        message: err.message,
+        message: describeJsonParseError(err.message),
         line,
         column
       }
@@ -172,13 +179,17 @@ export function useJsonFormatter() {
     showToast('键名已按字母排序')
   }, [input, indent, error, showToast])
 
-  const handleCopy = useCallback(() => {
+  const handleCopy = useCallback(async () => {
     const textToCopy = output || input
     if (!textToCopy.trim()) {
       showToast('没有可复制的内容')
       return
     }
-    navigator.clipboard.writeText(textToCopy)
+    const ok = await copyText(textToCopy)
+    if (!ok) {
+      showToast('复制失败，请手动选择')
+      return
+    }
     setCopied(true)
     showToast('已复制到剪贴板')
     setTimeout(() => setCopied(false), 1500)

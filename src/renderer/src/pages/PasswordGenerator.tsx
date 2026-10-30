@@ -1,5 +1,7 @@
 import { useState, useCallback, useMemo } from 'react'
 import { Copy, Check, RefreshCw, Eye, EyeOff } from 'lucide-react'
+import CopyToast from '@renderer/components/CopyToast'
+import { copyText } from '@renderer/lib/clipboard'
 import { randomInt } from '../lib/crypto-utils'
 
 interface PasswordConfig {
@@ -20,24 +22,27 @@ const CHAR_SETS = {
   symbols: '!@#$%^&*()_+-=[]{}|;:,.<>?'
 }
 
+type CharSetKey = keyof typeof CHAR_SETS
+
+const CHAR_SET_KEYS: CharSetKey[] = ['uppercase', 'lowercase', 'numbers', 'symbols']
+
+function stripSimilar(value: string): string {
+  let result = value
+  for (const char of SIMILAR_CHARS) result = result.replaceAll(char, '')
+  return result
+}
+
+/** 实际参与随机的字符集（排除易混淆字符后），熵值也必须按它计算。 */
+function getPool(config: PasswordConfig, key: CharSetKey): string {
+  return config.excludeSimilar ? stripSimilar(CHAR_SETS[key]) : CHAR_SETS[key]
+}
+
 function generatePassword(config: PasswordConfig): string {
-  const selectedSets: string[] = []
-  if (config.uppercase) selectedSets.push(CHAR_SETS.uppercase)
-  if (config.lowercase) selectedSets.push(CHAR_SETS.lowercase)
-  if (config.numbers) selectedSets.push(CHAR_SETS.numbers)
-  if (config.symbols) selectedSets.push(CHAR_SETS.symbols)
+  const selectedKeys = CHAR_SET_KEYS.filter((key) => config[key])
 
-  if (selectedSets.length === 0 || config.length < selectedSets.length) return ''
+  if (selectedKeys.length === 0 || config.length < selectedKeys.length) return ''
 
-  const normalize = (value: string): string => {
-    let result = value
-    if (config.excludeSimilar) {
-      for (const char of SIMILAR_CHARS) result = result.replaceAll(char, '')
-    }
-    return result
-  }
-
-  const pools = selectedSets.map(normalize).filter(Boolean)
+  const pools = selectedKeys.map((key) => getPool(config, key)).filter(Boolean)
   if (pools.length === 0) return ''
 
   const chars = pools.join('')
@@ -55,11 +60,11 @@ function generatePassword(config: PasswordConfig): string {
   return result.join('')
 }
 function calculateEntropy(password: string, config: PasswordConfig): number {
-  let poolSize = 0
-  if (config.uppercase) poolSize += 26
-  if (config.lowercase) poolSize += 26
-  if (config.numbers) poolSize += 10
-  if (config.symbols) poolSize += CHAR_SETS.symbols.length
+  if (!password) return 0
+  const poolSize = CHAR_SET_KEYS.reduce(
+    (sum, key) => (config[key] ? sum + getPool(config, key).length : sum),
+    0
+  )
   if (poolSize === 0) return 0
   return Math.floor(password.length * Math.log2(poolSize))
 }
@@ -71,6 +76,55 @@ function getStrength(entropy: number): { label: string; level: Strength; color: 
   if (entropy < 60) return { label: '中等', level: 'medium', color: 'var(--color-warning)' }
   if (entropy < 120) return { label: '强', level: 'strong', color: 'var(--color-success)' }
   return { label: '非常强', level: 'very-strong', color: 'var(--color-success)' }
+}
+
+const WEAK_FRAGMENTS = [
+  'password',
+  'passw0rd',
+  '123456',
+  'qwerty',
+  'abc123',
+  'admin',
+  'letmein',
+  'welcome',
+  'iloveyou',
+  '111111',
+  '000000'
+]
+
+/** 连续 4 位及以上的递增/递减字符（abcdef、1234、9876）。 */
+function hasSequentialRun(pwd: string): boolean {
+  let run = 1
+  let direction = 0
+  for (let i = 1; i < pwd.length; i++) {
+    const delta = pwd.charCodeAt(i) - pwd.charCodeAt(i - 1)
+    if (delta === 1 || delta === -1) {
+      if (delta === direction) {
+        run += 1
+      } else {
+        direction = delta
+        run = 2
+      }
+      if (run >= 4) return true
+    } else {
+      run = 1
+      direction = 0
+    }
+  }
+  return false
+}
+
+/**
+ * 熵值只反映字符集大小，无法体现「password」「123456」这类常见弱口令。
+ * 检测到明显模式时单独提示，避免用户把「中等」当成安全。
+ */
+function detectWeakPattern(pwd: string): string | null {
+  const lower = pwd.toLowerCase()
+  const fragment = WEAK_FRAGMENTS.find((word) => lower.includes(word))
+  if (fragment) return `包含常见弱口令片段「${fragment}」`
+  if (pwd.length >= 4 && new Set(pwd).size === 1) return '所有字符都相同'
+  if (hasSequentialRun(pwd)) return '包含连续递增 / 递减的字符序列'
+  return null
 }
 
 function checkPasswordStrength(pwd: string): {
@@ -92,7 +146,7 @@ function checkPasswordStrength(pwd: string): {
   if (hasUpper) poolSize += 26
   if (hasLower) poolSize += 26
   if (hasNumber) poolSize += 10
-  if (hasSymbol) poolSize += 32
+  if (hasSymbol) poolSize += CHAR_SETS.symbols.length
   if (poolSize === 0) poolSize = 1
 
   const entropy = Math.floor(pwd.length * Math.log2(poolSize))
@@ -123,6 +177,7 @@ export default function PasswordGenerator(): React.JSX.Element {
     excludeSimilar: false
   })
   const [copied, setCopied] = useState(false)
+  const [copyError, setCopyError] = useState(false)
 
   // Checker state
   const [checkPassword, setCheckPassword] = useState('')
@@ -137,26 +192,37 @@ export default function PasswordGenerator(): React.JSX.Element {
     [checkPassword]
   )
 
+  const weakPattern = useMemo(
+    () => (checkPassword ? detectWeakPattern(checkPassword) : null),
+    [checkPassword]
+  )
+
   const updateConfig = useCallback(
     <K extends keyof PasswordConfig>(key: K, value: PasswordConfig[K]) => {
+      // 密码会随选项重新生成，复制按钮不能还停留在「已复制」。
+      setCopied(false)
+      setCopyError(false)
       setConfig((prev) => ({ ...prev, [key]: value }))
     },
     []
   )
 
   const regenerate = useCallback(() => {
+    setCopied(false)
+    setCopyError(false)
     setConfig((prev) => ({ ...prev }))
   }, [])
 
   const copyPassword = useCallback(async () => {
     if (!password) return
-    try {
-      await navigator.clipboard.writeText(password)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 1500)
-    } catch {
-      // fallback
+    const ok = await copyText(password)
+    if (!ok) {
+      setCopyError(true)
+      setTimeout(() => setCopyError(false), 1800)
+      return
     }
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1500)
   }, [password])
 
   const hasCharType = config.uppercase || config.lowercase || config.numbers || config.symbols
@@ -384,6 +450,12 @@ export default function PasswordGenerator(): React.JSX.Element {
             </div>
           </section>
 
+          {weakPattern && (
+            <div className="pg-checker-warning" role="status">
+              {weakPattern}，实际强度会明显低于熵值估算。
+            </div>
+          )}
+
           {checkerResult && (
             <>
               <div className="pg-check-grid">
@@ -429,6 +501,10 @@ export default function PasswordGenerator(): React.JSX.Element {
                       <span>{checkerResult.entropy} bits</span>
                     </span>
                   </div>
+                  <p className="pg-entropy-note">
+                    熵值按检测到的字符类别估算（大写 26 / 小写 26 / 数字 10 / 符号{' '}
+                    {CHAR_SETS.symbols.length}），不统计字典词、重复模式与个人信息。
+                  </p>
                 </section>
               </div>
 
@@ -469,6 +545,7 @@ export default function PasswordGenerator(): React.JSX.Element {
           )}
         </>
       )}
+      <CopyToast message={copyError ? '复制失败，请手动选择' : null} />
     </div>
   )
 }

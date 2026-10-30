@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
 import type { LucideIcon } from 'lucide-react'
+import { copyText as writeClipboard } from '@renderer/lib/clipboard'
 import {
   Bold,
   Check,
@@ -301,13 +302,12 @@ export default function MarkdownPreview(): React.JSX.Element {
 
   const copyText = useCallback(
     async (text: string, key: CopyKey) => {
-      try {
-        await navigator.clipboard.writeText(text)
-        setCopied(key)
-        window.setTimeout(() => setCopied(null), 1500)
-      } catch {
+      if (!(await writeClipboard(text))) {
         flashNotice('复制失败，请检查剪贴板权限')
+        return
       }
+      setCopied(key)
+      window.setTimeout(() => setCopied(null), 1500)
     },
     [flashNotice]
   )

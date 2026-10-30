@@ -233,6 +233,28 @@
   outline-offset: -2px;
 }
 
+.tg-hint {
+  margin: 8px 0 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-2xs);
+  line-height: 1.6;
+}
+
+.tg-hint code {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.tg-error {
+  margin: 14px;
+  padding: 11px 14px;
+  border: 1px solid var(--color-danger);
+  border-radius: var(--radius-sm);
+  background: var(--color-danger-subtle);
+  color: var(--color-danger);
+  font-size: var(--text-sm);
+  line-height: 1.6;
+}
+
 .tg-empty {
   display: flex;
   flex: 1;

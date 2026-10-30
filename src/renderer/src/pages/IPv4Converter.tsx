@@ -1,13 +1,19 @@
 import { useState, useMemo, useCallback } from 'react'
 import { Copy, Check, ArrowLeftRight, Globe } from 'lucide-react'
+import CopyToast from '@renderer/components/CopyToast'
+import { copyText } from '@renderer/lib/clipboard'
+
+const OCTET_RE = /^\d{1,3}$/
 
 function ipToNumber(ip: string): number | null {
-  const parts = ip.split('.')
+  const parts = ip.trim().split('.')
   if (parts.length !== 4) return null
   let result = 0
   for (const part of parts) {
-    const num = parseInt(part, 10)
-    if (isNaN(num) || num < 0 || num > 255) return null
+    // 整段校验：parseInt 会把 "1x"、"1e2" 静默解析成 1。
+    if (!OCTET_RE.test(part)) return null
+    const num = Number(part)
+    if (num > 255) return null
     result = (result << 8) | num
   }
   return result >>> 0
@@ -48,35 +54,29 @@ function convert(input: string): ConvertResult | null {
   const cleaned = input.trim()
   if (!cleaned) return null
 
-  const dotParts = cleaned.split('.')
-  if (dotParts.length === 4) {
-    const num = ipToNumber(cleaned)
-    if (num !== null) {
-      return {
-        ip: cleaned,
-        decimal: num,
-        hex: formatHex(num),
-        binary: formatBinary(num),
-        octal: formatOctal(num),
-        integer: num
-      }
+  let num: number | null = null
+  if (cleaned.includes('.')) {
+    num = ipToNumber(cleaned)
+  } else {
+    const hexMatch = cleaned.match(/^0x([0-9a-f]{1,8})$/i)
+    if (hexMatch) {
+      num = parseInt(hexMatch[1], 16) >>> 0
+    } else if (/^\d{1,10}$/.test(cleaned)) {
+      const decimal = Number(cleaned)
+      if (decimal <= 4294967295) num = decimal
     }
   }
 
-  const num = parseInt(cleaned, 10)
-  if (!isNaN(num) && num >= 0 && num <= 4294967295) {
-    const ip = numberToIp(num)
-    return {
-      ip,
-      decimal: num,
-      hex: formatHex(num),
-      binary: formatBinary(num),
-      octal: formatOctal(num),
-      integer: num
-    }
-  }
+  if (num === null) return null
 
-  return null
+  return {
+    ip: numberToIp(num),
+    decimal: num,
+    hex: formatHex(num),
+    binary: formatBinary(num),
+    octal: formatOctal(num),
+    integer: num
+  }
 }
 
 interface OutputRow {
@@ -88,6 +88,7 @@ interface OutputRow {
 export default function IPv4Converter(): React.JSX.Element {
   const [input, setInput] = useState('192.168.1.1')
   const [copied, setCopied] = useState<string | null>(null)
+  const [copyError, setCopyError] = useState(false)
 
   const result = useMemo(() => convert(input), [input])
 
@@ -104,20 +105,28 @@ export default function IPv4Converter(): React.JSX.Element {
   }, [result])
 
   const copyValue = useCallback(async (value: string, key: string) => {
-    try {
-      await navigator.clipboard.writeText(value)
-      setCopied(key)
-      setTimeout(() => setCopied(null), 1500)
-    } catch {
-      // fallback
+    if (!(await copyText(value))) {
+      setCopyError(true)
+      setTimeout(() => setCopyError(false), 1800)
+      return
     }
+    setCopied(key)
+    setTimeout(() => setCopied(null), 1500)
   }, [])
 
   const loadSample = useCallback((ip: string) => {
     setInput(ip)
   }, [])
 
-  const isLikelyDecimal = /^\d{1,10}$/.test(input.trim()) && parseInt(input.trim()) > 255
+  const trimmedInput = input.trim()
+  // 只有转换成功时才提示识别到的输入格式，避免越界值时给出误导。
+  const detectedFormat = !result
+    ? null
+    : /^0x[0-9a-f]{1,8}$/i.test(trimmedInput)
+      ? 'hex'
+      : /^\d{1,10}$/.test(trimmedInput) && Number(trimmedInput) > 255
+        ? 'decimal'
+        : null
 
   return (
     <div className="v4c-page tool-page">
@@ -155,13 +164,15 @@ export default function IPv4Converter(): React.JSX.Element {
             className="tool-input tool-input--mono tool-input--lg"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="例如 192.168.1.1 或 3232235777"
+            placeholder="例如 192.168.1.1、3232235777 或 0xC0A80101"
             spellCheck={false}
           />
-          {isLikelyDecimal && (
+          {detectedFormat && (
             <p className="v4c-hint">
               <ArrowLeftRight size={13} aria-hidden="true" />
-              检测到十进制整数，将自动转换为 IPv4 地址
+              {detectedFormat === 'hex'
+                ? '检测到十六进制整数，将自动转换为 IPv4 地址'
+                : '检测到十进制整数，将自动转换为 IPv4 地址'}
             </p>
           )}
         </div>
@@ -200,9 +211,10 @@ export default function IPv4Converter(): React.JSX.Element {
       ) : (
         <section className="tool-panel v4c-empty">
           <Globe size={26} aria-hidden="true" />
-          <span>输入有效的 IPv4 地址或 0–4294967295 之间的整数</span>
+          <span>输入有效的 IPv4 地址、0–4294967295 的整数或 0x 开头的十六进制</span>
         </section>
       )}
+      <CopyToast message={copyError ? '复制失败，请手动选择' : null} />
     </div>
   )
 }

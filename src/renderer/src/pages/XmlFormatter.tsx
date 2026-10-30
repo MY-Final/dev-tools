@@ -1,6 +1,8 @@
 import { useState, useMemo, useCallback } from 'react'
 import { Code, Copy, Check, RotateCcw, Indent, Shrink } from 'lucide-react'
 import TextFileBar from '@renderer/components/TextFileBar'
+import CopyToast from '@renderer/components/CopyToast'
+import { copyText } from '@renderer/lib/clipboard'
 import '../styles/xml-formatter.css'
 
 type XmlToken =
@@ -224,6 +226,7 @@ export default function XmlFormatter(): React.JSX.Element {
   )
   const [indentSize, setIndentSize] = useState<2 | 4>(2)
   const [copied, setCopied] = useState(false)
+  const [copyError, setCopyError] = useState(false)
 
   const error = useMemo(() => validateXML(input), [input])
 
@@ -253,13 +256,13 @@ export default function XmlFormatter(): React.JSX.Element {
   const handleCopy = useCallback(async () => {
     // 有错误时不复制，避免把无效数据当作结果复制出去
     if (error) return
-    try {
-      await navigator.clipboard.writeText(output || input)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 1500)
-    } catch {
-      // silently fail
+    if (!(await copyText(output || input))) {
+      setCopyError(true)
+      setTimeout(() => setCopyError(false), 1800)
+      return
     }
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1500)
   }, [error, output, input])
 
   return (
@@ -359,6 +362,7 @@ export default function XmlFormatter(): React.JSX.Element {
           </div>
         </div>
       </div>
+      <CopyToast message={copyError ? '复制失败，请手动选择' : null} />
     </div>
   )
 }

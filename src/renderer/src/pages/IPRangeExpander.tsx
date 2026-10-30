@@ -1,5 +1,7 @@
 import { useState, useMemo, useCallback } from 'react'
 import { Copy, Check, Network } from 'lucide-react'
+import CopyToast from '@renderer/components/CopyToast'
+import { copyText } from '@renderer/lib/clipboard'
 
 const MAX_CIDR_BLOCKS = 64
 
@@ -66,6 +68,7 @@ export default function IPRangeExpander(): React.JSX.Element {
   const [startInput, setStartInput] = useState('192.168.1.1')
   const [endInput, setEndInput] = useState('192.168.1.254')
   const [copied, setCopied] = useState<string | null>(null)
+  const [copyError, setCopyError] = useState(false)
 
   const result = useMemo<RangeResult | null>(() => {
     const startNum = ipToNumber(startInput)
@@ -86,26 +89,29 @@ export default function IPRangeExpander(): React.JSX.Element {
     }
   }, [startInput, endInput])
 
-  const copyValue = useCallback(async (value: string, key: string) => {
-    try {
-      await navigator.clipboard.writeText(value)
-      setCopied(key)
-      setTimeout(() => setCopied(null), 1500)
-    } catch {
-      // Fallback is intentionally unavailable so clipboard errors are not reported as success.
-    }
+  const showCopyError = useCallback(() => {
+    setCopyError(true)
+    setTimeout(() => setCopyError(false), 1800)
   }, [])
+
+  const copyValue = useCallback(async (value: string, key: string) => {
+    if (!(await copyText(value))) {
+      showCopyError()
+      return
+    }
+    setCopied(key)
+    setTimeout(() => setCopied(null), 1500)
+  }, [showCopyError])
 
   const copyAllCIDRs = useCallback(async () => {
     if (!result) return
-    try {
-      await navigator.clipboard.writeText(result.cidrs.join('\n'))
-      setCopied('all')
-      setTimeout(() => setCopied(null), 1500)
-    } catch {
-      // Fallback is intentionally unavailable so clipboard errors are not reported as success.
+    if (!(await copyText(result.cidrs.join('\n')))) {
+      showCopyError()
+      return
     }
-  }, [result])
+    setCopied('all')
+    setTimeout(() => setCopied(null), 1500)
+  }, [result, showCopyError])
 
   const loadSample = useCallback((start: string, end: string) => {
     setStartInput(start)
@@ -263,6 +269,7 @@ export default function IPRangeExpander(): React.JSX.Element {
           )}
         </section>
       </div>
+      <CopyToast message={copyError ? '复制失败，请手动选择' : null} />
     </div>
   )
 }

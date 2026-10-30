@@ -1,5 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { Copy, Check, Search, ExternalLink, Globe, Loader } from 'lucide-react'
+import CopyToast from '@renderer/components/CopyToast'
+import { copyText } from '@renderer/lib/clipboard'
 import type { MavenDoc } from '@renderer/lib/maven-api'
 
 interface MavenMirror {
@@ -138,6 +140,7 @@ export default function MavenDependency(): React.JSX.Element {
   const [versionsError, setVersionsError] = useState('')
   const [format, setFormat] = useState<OutputFormat>('maven')
   const [copied, setCopied] = useState(false)
+  const [copyError, setCopyError] = useState(false)
   const [selectedMirror, setSelectedMirror] = useState<MavenMirror>(MAVEN_MIRRORS[0])
   const [mirrorCopied, setMirrorCopied] = useState(false)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
@@ -295,28 +298,31 @@ export default function MavenDependency(): React.JSX.Element {
     return `<mirror>\n    <id>${mirror.id}</id>\n    <name>${mirror.name}</name>\n    <url>${mirror.url}</url>\n    <mirrorOf>central</mirrorOf>\n</mirror>`
   }, [])
 
+  const showCopyError = useCallback(() => {
+    setCopyError(true)
+    setTimeout(() => setCopyError(false), 1800)
+  }, [])
+
   const copyOutput = useCallback(async () => {
     if (!selectedDep) return
     const output = generateOutput(selectedDep, selectedVersion, format)
-    try {
-      await navigator.clipboard.writeText(output)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 1500)
-    } catch {
-      // fallback
+    if (!(await copyText(output))) {
+      showCopyError()
+      return
     }
-  }, [selectedDep, selectedVersion, format, generateOutput])
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1500)
+  }, [selectedDep, selectedVersion, format, generateOutput, showCopyError])
 
   const copyMirror = useCallback(async () => {
     const config = generateMirrorConfig(selectedMirror)
-    try {
-      await navigator.clipboard.writeText(config)
-      setMirrorCopied(true)
-      setTimeout(() => setMirrorCopied(false), 1500)
-    } catch {
-      // fallback
+    if (!(await copyText(config))) {
+      showCopyError()
+      return
     }
-  }, [selectedMirror, generateMirrorConfig])
+    setMirrorCopied(true)
+    setTimeout(() => setMirrorCopied(false), 1500)
+  }, [selectedMirror, generateMirrorConfig, showCopyError])
 
   const formatLabels: Record<OutputFormat, string> = {
     maven: 'Maven',
@@ -509,7 +515,10 @@ export default function MavenDependency(): React.JSX.Element {
     </mirror>
   </mirrors>
 </settings>`
-                      await navigator.clipboard.writeText(full)
+                      if (!(await copyText(full))) {
+                        showCopyError()
+                        return
+                      }
                       setMirrorCopied(true)
                       setTimeout(() => setMirrorCopied(false), 1500)
                     }}
@@ -534,6 +543,7 @@ export default function MavenDependency(): React.JSX.Element {
           </div>
         )}
       </div>
+      <CopyToast message={copyError ? '复制失败，请手动选择' : null} />
     </div>
   )
 }

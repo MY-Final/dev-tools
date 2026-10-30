@@ -1,5 +1,7 @@
 import { useState, useCallback, useRef } from 'react'
 import { Keyboard, Trash2, Copy, Check } from 'lucide-react'
+import CopyToast from '@renderer/components/CopyToast'
+import { copyText } from '@renderer/lib/clipboard'
 
 interface KeyEvent {
   key: string
@@ -67,6 +69,7 @@ export default function KeyboardTester(): React.JSX.Element {
   const [history, setHistory] = useState<KeyEvent[]>([])
   const [focused, setFocused] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [copyError, setCopyError] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
@@ -102,13 +105,13 @@ export default function KeyboardTester(): React.JSX.Element {
 
   const copyJson = useCallback(async () => {
     if (!currentKey) return
-    try {
-      await navigator.clipboard.writeText(JSON.stringify(currentKey, null, 2))
-      setCopied(true)
-      setTimeout(() => setCopied(false), 1500)
-    } catch {
-      /* ignore */
+    if (!(await copyText(JSON.stringify(currentKey, null, 2)))) {
+      setCopyError(true)
+      setTimeout(() => setCopyError(false), 1800)
+      return
     }
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1500)
   }, [currentKey])
 
   const displayKey = currentKey ? SPECIAL_KEYS[currentKey.key] || currentKey.key : ''
@@ -256,6 +259,7 @@ export default function KeyboardTester(): React.JSX.Element {
           </section>
         </div>
       </div>
+      <CopyToast message={copyError ? '复制失败，请手动选择' : null} />
     </div>
   )
 }

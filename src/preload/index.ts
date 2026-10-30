@@ -80,6 +80,10 @@ const settingsAPI = {
     ipcRenderer.invoke('settings:update-shortcuts', updates),
   updateFavorites: (toolId: string): Promise<AppSettings> =>
     ipcRenderer.invoke('settings:update-favorites', toolId),
+  recordRecentTool: (toolId: string): Promise<AppSettings> =>
+    ipcRenderer.invoke('settings:record-recent-tool', toolId),
+  clearRecentTools: (): Promise<AppSettings> => ipcRenderer.invoke('settings:clear-recent-tools'),
+  clearToolUsage: (): Promise<AppSettings> => ipcRenderer.invoke('settings:clear-tool-usage'),
   getSettingsPath: (): Promise<string> => ipcRenderer.invoke('settings:get-path'),
   onSettingsChanged: (callback: (settings: AppSettings) => void): (() => void) => {
     const handler = (_event: Electron.IpcRendererEvent, settings: AppSettings): void =>
@@ -87,7 +91,9 @@ const settingsAPI = {
     ipcRenderer.on('settings:changed', handler)
     return () => ipcRenderer.removeListener('settings:changed', handler)
   },
-  resetToDefaults: (): Promise<AppSettings> => ipcRenderer.invoke('settings:reset')
+  resetToDefaults: (): Promise<AppSettings> => ipcRenderer.invoke('settings:reset'),
+  importSettings: (settings: unknown): Promise<AppSettings> =>
+    ipcRenderer.invoke('settings:import', settings)
 }
 
 // Updater API

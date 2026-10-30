@@ -18,6 +18,7 @@ import {
   Lock,
   Search,
   Star,
+  History,
   Menu,
   X
 } from 'lucide-react'
@@ -142,6 +143,16 @@ export default function Sidebar({
   const favoriteTools = useMemo(
     () => favorites.map((id) => tools.find((t) => t.id === id)).filter(Boolean) as typeof tools,
     [favorites]
+  )
+
+  // 最近使用（按记录顺序，过滤掉已不存在或当前环境不可用的工具）
+  const recentTools = useMemo(
+    () =>
+      settings.recentTools
+        .map((id) => tools.find((t) => t.id === id))
+        .filter((t): t is (typeof tools)[number] => Boolean(t))
+        .filter((t) => !webRuntime || supportsWeb(t)),
+    [settings.recentTools, webRuntime]
   )
 
   const handleNavigate = useCallback(
@@ -345,7 +356,9 @@ export default function Sidebar({
   const flyoutData = flyoutCategory
     ? flyoutCategory.name === '__favorites__'
       ? (['收藏', favoriteTools] as [string, typeof tools])
-      : (categoryEntries.find(([name]) => name === flyoutCategory.name) ?? null)
+      : flyoutCategory.name === '__recent__'
+        ? (['最近使用', recentTools] as [string, typeof tools])
+        : (categoryEntries.find(([name]) => name === flyoutCategory.name) ?? null)
     : null
 
   const flyoutTop = flyoutCategory ? flyoutCategory.top : 0
@@ -464,6 +477,54 @@ export default function Sidebar({
                         currentPage === tool.id && 'active',
                         effectiveCollapsed && 'collapsed'
                       )}
+                      onClick={() => navigateToTool(tool.id)}
+                      aria-current={currentPage === tool.id ? 'page' : undefined}
+                    >
+                      <Icon size={16} className="nav-icon" />
+                      <div className="nav-label-wrapper">
+                        <span className="nav-label">{tool.name}</span>
+                        {showShortDesc && <span className="nav-desc">{tool.shortDesc}</span>}
+                      </div>
+                    </button>
+                  )
+                })}
+            </div>
+          )}
+
+          {/* 最近使用 */}
+          {recentTools.length > 0 && (
+            <div className="nav-group">
+              {!effectiveCollapsed && (
+                <div className="nav-category-header nav-favorites-header">
+                  <History size={15} className="nav-category-icon nav-favorites-icon" />
+                  <span className="nav-category-label">最近使用</span>
+                  <span className="nav-category-count">{recentTools.length}</span>
+                </div>
+              )}
+              {effectiveCollapsed && (
+                <button
+                  type="button"
+                  className="nav-category-collapsed nav-favorites-collapsed"
+                  title="最近使用"
+                  aria-label="最近使用的工具"
+                  aria-expanded={flyoutCategory?.name === '__recent__'}
+                  aria-controls="sidebar-flyout"
+                  onClick={(e) => handleCategoryClick('__recent__', e)}
+                  onMouseEnter={(e) => handleCategoryMouseEnter('__recent__', e)}
+                  onMouseLeave={handleFlyoutClose}
+                  onKeyDown={(e) => handleCategoryKeyDown('__recent__', e)}
+                >
+                  <History size={18} />
+                </button>
+              )}
+              {!effectiveCollapsed &&
+                recentTools.map((tool) => {
+                  const Icon = tool.icon
+                  return (
+                    <button
+                      key={tool.id}
+                      type="button"
+                      className={cn('nav-icon-btn', currentPage === tool.id && 'active')}
                       onClick={() => navigateToTool(tool.id)}
                       aria-current={currentPage === tool.id ? 'page' : undefined}
                     >
@@ -627,7 +688,9 @@ export default function Sidebar({
                 const Icon =
                   flyoutData[0] === '收藏'
                     ? Star
-                    : categoryIcons[flyoutData[0]] || categoryIcons.__default
+                    : flyoutData[0] === '最近使用'
+                      ? History
+                      : categoryIcons[flyoutData[0]] || categoryIcons.__default
                 return <Icon size={15} />
               })()}
               <span>{flyoutData[0]}</span>

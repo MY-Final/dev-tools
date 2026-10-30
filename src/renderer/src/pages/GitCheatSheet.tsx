@@ -1,5 +1,7 @@
 import { useState, useMemo, useCallback } from 'react'
 import { Copy, Check, Search, GitBranch, User, Terminal } from 'lucide-react'
+import CopyToast from '@renderer/components/CopyToast'
+import { copyText } from '@renderer/lib/clipboard'
 import gitCommands from '@renderer/tools/git-cheat-sheet/git-commands.json'
 
 interface GitCommand {
@@ -80,6 +82,7 @@ export default function GitCheatSheet(): React.JSX.Element {
   const [search, setSearch] = useState('')
   const [expandedCommand, setExpandedCommand] = useState<string | null>(null)
   const [copied, setCopied] = useState<string | null>(null)
+  const [copyError, setCopyError] = useState(false)
 
   // Setup tab state
   const [gitName, setGitName] = useState('')
@@ -100,13 +103,14 @@ export default function GitCheatSheet(): React.JSX.Element {
   }, [search])
 
   const copyCommand = useCallback(async (command: string) => {
-    try {
-      await navigator.clipboard.writeText(command)
-      setCopied(command)
-      setTimeout(() => setCopied(null), 1500)
-    } catch {
-      // fallback
+    const ok = await copyText(command)
+    if (!ok) {
+      setCopyError(true)
+      setTimeout(() => setCopyError(false), 1800)
+      return
     }
+    setCopied(command)
+    setTimeout(() => setCopied(null), 1500)
   }, [])
 
   const toggleExpand = useCallback((command: string) => {
@@ -263,6 +267,7 @@ export default function GitCheatSheet(): React.JSX.Element {
           </div>
         )}
       </div>
+      <CopyToast message={copyError ? '复制失败，请手动选择' : null} />
     </div>
   )
 }

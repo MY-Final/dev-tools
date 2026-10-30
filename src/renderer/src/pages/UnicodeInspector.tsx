@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Check, Copy, Info } from 'lucide-react'
 import TextFileBar from '@renderer/components/TextFileBar'
+import { copyText as writeClipboard } from '@renderer/lib/clipboard'
 import {
   CATEGORY_GROUP_LABELS,
   CATEGORY_GROUP_ORDER,
@@ -242,14 +243,13 @@ export default function UnicodeInspector(): React.JSX.Element {
   }
 
   async function copyText(text: string, key: string): Promise<void> {
-    try {
-      await navigator.clipboard.writeText(text)
-      setCopyFailed(false)
-      setCopiedKey(key)
-      window.setTimeout(() => setCopiedKey((current) => (current === key ? null : current)), 1200)
-    } catch {
+    if (!(await writeClipboard(text))) {
       setCopyFailed(true)
+      return
     }
+    setCopyFailed(false)
+    setCopiedKey(key)
+    window.setTimeout(() => setCopiedKey((current) => (current === key ? null : current)), 1200)
   }
 
   return (

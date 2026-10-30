@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo } from 'react'
+import { copyText } from '@renderer/lib/clipboard'
 
 export type Mode = 'binary' | 'decimal'
 
@@ -37,36 +38,53 @@ export interface ParsedInput {
   unit: Unit
 }
 
-/** 智能解析输入，例如 "10mb" → { value: 10, unit: 'MB' } */
-export function parseInputWithUnit(input: string, activeUnit: Unit): ParsedInput {
-  const trimmed = input.trim()
-  // 尝试匹配 "数字 + 单位" 格式
-  const match = trimmed.match(/^(-?[\d.]+)\s*([a-zA-Z]+)$/)
-  if (match) {
-    const num = parseFloat(match[1])
-    const unitStr = match[2].toUpperCase()
-    const allUnits = [...BINARY_UNITS, ...DECIMAL_UNITS]
-    const found = allUnits.find(
-      (u) =>
-        u.toUpperCase() === unitStr ||
-        u.toUpperCase() === unitStr + 'B' ||
-        u.toUpperCase() === unitStr + 'IB'
-    )
-    if (found && !isNaN(num)) {
-      return { value: num, unit: found as Unit }
-    }
-  }
-  // 纯数字，使用当前活跃单位
-  return { value: parseFloat(trimmed), unit: activeUnit }
+const UNIT_ALIASES: Record<string, Unit> = {
+  B: 'B',
+  BYTE: 'B',
+  BYTES: 'B',
+  KB: 'KB',
+  K: 'KB',
+  KIB: 'KiB',
+  KI: 'KiB',
+  MB: 'MB',
+  M: 'MB',
+  MIB: 'MiB',
+  MI: 'MiB',
+  GB: 'GB',
+  G: 'GB',
+  GIB: 'GiB',
+  GI: 'GiB',
+  TB: 'TB',
+  T: 'TB',
+  TIB: 'TiB',
+  TI: 'TiB'
 }
 
-function toBytes(value: number, unit: Unit, mode: Mode): number {
-  if (mode === 'binary' && unit in BINARY_TO_BYTES) {
-    return value * BINARY_TO_BYTES[unit as BinaryUnit]
+const NUMBER_PATTERN = '[+-]?(?:\\d+\\.?\\d*|\\.\\d+)(?:[eE][+-]?\\d+)?'
+const PLAIN_NUMBER_RE = new RegExp(`^${NUMBER_PATTERN}$`)
+const NUMBER_UNIT_RE = new RegExp(`^(${NUMBER_PATTERN})\\s*([a-zA-Z]+)$`)
+
+/** 智能解析输入，例如 "10mb" → { value: 10, unit: 'MB' }。整串必须合法，避免 10abc 被静默当成 10。 */
+export function parseInputWithUnit(input: string, activeUnit: Unit): ParsedInput {
+  const trimmed = input.trim()
+  if (!trimmed) return { value: NaN, unit: activeUnit }
+
+  const withUnit = trimmed.match(NUMBER_UNIT_RE)
+  if (withUnit) {
+    const value = Number(withUnit[1])
+    const unit = UNIT_ALIASES[withUnit[2].toUpperCase()]
+    if (!unit || !Number.isFinite(value)) return { value: NaN, unit: activeUnit }
+    return { value, unit }
   }
-  if (mode === 'decimal' && unit in DECIMAL_TO_BYTES) {
-    return value * DECIMAL_TO_BYTES[unit as DecimalUnit]
-  }
+
+  if (!PLAIN_NUMBER_RE.test(trimmed)) return { value: NaN, unit: activeUnit }
+  return { value: Number(trimmed), unit: activeUnit }
+}
+
+/** 输入单位自带进制（KB / KiB），换算时按它自己的进制解释，再以当前模式展示。 */
+function toBytes(value: number, unit: Unit): number {
+  if (unit in BINARY_TO_BYTES) return value * BINARY_TO_BYTES[unit as BinaryUnit]
+  if (unit in DECIMAL_TO_BYTES) return value * DECIMAL_TO_BYTES[unit as DecimalUnit]
   return value
 }
 
@@ -79,6 +97,8 @@ function fromBytes(bytes: number, unit: Unit, mode: Mode, precision: number): st
   }
   const result = bytes / divisor
   if (result === 0) return '0'
+  // 整数字节数必须精确显示，否则 1 GiB → B 会被精度截成 1073741800。
+  if (Number.isInteger(result)) return result.toString()
   return parseFloat(result.toPrecision(precision + 2)).toString()
 }
 
@@ -88,7 +108,7 @@ export function convertToAllUnits(
   mode: Mode,
   precision: number
 ): Record<string, string> {
-  const bytes = toBytes(value, unit, mode)
+  const bytes = toBytes(value, unit)
   const units = getUnitsForMode(mode)
   const result: Record<string, string> = {}
   for (const u of units) {
@@ -108,15 +128,21 @@ export function useConverter() {
 
   const units = useMemo(() => getUnitsForMode(mode), [mode])
 
+  const parsed = useMemo(
+    () => parseInputWithUnit(activeValue, activeUnit),
+    [activeValue, activeUnit]
+  )
+
   const values = useMemo(() => {
-    const parsed = parseInputWithUnit(activeValue, activeUnit)
     if (isNaN(parsed.value)) {
       const empty: Record<string, string> = {}
       for (const u of units) empty[u] = ''
       return empty
     }
     return convertToAllUnits(parsed.value, parsed.unit, mode, precision)
-  }, [activeValue, activeUnit, mode, precision, units])
+  }, [parsed, mode, precision, units])
+
+  const invalid = activeValue.trim() !== '' && isNaN(parsed.value)
 
   const handleInputChange = useCallback((unit: Unit, input: string) => {
     setActiveUnit(unit)
@@ -143,10 +169,14 @@ export function useConverter() {
   }, [])
 
   const handleCopyValue = useCallback(
-    (unit: Unit) => {
+    async (unit: Unit) => {
       const val = values[unit]
       if (val) {
-        navigator.clipboard.writeText(val)
+        const ok = await copyText(val)
+        if (!ok) {
+          showToast('复制失败，请手动选择')
+          return
+        }
         setCopiedUnit(unit)
         showToast('已复制到剪贴板')
         setTimeout(() => setCopiedUnit(null), 1500)
@@ -155,10 +185,14 @@ export function useConverter() {
     [values, showToast]
   )
 
-  const handleCopyAll = useCallback(() => {
+  const handleCopyAll = useCallback(async () => {
+    if (!units.some((u) => values[u])) {
+      showToast('没有可复制的结果')
+      return
+    }
     const text = units.map((u) => `${u}: ${values[u] || ''}`).join('\n')
-    navigator.clipboard.writeText(text)
-    showToast('已复制全部结果')
+    const ok = await copyText(text)
+    showToast(ok ? '已复制全部结果' : '复制失败，请手动选择')
   }, [units, values, showToast])
 
   return {
@@ -166,6 +200,9 @@ export function useConverter() {
     precision,
     activeUnit,
     activeValue,
+    parsedUnit: parsed.unit,
+    invalid,
+    hasValues: units.some((u) => values[u]),
     toast,
     copiedUnit,
     units,

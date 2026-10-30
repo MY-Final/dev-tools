@@ -21,6 +21,40 @@
   font-size: var(--text-2xs);
 }
 
+.urlc-form-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
+  padding: 0 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xs);
+  color: var(--color-text-secondary);
+  font-size: var(--text-2xs);
+  cursor: pointer;
+  user-select: none;
+  transition:
+    background-color 0.12s ease,
+    border-color 0.12s ease,
+    color 0.12s ease;
+}
+
+.urlc-form-toggle:hover {
+  border-color: var(--color-border-hover);
+  background: var(--color-surface-hover);
+  color: var(--color-text);
+}
+
+.urlc-form-toggle:focus-within {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+.urlc-form-toggle input {
+  margin: 0;
+  accent-color: var(--color-accent);
+}
+
 .urlc-samples {
   display: flex;
   gap: 4px;

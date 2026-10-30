@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Copy, Check, RefreshCw } from 'lucide-react'
+import CopyToast from '@renderer/components/CopyToast'
+import { copyText } from '@renderer/lib/clipboard'
 import '../styles/screen-info.css'
 
 interface ScreenData {
@@ -59,6 +61,7 @@ export default function ScreenInfo(): React.JSX.Element {
   const [screenData, setScreenData] = useState<ScreenData>(getScreenData)
   const [copiedKey, setCopiedKey] = useState<string | null>(null)
   const [copiedAll, setCopiedAll] = useState(false)
+  const [copyError, setCopyError] = useState(false)
 
   useEffect(() => {
     const handler = (): void => setScreenData(getScreenData())
@@ -104,24 +107,24 @@ export default function ScreenInfo(): React.JSX.Element {
   ]
 
   const copyField = useCallback(async (key: string, value: string) => {
-    try {
-      await navigator.clipboard.writeText(value)
-      setCopiedKey(key)
-      setTimeout(() => setCopiedKey(null), 1500)
-    } catch {
-      /* ignore */
+    if (!(await copyText(value))) {
+      setCopyError(true)
+      setTimeout(() => setCopyError(false), 1800)
+      return
     }
+    setCopiedKey(key)
+    setTimeout(() => setCopiedKey(null), 1500)
   }, [])
 
   const copyAll = useCallback(async () => {
     const text = fields.map((f) => `${f.label}: ${f.value}`).join('\n')
-    try {
-      await navigator.clipboard.writeText(text)
-      setCopiedAll(true)
-      setTimeout(() => setCopiedAll(false), 1500)
-    } catch {
-      /* ignore */
+    if (!(await copyText(text))) {
+      setCopyError(true)
+      setTimeout(() => setCopyError(false), 1800)
+      return
     }
+    setCopiedAll(true)
+    setTimeout(() => setCopiedAll(false), 1500)
   }, [fields])
 
   const refresh = useCallback(() => {
@@ -202,6 +205,7 @@ export default function ScreenInfo(): React.JSX.Element {
           ))}
         </div>
       </section>
+      <CopyToast message={copyError ? '复制失败，请手动选择' : null} />
     </div>
   )
 }

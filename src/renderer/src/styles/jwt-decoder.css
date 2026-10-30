@@ -58,6 +58,12 @@
   color: var(--color-warning);
 }
 
+.jd-status--notYetValid {
+  border-color: color-mix(in srgb, var(--color-warning) 40%, var(--color-border));
+  background: var(--color-warning-subtle);
+  color: var(--color-warning);
+}
+
 .jd-status--invalid {
   border-color: color-mix(in srgb, var(--color-danger) 40%, var(--color-border));
   background: var(--color-danger-subtle);
@@ -81,6 +87,30 @@
   background: var(--color-danger-subtle);
   color: var(--color-danger);
   font-size: var(--text-xs);
+}
+
+.jd-warnings {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 9px 14px;
+  border-top: 1px solid color-mix(in srgb, var(--color-warning) 24%, var(--color-border));
+  background: var(--color-warning-subtle);
+  color: var(--color-warning);
+  font-size: var(--text-xs);
+}
+
+.jd-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.jd-warning svg {
+  flex-shrink: 0;
+  margin-top: 2px;
 }
 
 /* ── 结果 ───────────────────────────────────── */
@@ -134,6 +164,10 @@
   overflow-wrap: anywhere;
 }
 
+.jd-meta-value--missing {
+  color: var(--color-warning);
+}
+
 /* 时间信息 */
 
 .jd-details {
@@ -161,6 +195,14 @@
   min-width: 0;
   color: var(--color-text-secondary);
   font-size: var(--text-sm);
+  text-align: right;
+}
+
+.jd-time-invalid {
+  flex: 1;
+  min-width: 0;
+  color: var(--color-warning);
+  font-size: var(--text-xs);
   text-align: right;
 }
 

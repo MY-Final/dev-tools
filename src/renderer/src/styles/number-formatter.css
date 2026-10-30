@@ -94,10 +94,21 @@
 
 .nfm-result-value {
   margin-top: 2px;
+  max-height: 7.5em;
+  overflow-y: auto;
   overflow-wrap: anywhere;
   color: var(--color-text);
   font-family: 'JetBrains Mono', monospace;
   font-size: var(--text-md);
   font-variant-numeric: tabular-nums;
   line-height: 1.5;
+}
+
+.nfm-note {
+  margin: 0;
+  padding: 9px 14px;
+  border-top: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  font-size: var(--text-2xs);
+  line-height: 1.55;
 }

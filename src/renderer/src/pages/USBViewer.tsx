@@ -1,5 +1,7 @@
 import { useState, useCallback } from 'react'
 import { Usb, Copy, Check, Download, X, Cpu, Monitor } from 'lucide-react'
+import CopyToast from '@renderer/components/CopyToast'
+import { copyText as writeClipboard } from '@renderer/lib/clipboard'
 import '../styles/usb-viewer.css'
 
 // ── VID Manufacturer database ──────────────────────────────────
@@ -127,6 +129,7 @@ export default function USBViewer(): React.JSX.Element {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [copied, setCopied] = useState<string | null>(null)
+  const [copyError, setCopyError] = useState(false)
   const [descriptorHex, setDescriptorHex] = useState<string | null>(null)
   const [inputReports, setInputReports] = useState<Array<{ reportId: number; data: number[]; time: number }>>([])
   const [monitoring, setMonitoring] = useState(false)
@@ -261,13 +264,13 @@ export default function USBViewer(): React.JSX.Element {
   }, [])
 
   const copyText = useCallback(async (key: string, text: string) => {
-    try {
-      await navigator.clipboard.writeText(text)
-      setCopied(key)
-      setTimeout(() => setCopied(null), 1500)
-    } catch {
-      // ignore
+    if (!(await writeClipboard(text))) {
+      setCopyError(true)
+      setTimeout(() => setCopyError(false), 1800)
+      return
     }
+    setCopied(key)
+    setTimeout(() => setCopied(null), 1500)
   }, [])
 
   const exportJSON = useCallback(() => {
@@ -419,6 +422,7 @@ export default function USBViewer(): React.JSX.Element {
           </>
         )}
       </div>
+      <CopyToast message={copyError ? '复制失败，请手动选择' : null} />
     </div>
   )
 }

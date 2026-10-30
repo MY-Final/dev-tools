@@ -1,5 +1,7 @@
 import { useState, useMemo, useCallback } from 'react'
 import { Copy, Check, Search } from 'lucide-react'
+import CopyToast from '@renderer/components/CopyToast'
+import { copyText } from '@renderer/lib/clipboard'
 
 interface AsciiEntry {
   dec: number
@@ -72,6 +74,7 @@ export default function AsciiTable(): React.JSX.Element {
   const [search, setSearch] = useState('')
   const [format, setFormat] = useState<DisplayFormat>('dec')
   const [copiedKey, setCopiedKey] = useState<string | null>(null)
+  const [copyError, setCopyError] = useState(false)
 
   const filtered = useMemo(() => {
     if (!search.trim()) return ASCII_TABLE
@@ -88,13 +91,13 @@ export default function AsciiTable(): React.JSX.Element {
   }, [search])
 
   const copyToClipboard = useCallback(async (text: string, key: string) => {
-    try {
-      await navigator.clipboard.writeText(text)
-      setCopiedKey(key)
-      setTimeout(() => setCopiedKey(null), 1200)
-    } catch {
-      // ignore
+    if (!(await copyText(text))) {
+      setCopyError(true)
+      setTimeout(() => setCopyError(false), 1800)
+      return
     }
+    setCopiedKey(key)
+    setTimeout(() => setCopiedKey(null), 1200)
   }, [])
 
   const getDisplayValue = useCallback(
@@ -213,6 +216,7 @@ export default function AsciiTable(): React.JSX.Element {
           </div>
         )}
       </section>
+      <CopyToast message={copyError ? '复制失败，请手动选择' : null} />
     </div>
   )
 }

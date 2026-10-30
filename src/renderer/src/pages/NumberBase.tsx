@@ -1,5 +1,7 @@
 import { useState, useMemo, useCallback } from 'react'
 import { Copy, Check, RotateCcw } from 'lucide-react'
+import CopyToast from '@renderer/components/CopyToast'
+import { copyText } from '@renderer/lib/clipboard'
 import '../styles/number-base.css'
 
 type BitWidth = 8 | 16 | 32
@@ -45,8 +47,10 @@ function formatBinary(n: bigint, width: BitWidth): string {
     // Group by 4
     return bits.replace(/(.{4})/g, '$1 ').trim()
   }
-  const bits = n.toString(2).padStart(width, '0')
-  return bits.replace(/(.{4})/g, '$1 ').trim()
+  const raw = n.toString(2)
+  // 超出位宽的正数保留完整值，但补零到 4 位整数倍，避免最后一组只剩 1~3 位。
+  const padded = raw.padStart(Math.max(width, Math.ceil(raw.length / 4) * 4), '0')
+  return padded.replace(/(.{4})/g, '$1 ').trim()
 }
 
 function onesComplement(n: bigint, width: BitWidth): bigint {
@@ -60,12 +64,8 @@ function onesComplement(n: bigint, width: BitWidth): bigint {
 }
 
 function twosComplement(n: bigint, width: BitWidth): bigint {
-  if (n < 0n) {
-    // The two's complement of a negative is its positive counterpart
-    const mask = (1n << BigInt(width)) - 1n
-    return n & mask
-  }
-  // Positive number → its two's complement (negation)
+  // 与页面说明保持一致：对当前位宽的模式取反加一，等价于按位宽取负。
+  // 负数此前直接返回原模式，导致 -1 显示 1111 1111，与「反码 + 1」不符。
   const mask = (1n << BigInt(width)) - 1n
   return -n & mask
 }
@@ -97,7 +97,7 @@ function parseInput(input: string): { value: bigint; error: string | null } {
     if (/^[0-9a-fA-F]+$/.test(trimmed) && /[a-fA-F]/.test(trimmed)) {
       return { value: BigInt('0x' + trimmed), error: null }
     }
-    return { value: 0n, error: '无法识别格式' }
+    return { value: 0n, error: '无法识别格式，支持十进制、0x 十六进制、0b 二进制、0o 八进制' }
   } catch {
     return { value: 0n, error: '无效数字' }
   }
@@ -113,8 +113,17 @@ export default function NumberBase(): React.JSX.Element {
   const [input, setInput] = useState('')
   const [bitWidth, setBitWidth] = useState<BitWidth>(16)
   const [copiedKey, setCopiedKey] = useState<string | null>(null)
+  const [copyError, setCopyError] = useState(false)
 
   const { value, error } = useMemo(() => parseInput(input), [input])
+
+  const range = useMemo(() => {
+    const bits = BigInt(bitWidth)
+    const half = 1n << (bits - 1n)
+    return { min: -half, max: half - 1n }
+  }, [bitWidth])
+
+  const outOfRange = !!input.trim() && !error && (value < range.min || value > range.max)
 
   const results: ConversionResult[] = useMemo(() => {
     if (!input.trim() || error) return []
@@ -150,13 +159,13 @@ export default function NumberBase(): React.JSX.Element {
   const loadSample = useCallback((s: string) => setInput(s), [])
 
   const copyToClipboard = useCallback(async (key: string, text: string) => {
-    try {
-      await navigator.clipboard.writeText(text.replace(/\s/g, ''))
-      setCopiedKey(key)
-      setTimeout(() => setCopiedKey(null), 1500)
-    } catch {
-      // ignore
+    if (!(await copyText(text.replace(/\s/g, '')))) {
+      setCopyError(true)
+      setTimeout(() => setCopyError(false), 1800)
+      return
     }
+    setCopiedKey(key)
+    setTimeout(() => setCopiedKey(null), 1500)
   }, [])
 
   return (
@@ -185,7 +194,11 @@ export default function NumberBase(): React.JSX.Element {
               autoFocus
               spellCheck={false}
             />
-            {error && <div className="nb-error">{error}</div>}
+            {error && (
+              <div className="nb-error" role="status">
+                {error}
+              </div>
+            )}
 
             <div className="nb-samples">
               <span className="nb-samples-label">示例</span>
@@ -249,11 +262,20 @@ export default function NumberBase(): React.JSX.Element {
             {!results.length && <div className="nb-empty">输入数字后显示各进制结果</div>}
           </div>
 
+          {outOfRange && (
+            <p className="nb-warning" role="status">
+              {value.toString()} 超出 {bitWidth}-bit 有符号范围（{range.min.toString()} ~{' '}
+              {range.max.toString()}），反码/补码按低 {bitWidth} 位截断显示。
+            </p>
+          )}
+
           {onesComp && twosComp && (
             <>
               <div className="nb-section-head">
                 <span>反码与补码</span>
-                <span className="nb-section-hint">{bitWidth}-bit</span>
+                <span className="nb-section-hint">
+                  {bitWidth}-bit · {range.min.toString()} ~ {range.max.toString()}
+                </span>
               </div>
               <div className="nb-comp-list">
                 <div className="nb-comp">
@@ -310,6 +332,7 @@ export default function NumberBase(): React.JSX.Element {
           )}
         </section>
       </div>
+      <CopyToast message={copyError ? '复制失败，请手动选择' : null} />
     </div>
   )
 }

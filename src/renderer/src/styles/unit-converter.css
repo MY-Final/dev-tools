@@ -66,12 +66,9 @@
   min-width: 0;
 }
 
-.uc-input-unit {
-  flex-shrink: 0;
-  min-width: 34px;
-  color: var(--color-text-secondary);
-  font-family: 'JetBrains Mono', monospace;
-  font-size: var(--text-sm);
+.uc-unit-select {
+  flex: 0 0 auto;
+  max-width: 180px;
 }
 
 /* ── 结果网格：1px 间隙形成发丝线，不再一张结果一张卡片 ── */
@@ -106,6 +103,20 @@
 
 .uc-result-item:hover {
   background: var(--color-surface-hover);
+}
+
+.uc-result-item--source {
+  background: color-mix(in srgb, var(--color-accent) 6%, var(--color-surface));
+}
+
+.uc-result-tag {
+  flex-shrink: 0;
+  padding: 0 5px;
+  border: 1px solid color-mix(in srgb, var(--color-accent) 40%, transparent);
+  border-radius: var(--radius-xs);
+  color: var(--color-accent);
+  font-size: var(--text-2xs);
+  line-height: 1.5;
 }
 
 .uc-result-info {

@@ -37,7 +37,7 @@
 /* 日期切换 */
 .tn-datebar {
   display: grid;
-  grid-template-columns: 32px 1fr 32px auto auto;
+  grid-template-columns: auto 1fr auto auto auto;
   align-items: center;
   gap: 8px;
   margin-bottom: 12px;
@@ -369,7 +369,8 @@
 
 .tn-item {
   display: grid;
-  grid-template-columns: 28px 1fr auto;
+  /* 勾选按钮在粗指针设备被撑到 44px，固定列宽会压到标题文字上。 */
+  grid-template-columns: auto 1fr auto;
   gap: 12px;
   align-items: flex-start;
   padding: 12px 14px;
@@ -499,7 +500,7 @@
 
 @media (max-width: 640px) {
   .tn-datebar {
-    grid-template-columns: 32px 1fr 32px;
+    grid-template-columns: auto 1fr auto;
   }
 
   .tn-calendar-trigger {
@@ -533,7 +534,7 @@
   }
 
   .tn-item {
-    grid-template-columns: 26px 1fr;
+    grid-template-columns: auto 1fr;
   }
 
   .tn-item-actions {

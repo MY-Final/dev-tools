@@ -256,6 +256,17 @@
   font-size: var(--text-2xs);
 }
 
+.cron-config-error {
+  margin: 0 14px 14px;
+  padding: 8px 10px;
+  border: 1px solid color-mix(in srgb, var(--color-danger) 32%, var(--color-border));
+  border-radius: var(--radius-xs);
+  background: var(--color-danger-subtle);
+  color: var(--color-danger);
+  font-size: var(--text-xs);
+  line-height: 1.5;
+}
+
 .cron-error {
   margin: 0;
   padding: 9px 14px;

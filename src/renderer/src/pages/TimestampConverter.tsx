@@ -1,5 +1,7 @@
 import { useState, useCallback, useEffect, useMemo } from 'react'
 import { Copy, Check, RotateCcw, Clock, Globe, Zap } from 'lucide-react'
+import CopyToast from '@renderer/components/CopyToast'
+import { copyText as writeClipboard } from '@renderer/lib/clipboard'
 import '../styles/timestamp-converter.css'
 
 const TIMEZONES = [
@@ -40,6 +42,12 @@ function parseDateInput(input: string): Date | null {
   return isNaN(date.getTime()) ? null : date
 }
 
+/** 日期输入框标注为“本地时间”，因此必须按系统本地时区回填，而不是 UTC。 */
+function formatLocalInput(date: Date): string {
+  const pad = (value: number): string => String(value).padStart(2, '0')
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`
+}
+
 export default function TimestampConverter(): React.JSX.Element {
   const [now, setNow] = useState(new Date())
   const [timestampInput, setTimestampInput] = useState('')
@@ -52,6 +60,7 @@ export default function TimestampConverter(): React.JSX.Element {
     }
   })
   const [copied, setCopied] = useState<string | null>(null)
+  const [copyError, setCopyError] = useState(false)
   const [activeInput, setActiveInput] = useState<'timestamp' | 'date'>('timestamp')
 
   useEffect(() => {
@@ -68,14 +77,31 @@ export default function TimestampConverter(): React.JSX.Element {
     return parseDateInput(dateInput)
   }, [timestampInput, dateInput, activeInput])
 
+  const timestampInvalid =
+    activeInput === 'timestamp' && timestampInput.trim() !== '' && !parseTimestamp(timestampInput)
+  const dateInvalid =
+    activeInput === 'date' && dateInput.trim() !== '' && !parseDateInput(dateInput)
+  const inputError = timestampInvalid
+    ? '时间戳需为 10 位秒级或 13 位毫秒级数字'
+    : dateInvalid
+      ? '无法识别该日期，试试 2025-06-19 10:00:00'
+      : ''
+
+  const timezoneOptions = useMemo(() => {
+    if (TIMEZONES.some((tz) => tz.id === timezone)) return TIMEZONES
+    const city = timezone.split('/').pop()?.replace(/_/g, ' ') ?? timezone
+    return [{ id: timezone, label: `${city}（本地）` }, ...TIMEZONES]
+  }, [timezone])
+
   const handleTimestampChange = useCallback((value: string) => {
     setTimestampInput(value)
     setActiveInput('timestamp')
     const parsed = parseTimestamp(value)
     if (parsed) {
       const date = new Date(parsed.isMs ? parsed.value : parsed.value * 1000)
-      const iso = date.toISOString().slice(0, 19)
-      setDateInput(iso)
+      setDateInput(formatLocalInput(date))
+    } else {
+      setDateInput('')
     }
   }, [])
 
@@ -85,13 +111,15 @@ export default function TimestampConverter(): React.JSX.Element {
     const date = parseDateInput(value)
     if (date) {
       setTimestampInput(Math.floor(date.getTime() / 1000).toString())
+    } else {
+      setTimestampInput('')
     }
   }, [])
 
   const useCurrentTime = useCallback(() => {
     const date = new Date()
     setTimestampInput(Math.floor(date.getTime() / 1000).toString())
-    setDateInput(date.toISOString().slice(0, 19))
+    setDateInput(formatLocalInput(date))
     setActiveInput('timestamp')
   }, [])
 
@@ -105,20 +133,21 @@ export default function TimestampConverter(): React.JSX.Element {
       const base = currentDate || new Date()
       const future = new Date(base.getTime() + minutes * 60 * 1000)
       setTimestampInput(Math.floor(future.getTime() / 1000).toString())
-      setDateInput(future.toISOString().slice(0, 19))
+      setDateInput(formatLocalInput(future))
       setActiveInput('timestamp')
     },
     [currentDate]
   )
 
   const copyText = useCallback(async (text: string, key: string) => {
-    try {
-      await navigator.clipboard.writeText(text)
-      setCopied(key)
-      setTimeout(() => setCopied(null), 1500)
-    } catch {
-      // fallback
+    const ok = await writeClipboard(text)
+    if (!ok) {
+      setCopyError(true)
+      setTimeout(() => setCopyError(false), 1800)
+      return
     }
+    setCopied(key)
+    setTimeout(() => setCopied(null), 1500)
   }, [])
 
   const dateOpts: Intl.DateTimeFormatOptions = {
@@ -147,7 +176,7 @@ export default function TimestampConverter(): React.JSX.Element {
     },
     {
       key: 'local',
-      label: '本地时间',
+      label: '所选时区',
       hint: timezone,
       value: formatInTimezone(displayDate, timezone, dateOpts)
     },
@@ -178,7 +207,7 @@ export default function TimestampConverter(): React.JSX.Element {
               onChange={(e) => setTimezone(e.target.value)}
               aria-label="显示时区"
             >
-              {TIMEZONES.map((tz) => (
+              {timezoneOptions.map((tz) => (
                 <option key={tz.id} value={tz.id}>
                   {tz.label}
                 </option>
@@ -248,7 +277,7 @@ export default function TimestampConverter(): React.JSX.Element {
             <div className="tc-field">
               <div className="tc-field-head">
                 <label htmlFor="tc-date">日期时间</label>
-                <span>本地时间</span>
+                <span>系统本地时间</span>
               </div>
               <input
                 id="tc-date"
@@ -261,6 +290,12 @@ export default function TimestampConverter(): React.JSX.Element {
               />
             </div>
           </div>
+
+          {inputError && (
+            <p className="tc-input-error" role="status">
+              {inputError}
+            </p>
+          )}
 
           <div className="tc-quick">
             <span className="tc-quick-label">
@@ -286,7 +321,11 @@ export default function TimestampConverter(): React.JSX.Element {
           <section className="tool-panel">
             <div className="tool-panel-head">
               <h3 className="tool-panel-title">转换结果</h3>
-              {!currentDate && <span className="tc-preview-note">当前时间预览</span>}
+              {!currentDate && (
+                <span className="tc-preview-note">
+                  {inputError ? '输入无效，显示当前时间' : '当前时间预览'}
+                </span>
+              )}
             </div>
             <div className="tool-rows">
               {resultRows.map((row) => (
@@ -335,6 +374,7 @@ export default function TimestampConverter(): React.JSX.Element {
           </section>
         </aside>
       </div>
+      <CopyToast message={copyError ? '复制失败，请手动选择' : null} />
     </div>
   )
 }

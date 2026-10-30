@@ -1,4 +1,9 @@
-# 项目状态 v1.0.12
+# 项目状态 v1.0.12（历史快照）
+
+> 本文是 v1.0.12 的存档，工具数量与分类已过时。
+> 最新清单以 `src/renderer/src/tools/tools.json`、README 与 [product-loop.md](./product-loop.md) 为准。
+
+
 
 | 指标 | 值 |
 |------|-----|

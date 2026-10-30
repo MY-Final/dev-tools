@@ -1,12 +1,18 @@
 import { app } from 'electron'
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs'
 import { join } from 'path'
+import {
+  incrementToolUsage,
+  normalizeSettings,
+  normalizeToolUsage
+} from '../shared/contracts'
 
 // ────────────────────────────────────────────────────────────────
 // Settings Version & Migration Strategy
 // ────────────────────────────────────────────────────────────────
 
-export const SETTINGS_VERSION = 3 // 当前配置版本
+export const SETTINGS_VERSION = 4 // 当前配置版本
+const RECENT_TOOLS_LIMIT = 8
 
 export interface AppSettings {
   version?: number // 配置文件版本号
@@ -47,6 +53,8 @@ export interface AppSettings {
     goHome: string
   }
   favorites: string[]
+  recentTools: string[]
+  toolUsage: Record<string, number>
 }
 
 const DEFAULT_SHORTCUTS = {
@@ -90,7 +98,9 @@ const DEFAULT_SETTINGS: AppSettings = {
     url: ''
   },
   shortcuts: { ...DEFAULT_SHORTCUTS },
-  favorites: []
+  favorites: [],
+  recentTools: [],
+  toolUsage: {}
 }
 
 interface SettingsData {
@@ -105,6 +115,8 @@ interface SettingsData {
   proxy?: Partial<AppSettings['proxy']>
   shortcuts?: Partial<AppSettings['shortcuts']>
   favorites?: string[]
+  recentTools?: string[]
+  toolUsage?: Record<string, number>
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -210,7 +222,11 @@ export interface ISettingsStore {
   updateProxy(updates: Partial<AppSettings['proxy']>): AppSettings
   updateShortcuts(updates: Partial<AppSettings['shortcuts']>): AppSettings
   updateFavorites(toolId: string): AppSettings
+  recordRecentTool(toolId: string): AppSettings
+  clearRecentTools(): AppSettings
+  clearToolUsage(): AppSettings
   resetToDefaults(): AppSettings
+  importSettings(input: unknown): AppSettings
 }
 
 export class SettingsStore implements ISettingsStore {
@@ -278,7 +294,11 @@ export class SettingsStore implements ISettingsStore {
       mavenSearchUrl: data.mavenSearchUrl ?? '',
       proxy: { ...DEFAULT_SETTINGS.proxy, ...data.proxy },
       shortcuts: { ...DEFAULT_SETTINGS.shortcuts, ...data.shortcuts },
-      favorites: data.favorites ?? []
+      favorites: data.favorites ?? [],
+      recentTools: (data.recentTools ?? []).filter(
+        (id, index, list): id is string => typeof id === 'string' && list.indexOf(id) === index
+      ).slice(0, RECENT_TOOLS_LIMIT),
+      toolUsage: normalizeToolUsage(data.toolUsage)
     }
   }
 
@@ -397,8 +417,33 @@ export class SettingsStore implements ISettingsStore {
     return this.commit({ ...this.settings, favorites })
   }
 
+  recordRecentTool(toolId: string): AppSettings {
+    const recentTools = [toolId, ...this.settings.recentTools.filter((id) => id !== toolId)].slice(
+      0,
+      RECENT_TOOLS_LIMIT
+    )
+    // 打开工具时同时累计本地使用次数，用于常用工具排序。
+    const toolUsage = incrementToolUsage(this.settings.toolUsage, toolId)
+    return this.commit({ ...this.settings, recentTools, toolUsage })
+  }
+
+  clearRecentTools(): AppSettings {
+    return this.commit({ ...this.settings, recentTools: [] })
+  }
+
+  clearToolUsage(): AppSettings {
+    return this.commit({ ...this.settings, toolUsage: {} })
+  }
+
   resetToDefaults(): AppSettings {
     return this.commit({ ...DEFAULT_SETTINGS })
+  }
+
+  importSettings(input: unknown): AppSettings {
+    if (!input || typeof input !== 'object' || Array.isArray(input)) {
+      throw new Error('配置文件格式不正确')
+    }
+    return this.commit(normalizeSettings(input as AppSettings))
   }
 }
 

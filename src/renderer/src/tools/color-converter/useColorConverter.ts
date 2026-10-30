@@ -21,6 +21,15 @@ export interface ParsedColor {
   hex: string
   rgb: RGB
   hsl: HSL
+  /** 0–1；小于 1 时界面提示透明度被忽略。 */
+  alpha: number
+}
+
+function parseAlpha(raw: string | undefined): number {
+  if (raw === undefined) return 1
+  const value = raw.endsWith('%') ? Number.parseFloat(raw) / 100 : Number.parseFloat(raw)
+  if (!Number.isFinite(value)) return 1
+  return Math.min(1, Math.max(0, value))
 }
 
 // ── Parsers ────────────────────────────────────────────────────
@@ -45,13 +54,14 @@ function parseHex(input: string): ParsedColor | null {
     format: 'hex',
     hex: `#${full.toUpperCase()}`,
     rgb: { r, g, b },
-    hsl
+    hsl,
+    alpha: 1
   }
 }
 
 function parseRgb(input: string): ParsedColor | null {
   const match = input.match(
-    /rgba?\s*\(\s*(\d{1,3})\s*[,/\s]\s*(\d{1,3})\s*[,/\s]\s*(\d{1,3})\s*(?:[,/\s]\s*[\d.]+)?\s*\)/i
+    /rgba?\s*\(\s*(\d{1,3})\s*[,/\s]\s*(\d{1,3})\s*[,/\s]\s*(\d{1,3})\s*(?:[,/\s]\s*([\d.]+%?))?\s*\)/i
   )
   if (!match) return null
   const r = parseInt(match[1], 10)
@@ -61,22 +71,30 @@ function parseRgb(input: string): ParsedColor | null {
 
   const hex = rgbToHex({ r, g, b })
   const hsl = rgbToHsl({ r, g, b })
-  return { format: 'rgb', hex, rgb: { r, g, b }, hsl }
+  return { format: 'rgb', hex, rgb: { r, g, b }, hsl, alpha: parseAlpha(match[4]) }
 }
 
 function parseHsl(input: string): ParsedColor | null {
+  // 同时接受传统逗号与 CSS Color 4 的空格语法：hsl(239, 84%, 67%) / hsl(239 84% 67% / .5)
   const match = input.match(
-    /hsla?\s*\(\s*(\d{1,3})\s*,\s*(\d{1,3})%\s*,\s*(\d{1,3})%\s*(?:,\s*[\d.]+)?\s*\)/i
+    /hsla?\s*\(\s*(-?(?:\d+(?:\.\d+)?|\.\d+))(?:deg)?\s*[,/\s]\s*(\d+(?:\.\d+)?)%\s*[,/\s]\s*(\d+(?:\.\d+)?)%\s*(?:[,/\s]\s*([\d.]+%?))?\s*\)/i
   )
   if (!match) return null
-  const h = parseInt(match[1], 10) % 360
-  const s = parseInt(match[2], 10)
-  const l = parseInt(match[3], 10)
-  if (s > 100 || l > 100) return null
+  const rawHue = Number.parseFloat(match[1])
+  const s = Number.parseFloat(match[2])
+  const l = Number.parseFloat(match[3])
+  if (!Number.isFinite(rawHue) || s > 100 || l > 100) return null
+  const h = ((rawHue % 360) + 360) % 360
 
   const rgb = hslToRgb({ h, s, l })
   const hex = rgbToHex(rgb)
-  return { format: 'hsl', hex, rgb, hsl: { h, s, l } }
+  return {
+    format: 'hsl',
+    hex,
+    rgb,
+    hsl: { h: Math.round(h), s: Math.round(s), l: Math.round(l) },
+    alpha: parseAlpha(match[4])
+  }
 }
 
 // ── Converters ─────────────────────────────────────────────────
@@ -150,7 +168,7 @@ function hslToRgb({ h, s, l }: HSL): RGB {
 
 // ── Auto-detect ────────────────────────────────────────────────
 
-function parseColor(input: string): ParsedColor | null {
+export function parseColor(input: string): ParsedColor | null {
   const trimmed = input.trim()
   if (!trimmed) return null
 

@@ -1,9 +1,10 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import {
   base64UrlEncodeText,
   randomString,
   signJwtHmac
 } from '@renderer/lib/crypto-utils'
+import { copyText } from '@renderer/lib/clipboard'
 
 export type TokenType = 'uuid' | 'jwt' | 'api-key' | 'random-string' | 'secret-key'
 
@@ -89,11 +90,17 @@ function generateRandomString(length: number, charsets: RandomStringCharset[]): 
 
 function generateApiKey(prefix: string, length: number): string {
   const randomPart = generateRandomString(length, ['lowercase', 'digits', 'uppercase'])
-  return `${prefix}_${randomPart}`
+  const cleanPrefix = prefix.trim()
+  return cleanPrefix ? `${cleanPrefix}_${randomPart}` : randomPart
 }
 
 function generateSecretKey(length: number): string {
   return generateRandomString(length, ['uppercase', 'lowercase', 'digits'])
+}
+
+interface JwtResult {
+  token: string
+  error: string
 }
 
 async function generateJWT(
@@ -101,14 +108,24 @@ async function generateJWT(
   payload: string,
   secret: string,
   expiration: string
-): Promise<string> {
+): Promise<JwtResult> {
+  let parsedHeader: unknown
   try {
-    const parsedHeader: unknown = JSON.parse(header)
-    const parsedPayload: unknown = JSON.parse(payload)
-    if (!isRecord(parsedHeader) || !isRecord(parsedPayload)) {
-      return 'Invalid JSON in header or payload'
-    }
+    parsedHeader = JSON.parse(header)
+  } catch {
+    return { token: '', error: 'Header 不是有效的 JSON，请检查括号与引号。' }
+  }
+  let parsedPayload: unknown
+  try {
+    parsedPayload = JSON.parse(payload)
+  } catch {
+    return { token: '', error: 'Payload 不是有效的 JSON，请检查括号与引号。' }
+  }
+  if (!isRecord(parsedHeader) || !isRecord(parsedPayload)) {
+    return { token: '', error: 'Header 与 Payload 必须是 JSON 对象。' }
+  }
 
+  try {
     const algorithm = getJwtAlgorithm(parsedHeader.alg) ?? 'HS256'
     parsedHeader.alg = algorithm
 
@@ -131,19 +148,37 @@ async function generateJWT(
       algorithm
     )
 
-    return `${encodedHeader}.${encodedPayload}.${encodedSignature}`
+    return { token: `${encodedHeader}.${encodedPayload}.${encodedSignature}`, error: '' }
   } catch {
-    return 'Invalid JSON in header or payload'
+    return { token: '', error: 'JWT 签名失败，请稍后重试。' }
   }
 }
 
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 export function useTokenGenerator() {
-  const [tokenType, setTokenType] = useState<TokenType>('uuid')
+  const [tokenType, setTokenTypeState] = useState<TokenType>('uuid')
   const [config, setConfig] = useState<TokenConfig>(DEFAULT_CONFIG)
   const [results, setResults] = useState<string[]>([])
+  const [error, setError] = useState('')
   const [toast, setToast] = useState('')
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null)
+  // 切换类型 / 改配置后，之前异步生成的 JWT 不能再写回结果区。
+  const jobRef = useRef(0)
+
+  const resetResults = useCallback(() => {
+    jobRef.current++
+    setResults([])
+    setError('')
+    setCopiedIndex(null)
+  }, [])
+
+  const setTokenType = useCallback(
+    (type: TokenType) => {
+      setTokenTypeState(type)
+      resetResults()
+    },
+    [resetResults]
+  )
 
   const showToast = useCallback((message: string) => {
     setToast(message)
@@ -156,6 +191,7 @@ export function useTokenGenerator() {
       key: keyof TokenConfig[T],
       value: TokenConfig[T][keyof TokenConfig[T]]
     ) => {
+      resetResults()
       setConfig((prev) => ({
         ...prev,
         [type]: {
@@ -164,10 +200,12 @@ export function useTokenGenerator() {
         }
       }))
     },
-    []
+    [resetResults]
   )
 
   const generate = useCallback(async () => {
+    const job = ++jobRef.current
+    setError('')
     let generated: string[] = []
 
     switch (tokenType) {
@@ -175,16 +213,22 @@ export function useTokenGenerator() {
         generated = Array.from({ length: config.uuid.count }, () => generateUUID())
         break
 
-      case 'jwt':
-        generated = [
-          await generateJWT(
-            config.jwt.header,
-            config.jwt.payload,
-            config.jwt.secret,
-            config.jwt.expiration
-          )
-        ]
+      case 'jwt': {
+        const jwt = await generateJWT(
+          config.jwt.header,
+          config.jwt.payload,
+          config.jwt.secret,
+          config.jwt.expiration
+        )
+        if (job !== jobRef.current) return
+        if (jwt.error) {
+          setResults([])
+          setError(jwt.error)
+          return
+        }
+        generated = [jwt.token]
         break
+      }
 
       case 'api-key':
         generated = [generateApiKey(config['api-key'].prefix, config['api-key'].length)]
@@ -201,12 +245,17 @@ export function useTokenGenerator() {
         break
     }
 
+    if (job !== jobRef.current) return
     setResults(generated)
   }, [tokenType, config])
 
   const handleCopy = useCallback(
-    (text: string, index: number) => {
-      navigator.clipboard.writeText(text)
+    async (text: string, index: number) => {
+      const ok = await copyText(text)
+      if (!ok) {
+        showToast('复制失败，请手动选择')
+        return
+      }
       setCopiedIndex(index)
       showToast('已复制到剪贴板')
       setTimeout(() => setCopiedIndex(null), 1500)
@@ -214,9 +263,9 @@ export function useTokenGenerator() {
     [showToast]
   )
 
-  const handleCopyAll = useCallback(() => {
-    navigator.clipboard.writeText(results.join('\n'))
-    showToast('已复制全部结果')
+  const handleCopyAll = useCallback(async () => {
+    const ok = await copyText(results.join('\n'))
+    showToast(ok ? '已复制全部结果' : '复制失败，请手动选择')
   }, [results, showToast])
 
   const handleExport = useCallback(
@@ -246,6 +295,7 @@ export function useTokenGenerator() {
     config,
     updateConfig,
     results,
+    error,
     toast,
     copiedIndex,
     generate,

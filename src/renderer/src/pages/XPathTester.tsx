@@ -1,5 +1,7 @@
 import { useState, useMemo, useCallback } from 'react'
 import { Copy, Check, RotateCcw, Search } from 'lucide-react'
+import CopyToast from '@renderer/components/CopyToast'
+import { copyText } from '@renderer/lib/clipboard'
 import '../styles/xpath-tester.css'
 
 interface MatchResult {
@@ -79,6 +81,7 @@ export default function XPathTester(): React.JSX.Element {
   const [xpath, setXpath] = useState('')
   const [source, setSource] = useState('')
   const [copied, setCopied] = useState<string | null>(null)
+  const [copyError, setCopyError] = useState(false)
   const [mode, setMode] = useState<'xml' | 'html'>('xml')
 
   const { matches, error, matchCount } = useMemo(() => {
@@ -226,25 +229,25 @@ export default function XPathTester(): React.JSX.Element {
   }, [])
 
   const copyToClipboard = useCallback(async (text: string) => {
-    try {
-      await navigator.clipboard.writeText(text)
-      setCopied(text)
-      setTimeout(() => setCopied(null), 1500)
-    } catch {
-      // ignore
+    if (!(await copyText(text))) {
+      setCopyError(true)
+      setTimeout(() => setCopyError(false), 1800)
+      return
     }
+    setCopied(text)
+    setTimeout(() => setCopied(null), 1500)
   }, [])
 
   const copyAllMatches = useCallback(async () => {
     if (!matches) return
     const all = matches.map((m) => m.xml).join('\n---\n')
-    try {
-      await navigator.clipboard.writeText(all)
-      setCopied('all')
-      setTimeout(() => setCopied(null), 1500)
-    } catch {
-      // ignore
+    if (!(await copyText(all))) {
+      setCopyError(true)
+      setTimeout(() => setCopyError(false), 1800)
+      return
     }
+    setCopied('all')
+    setTimeout(() => setCopied(null), 1500)
   }, [matches])
 
   return (
@@ -377,6 +380,7 @@ export default function XPathTester(): React.JSX.Element {
           </div>
         )}
       </div>
+      <CopyToast message={copyError ? '复制失败，请手动选择' : null} />
     </div>
   )
 }

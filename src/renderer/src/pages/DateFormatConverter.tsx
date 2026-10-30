@@ -1,5 +1,7 @@
 import { useState, useCallback, useEffect } from 'react'
 import { Copy, Check, Clock } from 'lucide-react'
+import CopyToast from '@renderer/components/CopyToast'
+import { copyText } from '@renderer/lib/clipboard'
 import '../styles/date-format-converter.css'
 
 type Format =
@@ -21,6 +23,24 @@ interface FormatDef {
   format: (d: Date) => string
 }
 
+const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+/** RFC 2822 使用本地时间 + 本地时区偏移，而不是 toUTCString() 的 GMT 形式。 */
+function toRfc2822(d: Date): string {
+  const pad = (value: number): string => String(value).padStart(2, '0')
+  const offsetMinutes = -d.getTimezoneOffset()
+  const sign = offsetMinutes >= 0 ? '+' : '-'
+  const absolute = Math.abs(offsetMinutes)
+  const offset = `${sign}${pad(Math.floor(absolute / 60))}${pad(absolute % 60)}`
+  return `${WEEKDAYS[d.getDay()]}, ${pad(d.getDate())} ${MONTHS[d.getMonth()]} ${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())} ${offset}`
+}
+
+function formatLocalDateTime(d: Date): string {
+  const pad = (value: number): string => String(value).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
+}
+
 const FORMATS: FormatDef[] = [
   { id: 'ISO 8601', label: 'ISO 8601', format: (d) => d.toISOString() },
   {
@@ -29,7 +49,7 @@ const FORMATS: FormatDef[] = [
     format: (d) => Math.floor(d.getTime() / 1000).toString()
   },
   { id: 'Unix (毫秒)', label: 'Unix 时间戳 (毫秒)', format: (d) => d.getTime().toString() },
-  { id: 'RFC 2822', label: 'RFC 2822', format: (d) => d.toUTCString() },
+  { id: 'RFC 2822', label: 'RFC 2822', format: toRfc2822 },
   { id: 'UTC String', label: 'UTC String', format: (d) => d.toUTCString() },
   { id: 'Locale (zh-CN)', label: 'Locale (zh-CN)', format: (d) => d.toLocaleString('zh-CN') },
   { id: 'Locale (en-US)', label: 'Locale (en-US)', format: (d) => d.toLocaleString('en-US') },
@@ -123,6 +143,7 @@ export default function DateFormatConverter(): React.JSX.Element {
   const [parsed, setParsed] = useState<Date | null>(null)
   const [now, setNow] = useState(new Date())
   const [copied, setCopied] = useState<string | null>(null)
+  const [copyError, setCopyError] = useState(false)
   const [customFmt, setCustomFmt] = useState('yyyy-MM-dd HH:mm:ss')
 
   useEffect(() => {
@@ -141,9 +162,10 @@ export default function DateFormatConverter(): React.JSX.Element {
   }, [])
 
   const useNow = useCallback(() => {
-    setInput('')
-    setParsed(now)
-  }, [now])
+    const current = new Date()
+    setInput(formatLocalDateTime(current))
+    setParsed(current)
+  }, [])
 
   const customFormat = useCallback(
     (d: Date): string => {
@@ -166,13 +188,13 @@ export default function DateFormatConverter(): React.JSX.Element {
   )
 
   const copy = useCallback(async (text: string, key: string) => {
-    try {
-      await navigator.clipboard.writeText(text)
-      setCopied(key)
-      setTimeout(() => setCopied(null), 1500)
-    } catch {
-      /* ignore */
+    if (!(await copyText(text))) {
+      setCopyError(true)
+      setTimeout(() => setCopyError(false), 1800)
+      return
     }
+    setCopied(key)
+    setTimeout(() => setCopied(null), 1500)
   }, [])
 
   const displayDate = parsed || now
@@ -198,7 +220,7 @@ export default function DateFormatConverter(): React.JSX.Element {
             className="tool-input tool-input--lg tool-input--mono dfc-input"
             value={input}
             onChange={(e) => handleInput(e.target.value)}
-            placeholder={now.toLocaleString('zh-CN')}
+            placeholder="2026-10-30 11:00:00"
             autoComplete="off"
           />
           <button type="button" className="tool-btn tool-btn--outline" onClick={useNow}>
@@ -208,7 +230,7 @@ export default function DateFormatConverter(): React.JSX.Element {
         </div>
         {input && !parsed && (
           <div className="dfc-error" role="alert">
-            无法解析该日期格式
+            无法解析该日期，支持 ISO 8601、Unix 时间戳（秒 / 毫秒）与 YYYY-MM-DD HH:mm:ss
           </div>
         )}
       </section>
@@ -216,7 +238,9 @@ export default function DateFormatConverter(): React.JSX.Element {
       <section className="tool-panel dfc-output-panel">
         <div className="tool-panel-head">
           <h3 className="tool-panel-title">输出格式</h3>
-          <span className="dfc-output-note">{parsed ? '按输入日期转换' : '当前时间预览'}</span>
+          <span className="dfc-output-note">
+            {parsed ? '按输入日期转换' : input ? '输入无效，显示当前时间' : '当前时间预览'}
+          </span>
         </div>
 
         <div className="dfc-formats">
@@ -276,6 +300,7 @@ export default function DateFormatConverter(): React.JSX.Element {
           <code>mm</code> 分 <code>ss</code> 秒 <code>SSS</code> 毫秒
         </div>
       </section>
+      <CopyToast message={copyError ? '复制失败，请手动选择' : null} />
     </div>
   )
 }

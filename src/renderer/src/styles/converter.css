@@ -40,6 +40,22 @@
   flex-direction: column;
 }
 
+.dsv-note {
+  margin: 0;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--color-border);
+  background: color-mix(in srgb, var(--color-accent) 5%, transparent);
+  color: var(--color-text-secondary);
+  font-size: var(--text-xs);
+  line-height: 1.5;
+}
+
+.dsv-note--error {
+  border-bottom-color: color-mix(in srgb, var(--color-danger) 24%, var(--color-border));
+  background: var(--color-danger-subtle);
+  color: var(--color-danger);
+}
+
 .dsv-row {
   display: flex;
   align-items: center;

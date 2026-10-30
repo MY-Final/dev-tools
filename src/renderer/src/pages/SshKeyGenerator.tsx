@@ -1,5 +1,7 @@
 import { useState, useCallback } from 'react'
 import { KeyRound, Copy, Check, Loader2 } from 'lucide-react'
+import CopyToast from '@renderer/components/CopyToast'
+import { copyText } from '@renderer/lib/clipboard'
 import '../styles/ssh-key-generator.css'
 
 type KeyType = 'RSA' | 'Ed25519'
@@ -227,6 +229,7 @@ export default function SshKeyGenerator(): React.JSX.Element {
   const [keyPair, setKeyPair] = useState<KeyPair | null>(null)
   const [error, setError] = useState('')
   const [copiedField, setCopiedField] = useState<string | null>(null)
+  const [copyError, setCopyError] = useState(false)
   const [showPrivateKey, setShowPrivateKey] = useState(false)
 
   const generate = useCallback(async () => {
@@ -235,7 +238,7 @@ export default function SshKeyGenerator(): React.JSX.Element {
     setKeyPair(null)
 
     try {
-      const userComment = comment || `${process.env.USER || 'user'}@${process.env.HOSTNAME || 'host'}`
+      const userComment = comment.trim() || 'dev-tools'
       const result =
         keyType === 'RSA'
           ? await generateRsaKeyPair(rsaBits, userComment)
@@ -250,13 +253,14 @@ export default function SshKeyGenerator(): React.JSX.Element {
   }, [keyType, rsaBits, comment])
 
   const copyField = useCallback(async (key: string, value: string) => {
-    try {
-      await navigator.clipboard.writeText(value)
-      setCopiedField(key)
-      setTimeout(() => setCopiedField(null), 1500)
-    } catch {
-      /* ignore */
+    const ok = await copyText(value)
+    if (!ok) {
+      setCopyError(true)
+      setTimeout(() => setCopyError(false), 1800)
+      return
     }
+    setCopiedField(key)
+    setTimeout(() => setCopiedField(null), 1500)
   }, [])
 
   return (
@@ -415,6 +419,7 @@ export default function SshKeyGenerator(): React.JSX.Element {
           </div>
         )}
       </div>
+      <CopyToast message={copyError ? '复制失败，请手动选择' : null} />
     </div>
   )
 }

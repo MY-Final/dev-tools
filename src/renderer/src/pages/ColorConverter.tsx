@@ -1,6 +1,8 @@
 import { useState, useCallback } from 'react'
 import { Copy, Check, Palette, RotateCcw } from 'lucide-react'
-import { useColorConverter } from '@renderer/tools/color-converter/useColorConverter'
+import CopyToast from '@renderer/components/CopyToast'
+import { copyText } from '@renderer/lib/clipboard'
+import { parseColor, useColorConverter } from '@renderer/tools/color-converter/useColorConverter'
 import '../styles/color-converter.css'
 
 // ── Component ──────────────────────────────────────────────────
@@ -13,30 +15,19 @@ const SAMPLES = [
   'rgb(245, 158, 11)'
 ]
 
-// Helper for sample preview (not in hook because it's UI-specific)
-function parseColorForPreview(input: string): string | null {
-  const trimmed = input.trim()
-  if (/^#[0-9a-fA-F]{3,6}$/.test(trimmed)) return trimmed
-  const rgbMatch = trimmed.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/)
-  if (rgbMatch) {
-    const [, r, g, b] = rgbMatch
-    return `#${parseInt(r).toString(16).padStart(2, '0')}${parseInt(g).toString(16).padStart(2, '0')}${parseInt(b).toString(16).padStart(2, '0')}`
-  }
-  return null
-}
-
 export default function ColorConverter(): React.JSX.Element {
   const { input, setInput, color, clear, loadSample, formatRgb, formatHsl } = useColorConverter()
   const [copiedKey, setCopiedKey] = useState<string | null>(null)
+  const [copyError, setCopyError] = useState(false)
 
   const copyToClipboard = useCallback(async (key: string, text: string) => {
-    try {
-      await navigator.clipboard.writeText(text)
-      setCopiedKey(key)
-      setTimeout(() => setCopiedKey(null), 1500)
-    } catch {
-      // ignore
+    if (!(await copyText(text))) {
+      setCopyError(true)
+      setTimeout(() => setCopyError(false), 1800)
+      return
     }
+    setCopiedKey(key)
+    setTimeout(() => setCopiedKey(null), 1500)
   }, [])
 
   const formatRows = color
@@ -92,7 +83,7 @@ export default function ColorConverter(): React.JSX.Element {
                 <button key={s} className="cv-sample-btn" onClick={() => loadSample(s)}>
                   <span
                     className="cv-sample-dot"
-                    style={{ background: parseColorForPreview(s) ?? 'transparent' }}
+                    style={{ background: parseColor(s)?.hex ?? 'transparent' }}
                     aria-hidden="true"
                   />
                   {s}
@@ -105,7 +96,7 @@ export default function ColorConverter(): React.JSX.Element {
                 <Palette size={15} aria-hidden="true" />
                 <span>
                   无法识别该格式，请输入 HEX (#6366F1)、RGB (rgb(99,102,241)) 或 HSL
-                  (hsl(239,84%,67%))
+                  (hsl(239,84%,67%) / hsl(239 84% 67%))
                 </span>
               </div>
             )}
@@ -116,6 +107,11 @@ export default function ColorConverter(): React.JSX.Element {
               <div className="tool-panel-head">
                 <h3 className="tool-panel-title">转换结果</h3>
               </div>
+              {color.alpha < 1 && (
+                <p className="cv-alpha-note" role="status">
+                  已忽略透明度 {Math.round(color.alpha * 100)}%，转换为不透明颜色
+                </p>
+              )}
               <div className="tool-rows">
                 {formatRows.map((row) => (
                   <div className="tool-row" key={row.key}>
@@ -166,6 +162,7 @@ export default function ColorConverter(): React.JSX.Element {
           </section>
         )}
       </div>
+      <CopyToast message={copyError ? '复制失败，请手动选择' : null} />
     </div>
   )
 }

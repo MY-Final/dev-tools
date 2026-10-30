@@ -1,16 +1,20 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import {
   Settings,
   Palette,
   RotateCcw,
   RefreshCw,
   Download,
+  Upload,
   FileText,
   ChevronRight,
   Wifi,
-  Keyboard
+  Keyboard,
+  Database,
+  Trash2
 } from 'lucide-react'
 import { useSettings } from '@renderer/lib/contexts'
+import { getTool } from '@renderer/tools/registry'
 import { useUpdater } from '@renderer/lib/updater-context'
 import { formatShortcut } from '@renderer/lib/shortcuts'
 import { isWebRuntime } from '@renderer/lib/platform'
@@ -31,7 +35,11 @@ const CURRENT_RELEASE_NOTES = `
   </ul>
 `
 
-export default function SettingsPage(): React.JSX.Element {
+export default function SettingsPage({
+  onSelectTool
+}: {
+  onSelectTool: (page: string) => void
+}): React.JSX.Element {
   const {
     settings,
     updateAppearance,
@@ -43,7 +51,9 @@ export default function SettingsPage(): React.JSX.Element {
     updateMavenSearchUrl,
     updateProxy,
     updateShortcuts,
-    resetToDefaults
+    resetToDefaults,
+    importSettings,
+    clearToolUsage
   } = useSettings()
   const {
     status,
@@ -62,10 +72,19 @@ export default function SettingsPage(): React.JSX.Element {
 
   const [showNotes, setShowNotes] = useState(false)
   const notesTriggerRef = useRef<HTMLButtonElement | null>(null)
+  const [showResetConfirm, setShowResetConfirm] = useState(false)
+  const resetTriggerRef = useRef<HTMLButtonElement | null>(null)
   const [testResult, setTestResult] = useState('未测试')
   const [testing, setTesting] = useState(false)
   const [fetchedModels, setFetchedModels] = useState<string[]>([])
   const [settingsPath, setSettingsPath] = useState('')
+  const [backupStatus, setBackupStatus] = useState<{
+    kind: 'success' | 'error'
+    message: string
+  } | null>(null)
+  const importInputRef = useRef<HTMLInputElement | null>(null)
+  const [showClearUsageConfirm, setShowClearUsageConfirm] = useState(false)
+  const clearUsageTriggerRef = useRef<HTMLButtonElement | null>(null)
   const [activeSection, setActiveSection] = useState('appearance')
   const webRuntime = isWebRuntime()
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({
@@ -76,6 +95,7 @@ export default function SettingsPage(): React.JSX.Element {
     maven: false,
     proxy: false,
     shortcuts: false,
+    data: false,
     updater: false
   })
 
@@ -93,8 +113,98 @@ export default function SettingsPage(): React.JSX.Element {
     setShowNotes(true)
   }, [])
 
+  const exportSettings = useCallback(() => {
+    try {
+      const payload = {
+        app: 'dev-tools',
+        kind: 'settings',
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        settings
+      }
+      const blob = new Blob([JSON.stringify(payload, null, 2)], {
+        type: 'application/json'
+      })
+      const url = URL.createObjectURL(blob)
+      const anchor = document.createElement('a')
+      anchor.href = url
+      anchor.download = `dev-tools-settings-${new Date().toISOString().slice(0, 10)}.json`
+      document.body.appendChild(anchor)
+      anchor.click()
+      anchor.remove()
+      URL.revokeObjectURL(url)
+      setBackupStatus({ kind: 'success', message: '设置已导出为 JSON 文件。' })
+    } catch {
+      setBackupStatus({ kind: 'error', message: '导出失败，请稍后重试。' })
+    }
+  }, [settings])
+
+  const handleImportFile = useCallback(
+    async (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0]
+      event.target.value = ''
+      if (!file) return
+
+      if (file.size > 1024 * 1024) {
+        setBackupStatus({ kind: 'error', message: '文件超过 1 MB，不像是设置文件。' })
+        return
+      }
+
+      let parsed: unknown
+      try {
+        // 有些编辑器保存的 JSON 带 BOM，JSON.parse 会直接失败。
+        const text = await file.text()
+        parsed = JSON.parse(text.charCodeAt(0) === 0xfeff ? text.slice(1) : text)
+      } catch {
+        setBackupStatus({ kind: 'error', message: '无法解析：文件不是有效的 JSON。' })
+        return
+      }
+
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+        setBackupStatus({ kind: 'error', message: '无法导入：文件内容不是设置对象。' })
+        return
+      }
+
+      const record = parsed as Record<string, unknown>
+      if (record.app !== undefined && record.app !== 'dev-tools') {
+        setBackupStatus({ kind: 'error', message: '无法导入：这不是 dev-tools 的设置文件。' })
+        return
+      }
+      if (record.kind !== undefined && record.kind !== 'settings') {
+        setBackupStatus({ kind: 'error', message: '无法导入：文件类型不是设置。' })
+        return
+      }
+
+      const candidate = record.settings ?? record
+      try {
+        await importSettings(candidate)
+        setBackupStatus({ kind: 'success', message: '设置已导入并立即生效。' })
+      } catch (error) {
+        setBackupStatus({
+          kind: 'error',
+          message: error instanceof Error ? error.message : '导入失败，请检查文件内容。'
+        })
+      }
+    },
+    [importSettings]
+  )
+
   const translatorBaseUrl = settings.translator.baseUrl
   const translatorApiKey = settings.translator.apiKey
+
+  const usageEntries = useMemo(
+    () =>
+      Object.entries(settings.toolUsage ?? {})
+        .filter(([id, count]) => count > 0 && Boolean(getTool(id)))
+        .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])),
+    [settings.toolUsage]
+  )
+  const totalToolOpens = useMemo(
+    () => usageEntries.reduce((sum, [, count]) => sum + count, 0),
+    [usageEntries]
+  )
+  const topUsage = usageEntries.slice(0, 5)
+  const maxUsage = topUsage[0]?.[1] ?? 1
 
   // Auto-fetch models on mount if config exists
   useEffect(() => {
@@ -260,6 +370,15 @@ export default function SettingsPage(): React.JSX.Element {
             >
               <Keyboard size={15} />
               <span>快捷键</span>
+            </button>
+            <button
+              type="button"
+              className={`settings-nav-item ${activeSection === 'data' ? 'active' : ''}`}
+              aria-current={activeSection === 'data' ? 'page' : undefined}
+              onClick={() => selectSection('data')}
+            >
+              <Database size={15} />
+              <span>数据</span>
             </button>
             <button
               type="button"
@@ -1018,6 +1137,137 @@ export default function SettingsPage(): React.JSX.Element {
               </>
             )}
 
+            {/* 数据与备份 */}
+            {activeSection === 'data' && (
+              <>
+                <button
+                  type="button"
+                  id="settings-data-header"
+                  className="settings-section-header"
+                  onClick={() => toggleSection('data')}
+                  aria-expanded={!collapsedSections.data}
+                  aria-controls="settings-data"
+                >
+                  <h3 className="settings-section-title">
+                    <Database size={18} className="settings-section-icon" />
+                    数据
+                  </h3>
+                  <ChevronRight
+                    size={16}
+                    className={`settings-section-chevron ${!collapsedSections.data ? 'open' : ''}`}
+                  />
+                </button>
+                <div
+                  id="settings-data"
+                  role="region"
+                  aria-labelledby="settings-data-header"
+                  className={`settings-section-body ${!collapsedSections.data ? 'open' : ''}`}
+                >
+                  <div className="settings-item">
+                    <div className="settings-item-info">
+                      <p className="settings-item-label">本地使用统计</p>
+                      <p className="settings-item-description">
+                        仅记录在本机，用于了解常用工具与后续优化顺序；共打开 {totalToolOpens} 次。
+                      </p>
+                    </div>
+                    <button
+                      ref={clearUsageTriggerRef}
+                      className="settings-btn settings-btn-secondary"
+                      onClick={() => setShowClearUsageConfirm(true)}
+                      disabled={usageEntries.length === 0}
+                    >
+                      <Trash2 size={15} aria-hidden="true" />
+                      清空统计
+                    </button>
+                    {topUsage.length > 0 ? (
+                      <ol className="settings-usage-list">
+                        {topUsage.map(([id, count], index) => {
+                          const toolName = getTool(id)?.name ?? id
+                          return (
+                            <li key={id}>
+                              <button
+                                type="button"
+                                className="settings-usage-row"
+                                onClick={() => onSelectTool(id)}
+                                aria-label={`打开 ${toolName}`}
+                                title={`打开 ${toolName}`}
+                              >
+                                <span className="settings-usage-rank">{index + 1}</span>
+                                <span className="settings-usage-name">{toolName}</span>
+                                <span className="settings-usage-bar" aria-hidden="true">
+                                  <span
+                                    style={{ width: `${Math.round((count / maxUsage) * 100)}%` }}
+                                  />
+                                </span>
+                                <span className="settings-usage-count">{count} 次</span>
+                                <ChevronRight
+                                  size={14}
+                                  className="settings-usage-open"
+                                  aria-hidden="true"
+                                />
+                              </button>
+                            </li>
+                          )
+                        })}
+                      </ol>
+                    ) : (
+                      <p className="settings-usage-empty">
+                        还没有使用记录，打开任意工具后会自动统计。
+                      </p>
+                    )}
+                    {usageEntries.length > topUsage.length && (
+                      <p className="settings-usage-more">
+                        共 {usageEntries.length} 个工具有使用记录，这里显示前 {topUsage.length} 个。
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="settings-item">
+                    <div className="settings-item-info">
+                      <p className="settings-item-label">备份与恢复</p>
+                      <p className="settings-item-description">
+                        导出/导入收藏、快捷键等设置，文件含翻译 API Key，请妥善保管。
+                      </p>
+                    </div>
+                    <div className="updater-actions">
+                      <button
+                        className="settings-btn settings-btn-secondary"
+                        onClick={exportSettings}
+                      >
+                        <Download size={15} aria-hidden="true" />
+                        导出配置
+                      </button>
+                      <button
+                        className="settings-btn settings-btn-secondary"
+                        onClick={() => importInputRef.current?.click()}
+                      >
+                        <Upload size={15} aria-hidden="true" />
+                        导入配置
+                      </button>
+                      <input
+                        ref={importInputRef}
+                        type="file"
+                        accept="application/json,.json"
+                        className="settings-file-input"
+                        aria-label="选择设置文件"
+                        onChange={(event) => void handleImportFile(event)}
+                      />
+                    </div>
+                    {backupStatus && (
+                      <p
+                        role="status"
+                        className={`settings-backup-status${
+                          backupStatus.kind === 'error' ? ' settings-backup-status--error' : ''
+                        }`}
+                      >
+                        {backupStatus.message}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
+
             {/* 工具禁用 */}
             {/* 更新设置 */}
             {activeSection === 'updater' && (
@@ -1143,7 +1393,9 @@ export default function SettingsPage(): React.JSX.Element {
                     <div className="settings-item-info">
                       <p className="settings-item-label">维护操作</p>
                       <p className="settings-item-description">
-                        {webRuntime ? '将设置恢复为默认值' : '检查应用更新，或将设置恢复为默认值'}
+                        {webRuntime
+                          ? '将外观、编辑器、快捷键、收藏与最近使用恢复为默认值'
+                          : '检查应用更新，或将外观、编辑器、快捷键、收藏与最近使用恢复为默认值'}
                       </p>
                     </div>
                     <div className="updater-actions">
@@ -1197,8 +1449,9 @@ export default function SettingsPage(): React.JSX.Element {
                         </>
                       )}
                       <button
+                        ref={resetTriggerRef}
                         className="settings-btn settings-btn-secondary"
-                        onClick={resetToDefaults}
+                        onClick={() => setShowResetConfirm(true)}
                       >
                         <RotateCcw size={15} />
                         恢复默认
@@ -1244,6 +1497,78 @@ export default function SettingsPage(): React.JSX.Element {
           className="settings-modal-notes"
           dangerouslySetInnerHTML={{ __html: displayedReleaseNotes }}
         />
+      </Dialog>
+
+      <Dialog
+        open={showClearUsageConfirm}
+        onClose={() => setShowClearUsageConfirm(false)}
+        returnFocusRef={clearUsageTriggerRef}
+        title={
+          <>
+            <Trash2 size={16} aria-hidden="true" />
+            清空使用统计？
+          </>
+        }
+        footer={
+          <>
+            <button
+              className="settings-btn settings-btn-secondary"
+              onClick={() => setShowClearUsageConfirm(false)}
+            >
+              取消
+            </button>
+            <button
+              className="settings-btn settings-btn-primary"
+              onClick={() => {
+                void clearToolUsage()
+                setShowClearUsageConfirm(false)
+              }}
+            >
+              <Trash2 size={14} aria-hidden="true" />
+              清空统计
+            </button>
+          </>
+        }
+      >
+        <div className="settings-modal-empty">
+          只清除本机记录的工具打开次数，不影响收藏、最近使用和其他设置。此操作无法撤销。
+        </div>
+      </Dialog>
+
+      <Dialog
+        open={showResetConfirm}
+        onClose={() => setShowResetConfirm(false)}
+        returnFocusRef={resetTriggerRef}
+        title={
+          <>
+            <RotateCcw size={16} aria-hidden="true" />
+            恢复默认设置？
+          </>
+        }
+        footer={
+          <>
+            <button
+              className="settings-btn settings-btn-secondary"
+              onClick={() => setShowResetConfirm(false)}
+            >
+              取消
+            </button>
+            <button
+              className="settings-btn settings-btn-primary"
+              onClick={() => {
+                void resetToDefaults()
+                setShowResetConfirm(false)
+              }}
+            >
+              <RotateCcw size={14} aria-hidden="true" />
+              恢复默认
+            </button>
+          </>
+        }
+      >
+        <div className="settings-modal-empty">
+          外观、编辑器、快捷键、翻译配置、收藏和最近使用记录都会恢复为默认值。此操作无法撤销。
+        </div>
       </Dialog>
     </div>
   )

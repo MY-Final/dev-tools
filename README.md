@@ -17,42 +17,42 @@
 ## ✨ 功能一览
 
 <details>
-<summary><b>🔐 编码/加密 (12)</b></summary>
+<summary><b>🔐 编码/加密 (13)</b></summary>
 
-- **AES/DES Encryptor** — 对称加密/解密（AES-CBC/GCM/CTR/ECB、DES、3DES）
-- **Certificate Parser** — 解析 PEM/X.509 证书（颁发者/有效期/SAN/指纹）
-- **HMAC Generator** — HMAC-SHA-1/256/384/512 签名生成
-- **SSH Key Generator** — 生成 Ed25519/RSA 密钥对，OpenSSH 格式 + 指纹
 - **Token Generator** — 生成 UUID、JWT、API Key 等随机标识符
 - **JWT Generator** — 快速生成和调试 JSON Web Token
+- **URL Codec** — URL 编码与解码，支持参数编码和完整 URL
+- **Hash Generator** — 生成 MD5、SHA-1、SHA-256、SHA-384、SHA-512 哈希值
+- **Password Generator** — 生成高强度安全随机密码
 - **JWT Decoder** — 解析和检查 JWT Token
-- **Hash Generator** — MD5、SHA-1、SHA-256、SHA-384、SHA-512
-- **Password Generator** — 高强度随机密码
-- **Base64 Codec** — Base64 编码与解码
-- **URL Codec** — URL 编码与解码
+- **Base64 Codec** — Base64 编码与解码，支持 URL Safe
+- **File to Base64** — 文件转 Base64 · Data URL 生成
 - **UUID Decoder** — 解析 UUID 版本、变体、时间戳与 MAC
+- **AES/DES Encryptor** — 对称加密/解密（AES-CBC/GCM/CTR/ECB、DES、3DES）
+- **Certificate Parser** — 解析 PEM/X.509 证书：颁发者、有效期、SAN、指纹
+- **HMAC Generator** — HMAC-SHA256/512 签名生成
+- **SSH Key Generator** — 生成 Ed25519/RSA 密钥对，显示公钥指纹
 
 </details>
 
 <details>
-<summary><b>📐 换算工具 (9)</b></summary>
+<summary><b>📐 换算工具 (8)</b></summary>
 
-- **Timezone Converter** — 多时区时间对照
-- **Date Format Converter** — ISO/Unix/RFC/自定义日期格式互转
-- **Number Formatter** — 千分位/货币/百分比/科学计数/进制
-- **Unit Converter** — 10 种单位换算
-- **Data Size Converter** — 数据大小单位转换（Binary/Decimal）
+- **Data Size Converter** — 数据大小单位转换，支持 Binary/Decimal 模式
 - **Timestamp Converter** — Unix 时间戳与日期时间双向转换
 - **Color Converter** — 颜色格式转换 HEX ↔ RGB ↔ HSL
-- **Number Base Converter** — 进制转换 · 反码 · 补码
-- **Image Tools** — 图片转 Base64 · 图片信息查看
+- **Number Base Converter** — 进制转换 · 反码 · 补码（Bin/Oct/Dec/Hex）
+- **Unit Converter** — 长度/面积/体积/时间/角度/速度/温度/压力/热量/功率换算
+- **Timezone Converter** — 多时区时间对照
+- **Date Format Converter** — 日期格式互转（ISO/Unix/RFC/自定义）
+- **Number Formatter** — 数字格式化（千分位/货币/百分比/科学计数）
 
 </details>
 
 <details>
 <summary><b>🌐 网络工具 (5)</b></summary>
 
-- **我的 IP** — 查看本机内网 IP
+- **我的 IP** — 查看本机内网 IP 地址
 - **Port Generator** — 生成随机网络端口号
 - **Subnet Calculator** — IPv4 子网计算器
 - **IPv4 Converter** — IPv4 地址与数字格式互相转换
@@ -63,61 +63,82 @@
 <details>
 <summary><b>💻 系统工具 (8)</b></summary>
 
-- **Clipboard Manager** — 剪贴板历史记录（Ctrl+Shift+V 读取）
-- **Screen Info** — 屏幕分辨率/DPI/DPR/色彩深度/触摸屏
-- **Browser Storage Viewer** — localStorage/sessionStorage 查看编辑
-- **设备信息** — 设备和浏览器运行环境检测
+- **设备信息** — 查看当前设备和浏览器运行环境
+- **Keyboard Tester** — 实时查看键盘按键的 KeyboardEvent 信息
+- **Mouse Tester** — 实时查看鼠标事件的 MouseEvent 信息
 - **Environment Variables** — 查看当前系统环境变量
-- **Keyboard Tester** — 实时查看键盘按键的 KeyboardEvent
-- **Mouse Tester** — 鼠标事件检测（坐标/滚轮/按键）
-- **Timer & Stopwatch** — 秒表 · 倒计时 · 番茄钟 · 间歇训练
+- **Timer & Stopwatch** — 秒表 · 倒计时 · 番茄钟 · 间歇训练计时器
+- **USB Device Viewer** — WebHID — 查看 USB HID 设备 VID/PID/集合/报告
+- **Clipboard Manager** — 剪贴板历史记录
+- **Screen Info** — 屏幕分辨率、DPI、色彩深度信息
 
 </details>
 
 <details>
-<summary><b>🔧 开发工具 (12)</b></summary>
+<summary><b>🔧 开发工具 (13)</b></summary>
 
-- **AI Translator** — 基于 OpenAI 兼容 API 的多语言翻译
 - **Cron Generator** — 可视化生成和解析 Cron 表达式
-- **JSON Formatter** — 格式化、压缩、校验 JSON
-- **Maven Dependency** — Maven Central 实时搜索依赖
-- **File Generator** — 生成指定大小的测试文件
-- **Regex Tester** — 正则表达式实时测试与替换
-- **Diff Checker** — 逐行对比文本差异，高亮新增/删除/修改
-- **XPath Tester** — XPath 表达式测试与 XML/HTML 节点查询
-- **Data Format Converter** — CSV ↔ JSON ↔ XML 数据格式互转
+- **JSON Formatter** — 格式化、压缩、校验 JSON 数据
+- **File Generator** — 生成指定大小的测试文件，用于上传限制测试
+- **Regex Tester** — 正则实时匹配、分组与替换
+- **XPath Tester** — XPath 表达式测试 — XML/HTML 节点查询
+- **Data Format Converter** — JSON / YAML / TOML / XML / CSV / TSV 互转
 - **JSON Converter** — JSON → TypeScript · TOML · XML · YAML
-- **CSS Gradient Generator** — 可视化渐变生成器
+- **CSS Gradient Generator** — 可视化渐变生成器（方向/颜色/CSS 代码）
 - **HTML to JSX** — HTML 一键转 React JSX 语法
+- **Browser Storage Viewer** — localStorage / sessionStorage 查看编辑
+- **WebSocket Tester** — WebSocket 连接测试与消息收发调试
+- **CORS Checker** — 跨域请求检测 — 预检 OPTIONS 测试与响应头分析
+- **User-Agent Parser** — 解析 User-Agent 字符串，识别浏览器/操作系统/设备信息
 
 </details>
 
 <details>
-<summary><b>📝 文本工具 (6)</b></summary>
+<summary><b>📝 文本工具 (9)</b></summary>
 
-- **Text Analyzer** — 实时文本统计与分析
-- **Case Converter** — 大小写与命名格式实时转换（13 种）
-- **Unicode Inspector** — 查看字符的 Unicode 详细信息
-- **Lorem Ipsum Generator** — 虚拟占位文本生成
-- **Diff Checker** — 逐行对比文本差异
-- **Image Tools** — 图片转 Base64 · 图片信息查看
+- **Text Analyzer** — 字符/词/句/行统计、关键词与行分析
+- **Case Converter** — 16 种大小写与命名格式实时转换
+- **Unicode Inspector** — 码点、编码、分类与规范化查询
+- **Lorem Ipsum Generator** — 生成虚拟占位文本，用于设计和排版
+- **Diff Checker** — 逐行对比文本差异，支持并排、统一视图与合并
+- **AI Translator** — 基于 OpenAI 兼容 API 的多语言翻译（需配置 API Key）
+- **Markdown Preview** — Markdown 编辑、实时预览与 HTML 导出
+- **CSV Editor** — CSV 表格编辑，支持排序、筛选与导出
+- **XML Formatter** — XML 格式化、压缩与校验
 
 </details>
 
 <details>
-<summary><b>📋 备忘录 (11)</b></summary>
+<summary><b>📋 速查表 (11)</b></summary>
 
 - **Git Cheat Sheet** — Git 命令速查手册
 - **Docker Cheat Sheet** — Docker 命令速查手册
-- **npm Cheat Sheet** — npm / Yarn / pnpm 命令速查
-- **Linux Cheat Sheet** — Linux 常用命令速查手册
-- **Kubectl Cheat Sheet** — K8s 命令速查手册
 - **ASCII Table** — ASCII 码表完整对照（0–127）
-- **HTTP Status Codes** — HTTP 状态码速查手册（1xx–5xx）
+- **npm Cheat Sheet** — npm / Yarn / pnpm 包管理器命令速查
+- **Linux Cheat Sheet** — Linux 常用命令速查手册
+- **Kubernetes Cheat Sheet** — K8s 命令速查手册
+- **HTTP Status Codes** — HTTP 状态码速查手册 (1xx–5xx)
 - **Regex Cheat Sheet** — 正则表达式语法速查手册
-- **HTML Entities** — HTML 实体字符速查手册
-- **SQL Cheat Sheet** — SQL 常用语法速查手册
+- **HTML Entities** — HTML 实体字符速查手册 (&amp; &lt; &copy;)
+- **SQL Cheat Sheet** — SQL 常用语法速查手册 (SELECT/JOIN/DDL)
 - **CSS Cheat Sheet** — Flexbox · Grid · 单位 · 选择器 · 动画速查
+
+</details>
+
+<details>
+<summary><b>🔎 资源搜索 (3)</b></summary>
+
+- **Maven Dependency** — 快速生成 Maven / Gradle 依赖配置
+- **npm Search** — 搜索 npm 包，一键复制依赖配置
+- **Docker Hub Search** — 搜索 Docker Hub 镜像，一键复制 docker pull 命令
+
+</details>
+
+<details>
+<summary><b>🗒️ 备忘录 (2)</b></summary>
+
+- **Todo Notes** — 每日待办 · 本地保存
+- **Danmaku Display** — 全屏展示自定义消息（弹幕滚动/居中大字），适合离开工位时留言
 
 </details>
 
@@ -233,7 +254,7 @@ npm run build:web
 
 | 功能                                           | 状态                                                    |
 | ---------------------------------------------- | ------------------------------------------------------- |
-| 纯前端工具（格式化/转换/哈希/加密等 65+ 工具） | ✅ 完全可用                                             |
+| 纯前端工具（格式化/转换/哈希/加密等 69 个）    | ✅ 完全可用                                             |
 | 文件打开 / 保存                                | ✅ 可用，UTF-8 / GBK 自动识别；保存走浏览器下载         |
 | npm / Docker 搜索                              | ✅ 可用（依赖上游返回 CORS 头）                         |
 | AI 翻译                                        | ✅ 可用（需自己配置 API Key，且服务商需允许浏览器跨域） |

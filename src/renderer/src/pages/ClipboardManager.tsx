@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { Clipboard, Copy, Check, Trash2, Download, Clock, X } from 'lucide-react'
 import Dialog from '../components/ui/dialog'
+import { copyText } from '@renderer/lib/clipboard'
 import '../styles/clipboard-manager.css'
 
 interface HistoryItem {
@@ -131,8 +132,8 @@ export default function ClipboardManager(): React.JSX.Element {
         await navigator.clipboard.write([
           new ClipboardItem({ [item.imageType || blob.type]: blob })
         ])
-      } else {
-        await navigator.clipboard.writeText(item.text)
+      } else if (!(await copyText(item.text))) {
+        throw new Error('剪贴板不可用')
       }
       setCopyFeedback({ itemId: item.id, kind: 'success', message: '已复制到剪贴板' })
     } catch (err) {

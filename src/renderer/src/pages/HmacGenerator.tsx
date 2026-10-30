@@ -1,5 +1,7 @@
 import { useState, useCallback, useEffect } from 'react'
 import { Copy, Check, RotateCcw } from 'lucide-react'
+import CopyToast from '@renderer/components/CopyToast'
+import { copyText } from '@renderer/lib/clipboard'
 import '../styles/hmac-generator.css'
 import { hexToBytes, toArrayBuffer } from '../lib/crypto-utils'
 
@@ -65,6 +67,7 @@ export default function HmacGenerator(): React.JSX.Element {
   const [result, setResult] = useState('')
   const [error, setError] = useState('')
   const [copied, setCopied] = useState(false)
+  const [copyError, setCopyError] = useState(false)
 
   // Real-time computation
   useEffect(() => {
@@ -121,13 +124,14 @@ export default function HmacGenerator(): React.JSX.Element {
 
   const copyResult = useCallback(async () => {
     if (!result) return
-    try {
-      await navigator.clipboard.writeText(result)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 1500)
-    } catch {
-      /* ignore */
+    const ok = await copyText(result)
+    if (!ok) {
+      setCopyError(true)
+      setTimeout(() => setCopyError(false), 1800)
+      return
     }
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1500)
   }, [result])
 
   const clear = useCallback(() => {
@@ -334,6 +338,7 @@ export default function HmacGenerator(): React.JSX.Element {
           )}
         </section>
       </div>
+      <CopyToast message={copyError ? '复制失败，请手动选择' : null} />
     </div>
   )
 }

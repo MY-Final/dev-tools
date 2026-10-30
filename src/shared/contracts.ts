@@ -1,5 +1,10 @@
-export const SETTINGS_VERSION = 3
+export const SETTINGS_VERSION = 4
 export const TODOS_VERSION = 1
+/** How many recently used tools to remember. */
+export const RECENT_TOOLS_LIMIT = 8
+/** Upper bound for tracked tools, so an imported file cannot bloat settings. */
+export const TOOL_USAGE_LIMIT = 200
+const TOOL_USAGE_MAX_COUNT = 1_000_000
 
 export interface AppSettings {
   version?: number
@@ -40,6 +45,9 @@ export interface AppSettings {
     goHome: string
   }
   favorites: string[]
+  recentTools: string[]
+  /** Local-only open counts per tool id. Never leaves the machine. */
+  toolUsage: Record<string, number>
 }
 
 export interface SettingsAPI {
@@ -60,9 +68,13 @@ export interface SettingsAPI {
   updateProxy: (updates: Partial<AppSettings['proxy']>) => Promise<AppSettings>
   updateShortcuts: (updates: Partial<AppSettings['shortcuts']>) => Promise<AppSettings>
   updateFavorites: (toolId: string) => Promise<AppSettings>
+  recordRecentTool: (toolId: string) => Promise<AppSettings>
+  clearRecentTools: () => Promise<AppSettings>
+  clearToolUsage: () => Promise<AppSettings>
   getSettingsPath: () => Promise<string>
   onSettingsChanged: (callback: (settings: AppSettings) => void) => () => void
   resetToDefaults: () => Promise<AppSettings>
+  importSettings: (settings: unknown) => Promise<AppSettings>
 }
 
 export interface TodoItem {
@@ -185,7 +197,9 @@ export const DEFAULT_SETTINGS: AppSettings = {
     openSettings: 'Ctrl+,',
     goHome: 'Escape'
   },
-  favorites: []
+  favorites: [],
+  recentTools: [],
+  toolUsage: {}
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -332,6 +346,61 @@ export function normalizeSettings(value: unknown): AppSettings {
     },
     favorites: Array.isArray(migrated.favorites)
       ? migrated.favorites.filter((item): item is string => typeof item === 'string')
-      : []
+      : [],
+    recentTools: normalizeRecentTools(migrated.recentTools),
+    toolUsage: normalizeToolUsage(migrated.toolUsage)
   }
+}
+
+function isToolId(value: unknown): value is string {
+  return (
+    typeof value === 'string' &&
+    value.length > 0 &&
+    value.length <= 80 &&
+    value !== '__proto__' &&
+    value !== 'constructor' &&
+    value !== 'prototype'
+  )
+}
+
+export function normalizeToolUsage(value: unknown): Record<string, number> {
+  if (!isRecord(value)) return {}
+  const usage: Record<string, number> = {}
+  let kept = 0
+  for (const [toolId, rawCount] of Object.entries(value)) {
+    if (!isToolId(toolId) || typeof rawCount !== 'number' || !Number.isFinite(rawCount)) continue
+    const count = Math.floor(rawCount)
+    if (count <= 0) continue
+    usage[toolId] = Math.min(count, TOOL_USAGE_MAX_COUNT)
+    kept += 1
+    if (kept >= TOOL_USAGE_LIMIT) break
+  }
+  return usage
+}
+
+/** Returns a new map with one open added; unchanged when the cap would be exceeded. */
+export function incrementToolUsage(
+  usage: Record<string, number>,
+  toolId: string
+): Record<string, number> {
+  if (!isToolId(toolId)) return usage
+  const current = usage[toolId] ?? 0
+  if (current === 0 && Object.keys(usage).length >= TOOL_USAGE_LIMIT) return usage
+  return {
+    ...usage,
+    [toolId]: Math.min(current + 1, TOOL_USAGE_MAX_COUNT)
+  }
+}
+
+function normalizeRecentTools(value: unknown): string[] {
+  if (!Array.isArray(value)) return []
+  const seen = new Set<string>()
+  const tools: string[] = []
+  for (const item of value) {
+    if (typeof item !== 'string' || seen.has(item)) continue
+    seen.add(item)
+    tools.push(item)
+    if (tools.length === RECENT_TOOLS_LIMIT) break
+  }
+  return tools
 }

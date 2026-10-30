@@ -160,6 +160,11 @@
   pointer-events: none;
 }
 
+.toast-item--error {
+  color: var(--color-danger);
+  border-color: var(--color-danger-subtle);
+}
+
 .toast-item {
   display: flex;
   align-items: center;

@@ -237,6 +237,13 @@
   text-align: left;
 }
 
+.tc-input-error {
+  margin: 0;
+  color: var(--color-danger);
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
 .tc-preview-note {
   color: var(--color-text-muted);
   font-size: var(--text-xs);

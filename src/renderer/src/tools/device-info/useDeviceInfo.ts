@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from 'react'
+import { copyText } from '@renderer/lib/clipboard'
 
 export interface ScreenInfo {
   screenWidth: number
@@ -384,14 +385,14 @@ export function useDeviceInfo() {
   }, [loadDeviceInfo, getScreenInfo])
 
   const handleCopy = useCallback(
-    (text: string) => {
-      navigator.clipboard.writeText(text)
-      showToast('已复制')
+    async (text: string) => {
+      const ok = await copyText(text)
+      showToast(ok ? '已复制' : '复制失败，请手动选择')
     },
     [showToast]
   )
 
-  const handleCopyAll = useCallback(() => {
+  const handleCopyAll = useCallback(async () => {
     if (!info) return
     const data = {
       browser: getBrowserName() + ' ' + info.browser.userAgent.match(/Chrome\/([\d.]+)/)?.[1] || '',
@@ -408,8 +409,8 @@ export function useDeviceInfo() {
       battery: info.battery.level !== null ? `${info.battery.level}%` : 'Unknown',
       capabilities: info.capabilities
     }
-    navigator.clipboard.writeText(JSON.stringify(data, null, 2))
-    showToast('已复制全部信息')
+    const ok = await copyText(JSON.stringify(data, null, 2))
+    showToast(ok ? '已复制全部信息' : '复制失败，请手动选择')
   }, [info, showToast])
 
   const handleExport = useCallback(() => {

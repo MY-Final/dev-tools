@@ -129,7 +129,8 @@
 
 .sc-result-row {
   display: grid;
-  grid-template-columns: 104px minmax(0, 1fr) 24px;
+  /* 最后一列用 auto：窄屏触控目标会把按钮撑到 44px，固定 24px 会被面板裁掉。 */
+  grid-template-columns: 104px minmax(0, 1fr) auto;
   align-items: center;
   gap: 10px;
   min-width: 0;
@@ -199,11 +200,10 @@
 }
 
 .sc-info-value {
-  overflow: hidden;
   color: var(--color-text);
   font-size: var(--text-sm);
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
+  white-space: normal;
 }
 
 .sc-binary-item {
@@ -264,7 +264,7 @@
   }
 
   .sc-result-row {
-    grid-template-columns: 92px minmax(0, 1fr) 24px;
+    grid-template-columns: 92px minmax(0, 1fr) auto;
   }
 
   .sc-info-value {

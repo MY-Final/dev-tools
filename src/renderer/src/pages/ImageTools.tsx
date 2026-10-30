@@ -1,5 +1,7 @@
 import { useState, useCallback, useRef } from 'react'
 import { Upload, Copy, Check, Trash2, FileImage, File, Video, Music } from 'lucide-react'
+import CopyToast from '@renderer/components/CopyToast'
+import { copyText } from '@renderer/lib/clipboard'
 import '../styles/image-tools.css'
 
 type FileCategory = 'image' | 'video' | 'audio' | 'file'
@@ -34,6 +36,7 @@ function getDisplayType(file: File): string {
 export default function ImageTools(): React.JSX.Element {
   const [fileInfo, setFileInfo] = useState<FileInfo | null>(null)
   const [copied, setCopied] = useState(false)
+  const [copyError, setCopyError] = useState(false)
   const [dragOver, setDragOver] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
 
@@ -84,52 +87,38 @@ export default function ImageTools(): React.JSX.Element {
 
   const clear = useCallback(() => setFileInfo(null), [])
 
+  const finishCopy = useCallback((ok: boolean) => {
+    if (!ok) {
+      setCopyError(true)
+      setTimeout(() => setCopyError(false), 1800)
+      return
+    }
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1500)
+  }, [])
+
   const copyBase64 = useCallback(async () => {
     if (!fileInfo) return
-    try {
-      await navigator.clipboard.writeText(fileInfo.base64)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 1500)
-    } catch {
-      // ignore
-    }
-  }, [fileInfo])
+    finishCopy(await copyText(fileInfo.base64))
+  }, [fileInfo, finishCopy])
 
   const copyDataUrl = useCallback(async () => {
     if (!fileInfo) return
-    try {
-      await navigator.clipboard.writeText(fileInfo.dataUrl)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 1500)
-    } catch {
-      // ignore
-    }
-  }, [fileInfo])
+    finishCopy(await copyText(fileInfo.dataUrl))
+  }, [fileInfo, finishCopy])
 
   const copyImgTag = useCallback(async () => {
     if (!fileInfo || fileInfo.category !== 'image') return
     const tag = `<img src="${fileInfo.dataUrl}" alt="${fileInfo.name}" />`
-    try {
-      await navigator.clipboard.writeText(tag)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 1500)
-    } catch {
-      // ignore
-    }
-  }, [fileInfo])
+    finishCopy(await copyText(tag))
+  }, [fileInfo, finishCopy])
 
   const copyMediaTag = useCallback(async () => {
     if (!fileInfo || (fileInfo.category !== 'video' && fileInfo.category !== 'audio')) return
     const tagName = fileInfo.category
     const tag = `<${tagName} controls src="${fileInfo.dataUrl}"></${tagName}>`
-    try {
-      await navigator.clipboard.writeText(tag)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 1500)
-    } catch {
-      // ignore
-    }
-  }, [fileInfo])
+    finishCopy(await copyText(tag))
+  }, [fileInfo, finishCopy])
 
   const renderPreview = (): React.JSX.Element => {
     if (!fileInfo) return <></>
@@ -257,6 +246,7 @@ export default function ImageTools(): React.JSX.Element {
           </>
         )}
       </div>
+      <CopyToast message={copyError ? '复制失败，请手动选择' : null} />
     </div>
   )
 }

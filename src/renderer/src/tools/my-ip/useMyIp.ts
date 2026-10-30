@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react'
+import { copyText } from '@renderer/lib/clipboard'
 
 export interface LocalIpInfo {
   ips: string[]
@@ -72,8 +73,12 @@ export function useMyIp() {
   }, [showToast])
 
   const handleCopyIp = useCallback(
-    (ip: string, index: number) => {
-      navigator.clipboard.writeText(ip)
+    async (ip: string, index: number) => {
+      const ok = await copyText(ip)
+      if (!ok) {
+        showToast('复制失败，请手动选择')
+        return
+      }
       setCopiedIndex(index)
       showToast('已复制 IP 地址')
       setTimeout(() => setCopiedIndex(null), 1500)
@@ -81,11 +86,11 @@ export function useMyIp() {
     [showToast]
   )
 
-  const handleCopyAll = useCallback(() => {
+  const handleCopyAll = useCallback(async () => {
     if (ipInfo) {
       const text = ipInfo.ips.map((ip) => `内网 IP: ${ip}`).join('\n')
-      navigator.clipboard.writeText(text)
-      showToast('已复制全部 IP')
+      const ok = await copyText(text)
+      showToast(ok ? '已复制全部 IP' : '复制失败，请手动选择')
     }
   }, [ipInfo, showToast])
 

@@ -11,6 +11,8 @@ import {
   Plus,
   ChevronRight
 } from 'lucide-react'
+import CopyToast from '@renderer/components/CopyToast'
+import { copyText } from '@renderer/lib/clipboard'
 import '../styles/storage-viewer.css'
 
 type StorageType = 'localStorage' | 'sessionStorage'
@@ -63,6 +65,7 @@ export default function StorageViewer(): React.JSX.Element {
   const [editingValue, setEditingValue] = useState('')
   const [newKey, setNewKey] = useState('')
   const [newValue, setNewValue] = useState('')
+  const [copyError, setCopyError] = useState(false)
   const [copiedKey, setCopiedKey] = useState<string | null>(null)
   const [error, setError] = useState(() => {
     try {
@@ -153,13 +156,13 @@ export default function StorageViewer(): React.JSX.Element {
   }, [newKey, newValue, storageType])
 
   const copyEntry = useCallback(async (value: string, key: string) => {
-    try {
-      await navigator.clipboard.writeText(value)
-      setCopiedKey(key)
-      setTimeout(() => setCopiedKey(null), 1500)
-    } catch {
-      /* ignore */
+    if (!(await copyText(value))) {
+      setCopyError(true)
+      setTimeout(() => setCopyError(false), 1800)
+      return
     }
+    setCopiedKey(key)
+    setTimeout(() => setCopiedKey(null), 1500)
   }, [])
 
   const clearAll = useCallback(() => {
@@ -396,6 +399,7 @@ export default function StorageViewer(): React.JSX.Element {
           </div>
         )}
       </section>
+      <CopyToast message={copyError ? '复制失败，请手动选择' : null} />
     </div>
   )
 }

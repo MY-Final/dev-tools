@@ -113,6 +113,15 @@
   text-align: center;
 }
 
+.nb-warning {
+  margin: 0;
+  padding: 8px 14px;
+  background: var(--color-warning-subtle);
+  color: var(--color-warning);
+  font-size: var(--text-xs);
+  line-height: 1.6;
+}
+
 .nb-section-head {
   display: flex;
   align-items: center;

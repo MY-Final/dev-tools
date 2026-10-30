@@ -43,6 +43,7 @@ export default function TokenGenerator(): React.JSX.Element {
     config,
     updateConfig,
     results,
+    error,
     toast,
     copiedIndex,
     generate,
@@ -142,6 +143,10 @@ export default function TokenGenerator(): React.JSX.Element {
                   </button>
                 ))}
               </div>
+              <p className="tg-hint">
+                生成时会自动写入 <code>iat</code>，并按所选有效期写入 <code>exp</code>
+                （覆盖 Payload 中的同名声明）。
+              </p>
             </div>
           </>
         )
@@ -355,7 +360,11 @@ export default function TokenGenerator(): React.JSX.Element {
             </div>
           </div>
 
-          {results.length > 0 ? (
+          {error ? (
+            <div className="tg-error" role="alert">
+              {error}
+            </div>
+          ) : results.length > 0 ? (
             <>
               <div className="tg-results-list">
                 {visibleResults.map((token, index) => (
