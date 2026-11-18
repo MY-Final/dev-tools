@@ -194,6 +194,13 @@ export default function Sidebar({
     }))
   }
 
+  // 「最近使用」是自动生成的列表，占地方但价值有限，允许收起；
+  // 状态走 settings 持久化，否则每次重启又展开，折叠就白折了
+  const recentCollapsed = settings.appearance.sidebarRecentCollapsed
+  const toggleRecentGroup = useCallback((): void => {
+    void updateAppearance({ sidebarRecentCollapsed: !recentCollapsed })
+  }, [recentCollapsed, updateAppearance])
+
   // 收起侧边栏时显示分类工具菜单
   const [flyoutCategory, setFlyoutCategory] = useState<{ name: string; top: number } | null>(null)
   const flyoutTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -495,11 +502,21 @@ export default function Sidebar({
           {recentTools.length > 0 && (
             <div className="nav-group">
               {!effectiveCollapsed && (
-                <div className="nav-category-header nav-favorites-header">
+                <button
+                  type="button"
+                  className="nav-category-header nav-favorites-header nav-recent-header"
+                  onClick={toggleRecentGroup}
+                  aria-expanded={!recentCollapsed}
+                  aria-controls="sidebar-recent-tools"
+                >
                   <History size={15} className="nav-category-icon nav-favorites-icon" />
                   <span className="nav-category-label">最近使用</span>
                   <span className="nav-category-count">{recentTools.length}</span>
-                </div>
+                  <ChevronDown
+                    size={12}
+                    className={`nav-category-arrow ${recentCollapsed ? 'collapsed' : ''}`}
+                  />
+                </button>
               )}
               {effectiveCollapsed && (
                 <button
@@ -517,25 +534,28 @@ export default function Sidebar({
                   <History size={18} />
                 </button>
               )}
-              {!effectiveCollapsed &&
-                recentTools.map((tool) => {
-                  const Icon = tool.icon
-                  return (
-                    <button
-                      key={tool.id}
-                      type="button"
-                      className={cn('nav-icon-btn', currentPage === tool.id && 'active')}
-                      onClick={() => navigateToTool(tool.id)}
-                      aria-current={currentPage === tool.id ? 'page' : undefined}
-                    >
-                      <Icon size={16} className="nav-icon" />
-                      <div className="nav-label-wrapper">
-                        <span className="nav-label">{tool.name}</span>
-                        {showShortDesc && <span className="nav-desc">{tool.shortDesc}</span>}
-                      </div>
-                    </button>
-                  )
-                })}
+              {!effectiveCollapsed && !recentCollapsed && (
+                <div id="sidebar-recent-tools" className="nav-category-tools">
+                  {recentTools.map((tool) => {
+                    const Icon = tool.icon
+                    return (
+                      <button
+                        key={tool.id}
+                        type="button"
+                        className={cn('nav-icon-btn', currentPage === tool.id && 'active')}
+                        onClick={() => navigateToTool(tool.id)}
+                        aria-current={currentPage === tool.id ? 'page' : undefined}
+                      >
+                        <Icon size={16} className="nav-icon" />
+                        <div className="nav-label-wrapper">
+                          <span className="nav-label">{tool.name}</span>
+                          {showShortDesc && <span className="nav-desc">{tool.shortDesc}</span>}
+                        </div>
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
             </div>
           )}
 

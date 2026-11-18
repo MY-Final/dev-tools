@@ -1,125 +1,78 @@
-# 设计系统记忆
+# 设计系统记忆（2026-11 校正）
+
+> ⚠️ 旧版描述的「莫兰迪紫 + 毛玻璃 + Inter」已全部作废。以 `src/renderer/src/assets/base.css` 实际代码为准。
 
 ## 整体风格
-- **设计理念**: Soft Minimalism（柔和极简风）+ 代码编辑器元素
-- **灵感来源**: GitHub Dark + 莫兰迪色系
+- **设计理念**: 暖调石墨（warm graphite）+ 琥珀信号色（amber signal）。界面保持中性，颜色只用于状态、分类标识与代码高亮
+- **平面化**: 全站去毛玻璃，`--glass-bg` 已别名到 `--color-surface`（旧页面沿用会自动获得新样式）
+- **圆角**: 连续曲率 squircle（`corner-shape: squircle` 全局声明），正圆元素需单独写 `corner-shape: round`
 
-## 配色方案
+## 配色
 
-### 浅色模式
-| 角色 | 色值 | 说明 |
-|------|------|------|
-| 背景 | `#F8F9FB` | 微妙渐变 |
-| 表面 | `#FFFFFF` | 卡片背景 |
-| 边框 | `#E8ECF0` | 柔和边框 |
-| 强调色 | `#7C6BC4` | 莫兰迪蓝紫 |
-| 文字 | `#1A1D21` | 主文字 |
-| 次要文字 | `#5E6772` | |
+### 深色（默认，`:root` / `[data-theme='dark']`）
+| 角色 | 色值 |
+|------|------|
+| 背景 | `#1a1a18` |
+| 表面 / hover / active | `#21211f` / `#272725` / `#2e2e2b` |
+| 侧栏背景 | `#151513` |
+| 编辑器背景 | `#1c1c1a` |
+| 边框 / hover / active | `#34342f` / `#45453f` / `#55554d` |
+| 文字 / 次要 / 弱 | `#ecebe6` / `#b4b0a5` / `#948f84` |
+| 强调（琥珀） | `#d9a441`，hover `#e8b65c` |
+| success / warning / danger | `#7aa874` / `#d98a3d` / `#d0655c` |
 
-### 深色模式
-| 角色 | 色值 | 说明 |
-|------|------|------|
-| 背景 | `#0D1117` | GitHub Dark 风格 |
-| 表面 | `#161B22` | |
-| 强调色 | `#8B7EC8` | 莫兰迪蓝紫 |
-| 文字 | `#F0F6FC` | |
+### 浅色（`[data-theme='light']`）
+| 角色 | 色值 |
+|------|------|
+| 背景 | `#f6f6f4` |
+| 表面 / hover / active | `#ffffff` / `#f1f1ee` / `#e9e9e5` |
+| 侧栏背景 | `#efefec` |
+| 边框 | `#e2e2dd` |
+| 文字 | `#1c1c1a`，次要 `#55534d` |
+| 强调 | `#8a5a12`（深琥珀，保对比度） |
 
-## 字体系统
-- **显示字体**: JetBrains Mono（等宽，用于标题、品牌、工具名称）
-- **正文字体**: Inter（清晰易读）
-- **代码字体**: JetBrains Mono
+## 字体
+- **正文**: IBM Plex Sans（Google Fonts import），CJK 回退 PingFang SC / Microsoft YaHei
+- **等宽**: JetBrains Mono（代码、kbd、数字）——不是显示字体
+- 数字对齐: `.tabular` / `[data-numeric]` → `font-variant-numeric: tabular-nums`
 
-## 页面布局模式
+## 令牌标尺
+- **圆角**: `--radius-xs/sm/md/lg/xl/pill` = 5 / 7.5 / 10 / 15 / 20 / 999px
+- **字号**: `--text-2xs..3xl` = 10/11/12/13/14/16/20/24/28px；`html { font-size: var(--app-root-font-size) }`，设置项 small/medium/large = 14/16/18px
+- **分类色**: `--cat-1..9`（低饱和土色），只做图标/分类标识，不参与交互
+- **代码高亮**: `--jf-key/string/number/boolean/null`
+- **旧别名保留**: `--color-accent-soft*` → accent；`--glass-*` → surface/border；`--gradient-bg` → background
 
-### 标准工具页面
+## 布局骨架
 ```
-.xx-page                    → 全页容器，居中，padding: 40px 24px
-  .xx-card                  → 毛玻璃卡片，max-width 600~780px
-    .xx-header              → 居中，标题 + 副标题
-    .xx-input-area          → 输入区域（textarea + 标签）
-    .xx-actions             → 操作按钮行
-    .xx-output-area         → 输出区域
+.app-layout（flex，sidebar + main-content 100dvh）
+  .tool-shell（container-type: inline-size; container-name: tool）
+    .tool-shell-main（--tool-max 分档：表单 900 / 结果 1080 / 复杂 1120 / 速查 1240）
 ```
+- 宽屏 container query ≥1080px 再放大一档；工作台类（jf/mp/csv/xf/df）占满高度
+- 侧栏断点：<768 mobile drawer、<1024 tablet collapsed、desktop 用户控制
 
-### 卡片样式规范
-```css
-.xx-card {
-  background: var(--glass-bg);           /* 毛玻璃背景 */
-  backdrop-filter: blur(20px);
-  border: 1px solid var(--glass-border);
-  border-radius: 20px;
-  padding: 32px;
-  box-shadow: var(--shadow-xl);
-}
-```
+## 共享工具页类（tool-layout.css，新页面优先复用）
+- 页框: `.tool-page` / `-header` / `-title` / `-desc` / `-actions`
+- 平面: `.tool-panel`（+ `-head` `-title` `-body` `-body--flush`）——一个模块一张平面，内部用分隔线，不叠小卡片
+- 控件标尺: `.tool-input/select` 32px（`--lg` 38px）、`.tool-btn` 32px（`--outline` `--primary`）、`.tool-icon-btn` 28px、`.tool-segmented/.tool-seg` 26px
+- 行式数据: `.tool-rows/.tool-row`（44px 行高 + 发丝线）
+- 分栏: `.tool-split`（+`--even` `--wide`，≥980px 才并排）
+- 旧页面 `.xx-card/.xx-header` 被 tool-layout 统一归一化：去卡片背景、标题左对齐同字号
 
-### 标题样式
-```css
-.xx-title {
-  font-size: 24px;
-  font-weight: 700;
-  color: var(--color-text);
-  font-family: 'JetBrains Mono', monospace;
-  letter-spacing: -0.5px;
-}
-.xx-subtitle {
-  font-size: 14px;
-  color: var(--color-text-muted);
-}
-```
-
-### 输入框样式
-```css
-.xx-textarea {
-  background: var(--color-editor-bg);
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 13px;
-  /* focus: border-color → var(--color-accent-soft) */
-}
-```
-
-### 按钮变体
-| 类名 | 用途 | 样式 |
-|------|------|------|
-| `.btn-primary` | 主操作 | 莫兰迪蓝紫背景 + 白字 |
-| `.btn-secondary` | 次要操作 | 表面背景 + 边框 |
-| `.btn-ghost` | 辅助操作 | 透明 + 灰字 |
-| `.btn-danger` | 危险操作 | 红色系 |
-
-### 模式选择器（Segmented Control）
-```css
-.xx-mode-selector {
-  display: flex; gap: 8px; padding: 6px;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 14px;
-}
-.xx-mode-btn.active {
-  background: var(--color-accent-soft);
-  color: var(--color-text-inverse);
-}
-```
-
-## Home 页面
-- **代码片段卡片**: `.tool-card-filename` 标签外壳 + 工具图标信息
-- **搜索框**: 命令行风格（`$ search tools...`）
-- **分类分组**: 按 category 自动分组，带 categoryIcon
-
-## 关键 CSS 变量
-```css
---color-accent-soft: #7C6BC4;        /* 莫兰迪蓝紫 */
---color-accent-soft-glow: rgba(124, 107, 196, 0.12);
---gradient-bg: linear-gradient(160deg, #F8F9FB 0%, #F0F2F5 40%, #F5F6F8 100%);
---glass-bg: rgba(255, 255, 255, 0.85);
---shadow-xl: 0 20px 60px rgba(0, 0, 0, 0.1), 0 8px 20px rgba(0, 0, 0, 0.06);
-```
+## 动效系统（2026-11 已建成）
+- **令牌**（base.css `:root`）: `--duration-instant/fast/base/slow` = 90/140/200/280ms；`--ease-out`（出现）、`--ease-in-out`、`--ease-overshoot`（按压/chevron 轻回弹）、`--press-scale: 0.97`
+- **视图过渡**（App.tsx `navigate` + base.css）: `document.startViewTransition(() => flushSync(commit))`。**只给 `.main-content` 命名**（`view-transition-name: main-content`），侧栏等常驻 chrome 不进快照——整页一起淡入淡出就是用户说的「像刷新」。root 快照动画停掉（`animation: none` + z-index 0/1 分层）；内容区旧层静止垫底、新层 `vt-content-enter` 140ms 纯透明度淡入盖上，无位移
+- **过渡守卫**: reduced-motion、`document.visibilityState !== 'visible'`（隐藏文档下 Chromium 会挂起过渡不执行）、API 缺失 → 一律直切
+- **同页不过渡**: `page === currentPage` 直接 return，否则内容没变也淡一下=闪烁
+- **两个踩过的坑**: ① update callback 是**异步**调用的（实测 ~74ms），兜底不能同步检查 `applied`，必须挂 `transition.updateCallbackDone.catch()`——过渡被跳过时 callback 不执行，导航会静默丢失；② 三条 promise 都要 catch，否则跳过时刷 Uncaught (in promise)
+- **验证动效的前提**: 页面必须产帧（rAF）。Claude 预览面板不产帧时会挂起过渡回调，表现为「点击没反应」——环境问题，真实窗口 60fps 不受影响
+- **按压反馈**: `.btn` / `.tool-btn` / `.tool-icon-btn` / `.tool-seg` / `.nav-icon-btn` / `.home-tool-card-main` / 侧栏按钮共用 `scale(var(--press-scale))`，过渡列表必须含 `transform var(--duration-instant)`
+- **滚动重置**: navigate 时 `#main-content` scrollTo(0)，该容器跨页面复用
+- **注意**: 页面 CSS 里仍有少量历史硬编码时长（如 0.1s/0.16s），新代码一律用令牌；lazy 页面未就绪时过渡会落到 Loading 骨架
+## 可访问性基线
+- skip-link、`:focus-visible` 2px 琥珀 outline、`aria-current="page"`、触屏 44px 最小热区、自定义滚动条
 
 ## 响应式断点
-- `@media (max-width: 600px)` — 移动端适配
-  - padding 减小到 `24px 16px`
-  - 卡片圆角缩小到 `16px`
-  - 标题字号缩小到 `20px`
-  - 输入头改为纵向排列
-  - 统计网格 4 列 → 2 列
+- 侧栏: 767 / 1024（JS 判断，Sidebar.tsx）
+- 工具页: 767 / 1100 media query + container 980 / 1080

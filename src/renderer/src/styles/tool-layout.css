@@ -676,9 +676,9 @@
   line-height: 1.4;
   outline: none;
   transition:
-    border-color 0.12s ease,
-    background-color 0.12s ease,
-    box-shadow 0.12s ease;
+    border-color var(--duration-fast) var(--ease-out),
+    background-color var(--duration-fast) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out);
 }
 
 .tool-input::placeholder {
@@ -728,9 +728,10 @@
   cursor: pointer;
   user-select: none;
   transition:
-    background-color 0.12s ease,
-    border-color 0.12s ease,
-    color 0.12s ease;
+    background-color var(--duration-fast) var(--ease-out),
+    border-color var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out),
+    transform var(--duration-instant) var(--ease-out);
 }
 
 .tool-btn:hover:not(:disabled) {
@@ -740,6 +741,7 @@
 
 .tool-btn:active:not(:disabled) {
   background: var(--color-surface-active);
+  transform: scale(var(--press-scale));
 }
 
 .tool-btn:focus-visible {
@@ -787,13 +789,18 @@
   color: var(--color-text-muted);
   cursor: pointer;
   transition:
-    background-color 0.12s ease,
-    color 0.12s ease;
+    background-color var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out),
+    transform var(--duration-instant) var(--ease-out);
 }
 
 .tool-icon-btn:hover {
   background: var(--color-surface-hover);
   color: var(--color-text);
+}
+
+.tool-icon-btn:active {
+  transform: scale(var(--press-scale));
 }
 
 .tool-icon-btn:focus-visible {
@@ -825,14 +832,19 @@
   white-space: nowrap;
   cursor: pointer;
   transition:
-    background-color 0.12s ease,
-    color 0.12s ease,
-    box-shadow 0.12s ease;
+    background-color var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out),
+    transform var(--duration-instant) var(--ease-out);
 }
 
 .tool-seg:hover:not(.active) {
   background: var(--color-surface-hover);
   color: var(--color-text);
+}
+
+.tool-seg:active:not(.active) {
+  transform: scale(var(--press-scale));
 }
 
 .tool-seg.active {

@@ -17,9 +17,9 @@
   z-index: 10;
   overflow: visible;
   transition:
-    width 0.18s ease,
-    min-width 0.18s ease,
-    transform 0.18s ease;
+    width var(--duration-base) var(--ease-out),
+    min-width var(--duration-base) var(--ease-out),
+    transform var(--duration-base) var(--ease-out);
 }
 
 .sidebar.sidebar-collapsed {
@@ -82,8 +82,9 @@
   cursor: pointer;
   text-align: left;
   transition:
-    border-color 0.12s ease,
-    background-color 0.12s ease;
+    border-color var(--duration-fast) var(--ease-out),
+    background-color var(--duration-fast) var(--ease-out),
+    transform var(--duration-instant) var(--ease-out);
 }
 
 /* 悬停、按下、键盘焦点各司其职，不叠加 */
@@ -186,8 +187,9 @@
   background: transparent;
   cursor: pointer;
   transition:
-    background-color 0.12s ease,
-    color 0.12s ease;
+    background-color var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out),
+    transform var(--duration-instant) var(--ease-out);
   border-radius: var(--radius-md);
 }
 
@@ -229,7 +231,7 @@
 
 .nav-category-arrow {
   color: var(--color-text-muted);
-  transition: transform 0.16s ease;
+  transition: transform var(--duration-fast) var(--ease-overshoot);
   flex-shrink: 0;
 }
 
@@ -252,8 +254,9 @@
   background: transparent;
   border-radius: var(--radius-md);
   transition:
-    background-color 0.12s ease,
-    color 0.12s ease;
+    background-color var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out),
+    transform var(--duration-instant) var(--ease-out);
 }
 
 .nav-category-collapsed:hover {
@@ -314,8 +317,9 @@
   font-size: var(--text-base);
   font-weight: 400;
   transition:
-    background-color 0.12s ease,
-    color 0.12s ease;
+    background-color var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out),
+    transform var(--duration-instant) var(--ease-out);
   text-align: left;
 }
 
@@ -362,8 +366,9 @@
   cursor: pointer;
   color: var(--color-text-muted);
   transition:
-    background-color 0.12s ease,
-    color 0.12s ease;
+    background-color var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out),
+    transform var(--duration-instant) var(--ease-out);
   user-select: none;
   border: none;
   background: transparent;
@@ -388,6 +393,11 @@
 
 .nav-icon-btn:active:not(.active) {
   background: var(--color-surface-active);
+}
+
+/* 按压反馈：侧栏所有可点元素共用一份缩放，触屏上质感最明显 */
+.sidebar :is(button, [role='button']):active:not(:disabled) {
+  transform: scale(var(--press-scale));
 }
 
 /* 选中：中性填充 + 文字加粗，图标保持中性色 */
@@ -460,7 +470,7 @@
   white-space: nowrap;
   pointer-events: none;
   opacity: 0;
-  transition: opacity 0.14s ease;
+  transition: opacity var(--duration-fast) var(--ease-out);
   z-index: 100;
   box-shadow: var(--shadow-md);
 }
@@ -473,6 +483,12 @@
 /* 收藏区 */
 .nav-favorites-header {
   cursor: default;
+}
+
+/* 最近使用是可折叠分组（与分类同一套 chevron 语言），
+   覆盖上面的 cursor: default */
+.nav-recent-header {
+  cursor: pointer;
 }
 
 .nav-favorites-icon {
@@ -517,6 +533,13 @@
     color: var(--color-text);
     box-shadow: var(--shadow-sm);
     cursor: pointer;
+    transition:
+      background-color var(--duration-fast) var(--ease-out),
+      transform var(--duration-instant) var(--ease-out);
+  }
+
+  .sidebar-mobile-toggle:active {
+    transform: scale(var(--press-scale));
   }
 
   .sidebar-mobile-backdrop {
@@ -545,8 +568,8 @@
     transform: translateX(-105%);
     box-shadow: var(--shadow-lg);
     transition:
-      transform 0.2s ease,
-      width 0.2s ease;
+      transform var(--duration-base) var(--ease-out),
+      width var(--duration-base) var(--ease-out);
   }
 
   .sidebar.sidebar-collapsed,

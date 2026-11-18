@@ -173,6 +173,76 @@
   --app-root-font-size: 18px;
 }
 
+/* ── 动效令牌 ───────────────────────────────────────────
+   全站时长与缓出曲线只从这里取，页面 CSS 不写死秒数。
+   ease-out 负责「出现」；overshoot 只留给按压/选中这类
+   需要一点物理感的微交互；reduced-motion 由全局 kill
+   switch 与视图过渡守卫共同接管。 */
+:root {
+  --duration-instant: 90ms;
+  --duration-fast: 140ms;
+  --duration-base: 200ms;
+  --duration-slow: 280ms;
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-overshoot: cubic-bezier(0.34, 1.4, 0.64, 1);
+
+  /* 按压反馈：按钮/导航项按下时的缩放，触屏上质感最明显 */
+  --press-scale: 0.97;
+}
+
+/* ── 视图过渡：工具页切换 ───────────────────────────────
+   App.tsx 的 navigate 用 document.startViewTransition 包裹。
+   只给内容区（.main-content）命名：侧栏等常驻 chrome 不进
+   快照、不闪不动——整页一起淡入淡出就是「像刷新」的根源。
+   根快照新旧完全一致，动画直接停掉；内容区盒尺寸恒定
+   （撑满视口），只剩一次纯透明度淡化，无位移、无挤压。 */
+.main-content {
+  view-transition-name: main-content;
+}
+
+/* 根快照 = 侧栏 + 背景，新旧一致，停掉默认淡化 */
+::view-transition-old(root) {
+  animation: none;
+  z-index: 0;
+}
+
+::view-transition-new(root) {
+  animation: none;
+  z-index: 1;
+}
+
+/* 旧内容原样停在底层，新内容淡入盖上——纯溶解，不带任何位移 */
+::view-transition-old(main-content) {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  animation: none;
+}
+
+::view-transition-new(main-content) {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  animation: vt-content-enter var(--duration-fast) var(--ease-out) both;
+}
+
+@keyframes vt-content-enter {
+  from {
+    opacity: 0;
+  }
+}
+
+/* reduced-motion 下自定义的 ::view-transition 动画同样要停 */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}
+
 html {
   font-size: var(--app-root-font-size);
   scrollbar-color: var(--color-border-hover) transparent;

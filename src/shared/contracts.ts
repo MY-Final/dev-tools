@@ -13,6 +13,8 @@ export interface AppSettings {
     fontSize: 'small' | 'medium' | 'large'
     sidebarCollapsed: boolean
     showSidebarShortDesc: boolean
+    /** 侧栏「最近使用」分组是否收起——自动生成的列表，默认展开但可折叠 */
+    sidebarRecentCollapsed: boolean
   }
   editor: {
     jsonIndent: 2 | 4
@@ -164,7 +166,8 @@ export const DEFAULT_SETTINGS: AppSettings = {
     theme: 'dark',
     fontSize: 'medium',
     sidebarCollapsed: false,
-    showSidebarShortDesc: true
+    showSidebarShortDesc: true,
+    sidebarRecentCollapsed: false
   },
   editor: {
     jsonIndent: 2,
@@ -301,6 +304,10 @@ export function normalizeSettings(value: unknown): AppSettings {
       showSidebarShortDesc: readBoolean(
         appearance.showSidebarShortDesc,
         DEFAULT_SETTINGS.appearance.showSidebarShortDesc
+      ),
+      sidebarRecentCollapsed: readBoolean(
+        appearance.sidebarRecentCollapsed,
+        DEFAULT_SETTINGS.appearance.sidebarRecentCollapsed
       )
     },
     editor: {

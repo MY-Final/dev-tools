@@ -18,47 +18,9 @@ export interface ElectronCompatAPI {
   }
 }
 
-export interface AppSettings {
-  appearance: {
-    theme: 'light' | 'dark' | 'system'
-    fontSize: 'small' | 'medium' | 'large'
-    sidebarCollapsed: boolean
-    showSidebarShortDesc: boolean
-  }
-  editor: {
-    jsonIndent: 2 | 4
-    autoCopy: boolean
-    timestampFormat: 'seconds' | 'milliseconds'
-  }
-  updater: {
-    autoCheck: boolean
-  }
-  window: {
-    closeBehavior: 'ask' | 'minimize-to-tray' | 'exit'
-  }
-  translator: {
-    baseUrl: string
-    apiKey: string
-    model: string
-    systemPrompt: string
-    temperature: number
-    maxTokens: number
-  }
-  npmRegistry: string
-  mavenSearchUrl: string
-  proxy: {
-    enabled: boolean
-    url: string
-  }
-  shortcuts: {
-    toggleSidebar: string
-    openSettings: string
-    goHome: string
-  }
-  favorites: string[]
-  recentTools: string[]
-  toolUsage: Record<string, number>
-}
+// AppSettings 的唯一真源在 shared/contracts。这里曾有一份手写副本，
+// 2026-11 加字段时两边漂移导致渲染进程类型不兼容，改为直接 re-export。
+export type { AppSettings } from '../shared/contracts'
 
 export interface SettingsAPI {
   getSettings: () => Promise<AppSettings>
