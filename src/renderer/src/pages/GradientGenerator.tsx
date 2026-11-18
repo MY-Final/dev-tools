@@ -1,5 +1,7 @@
 import { useState, useCallback } from 'react'
 import { Copy, Check, RotateCcw } from 'lucide-react'
+import CopyToast from '@renderer/components/CopyToast'
+import { copyText } from '@renderer/lib/clipboard'
 import '../styles/gradient-generator.css'
 
 type GradientDirection =
@@ -47,6 +49,7 @@ export default function GradientGenerator(): React.JSX.Element {
   const [color2, setColor2] = useState('#8B5CF6')
   const [direction, setDirection] = useState<GradientDirection>('to bottom right')
   const [copied, setCopied] = useState(false)
+  const [copyError, setCopyError] = useState(false)
 
   const gradientCss = `background: linear-gradient(${direction}, ${color1}, ${color2});`
   const gradientStyle = { background: `linear-gradient(${direction}, ${color1}, ${color2})` }
@@ -57,13 +60,13 @@ export default function GradientGenerator(): React.JSX.Element {
   }, [])
 
   const copy = useCallback(async () => {
-    try {
-      await navigator.clipboard.writeText(gradientCss)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 1500)
-    } catch {
-      /* ignore */
+    if (!(await copyText(gradientCss))) {
+      setCopyError(true)
+      setTimeout(() => setCopyError(false), 1800)
+      return
     }
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1500)
   }, [gradientCss])
 
   const reset = useCallback(() => {
@@ -178,6 +181,7 @@ export default function GradientGenerator(): React.JSX.Element {
           <pre className="gg-output-code">{gradientCss}</pre>
         </div>
       </div>
+      <CopyToast message={copyError ? '复制失败，请手动选择' : null} />
     </div>
   )
 }

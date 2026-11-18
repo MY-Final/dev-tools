@@ -1,5 +1,7 @@
 import { useState, useCallback } from 'react'
 import { Copy, Check } from 'lucide-react'
+import CopyToast from '@renderer/components/CopyToast'
+import { copyText } from '@renderer/lib/clipboard'
 import '../styles/number-formatter.css'
 
 type Style =
@@ -26,13 +28,20 @@ function parseNumericInput(input: string): number | null {
   return Number.isFinite(value) ? value : null
 }
 
+/** 用 BigInt 做进制转换：避免 >>> 0 把负数和超过 2^32 的值静默截断。 */
+function formatIntegerBase(n: number, radix: 2 | 8 | 16): string {
+  return BigInt(Math.round(n)).toString(radix).toUpperCase()
+}
+
 function formatNumber(
   n: number,
   style: Style,
   locale: string,
   currency: string,
-  fractionDigits: number
+  rawFractionDigits: number
 ): string {
+  // Intl 只接受 0–20；输入框被键入 -1 时曾直接抛 RangeError 让整页进入错误边界。
+  const fractionDigits = Math.min(20, Math.max(0, Math.trunc(rawFractionDigits) || 0))
   switch (style) {
     case 'decimal':
       return new Intl.NumberFormat(locale, {
@@ -83,14 +92,12 @@ function formatNumber(
       const suffix = suffixes[engExp.toString()] || `e${engExp}`
       return `${sign}${mantissa.toFixed(fractionDigits)} ${suffix}`
     }
-    case 'hex': {
-      const i = Math.round(n)
-      return (i >>> 0).toString(16).toUpperCase()
-    }
+    case 'hex':
+      return formatIntegerBase(n, 16)
     case 'octal':
-      return (Math.round(n) >>> 0).toString(8)
+      return formatIntegerBase(n, 8)
     case 'binary':
-      return (Math.round(n) >>> 0).toString(2)
+      return formatIntegerBase(n, 2)
     default:
       return n.toString()
   }
@@ -123,6 +130,7 @@ export default function NumberFormatter(): React.JSX.Element {
   const [currency, setCurrency] = useState('CNY')
   const [fractionDigits, setFractionDigits] = useState(2)
   const [copiedId, setCopiedId] = useState<string | null>(null)
+  const [copyError, setCopyError] = useState(false)
 
   const n = parseNumericInput(input)
   const hasInput = n !== null
@@ -137,13 +145,13 @@ export default function NumberFormatter(): React.JSX.Element {
 
   const copyResult = useCallback(async (id: string, value: string) => {
     if (value === '—') return
-    try {
-      await navigator.clipboard.writeText(value)
-      setCopiedId(id)
-      setTimeout(() => setCopiedId(null), 1500)
-    } catch {
-      /* ignore */
+    if (!(await copyText(value))) {
+      setCopyError(true)
+      setTimeout(() => setCopyError(false), 1800)
+      return
     }
+    setCopiedId(id)
+    setTimeout(() => setCopiedId(null), 1500)
   }, [])
 
   return (
@@ -205,15 +213,19 @@ export default function NumberFormatter(): React.JSX.Element {
               type="number"
               min={0}
               max={20}
+              step={1}
               value={fractionDigits}
-              onChange={(e) => setFractionDigits(parseInt(e.target.value) || 0)}
+              onChange={(e) => {
+                const next = Math.trunc(Number(e.target.value))
+                setFractionDigits(Number.isFinite(next) ? Math.min(20, Math.max(0, next)) : 0)
+              }}
             />
           </label>
         </div>
 
         {input && !hasInput && (
           <div className="nfm-error" role="alert">
-            请输入有效数字
+            请输入有效数字，支持小数与科学计数法（如 1234.5、-2e3）
           </div>
         )}
       </section>
@@ -242,12 +254,19 @@ export default function NumberFormatter(): React.JSX.Element {
                     )}
                   </button>
                 </div>
-                <div className="nfm-result-value">{r.value}</div>
+                <div className="nfm-result-value" title={r.value}>
+                  {r.value}
+                </div>
               </div>
             ))}
           </div>
+          <p className="nfm-note">
+            十六 / 八 / 二进制会先四舍五入为整数；负值与超大整数按实际数值展示，不做 32
+            位补码截断。
+          </p>
         </section>
       )}
+      <CopyToast message={copyError ? '复制失败，请手动选择' : null} />
     </div>
   )
 }

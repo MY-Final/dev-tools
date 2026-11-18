@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from 'react'
 import { Check, Copy, RotateCcw } from 'lucide-react'
 import TextFileBar from '@renderer/components/TextFileBar'
+import { copyText } from '@renderer/lib/clipboard'
 import { CASE_FORMATS, splitWords, type CaseFormat } from '@renderer/lib/case-transform'
 
 type CopyStatus = 'idle' | 'copied' | 'failed'
@@ -25,13 +26,8 @@ function useCopy(): [CopyStatus, (text: string) => Promise<void>] {
   const timer = useRef(0)
 
   const copy = async (text: string): Promise<void> => {
-    let next: CopyStatus = 'copied'
-    try {
-      await navigator.clipboard.writeText(text)
-    } catch {
-      next = 'failed'
-    }
-    setStatus(next)
+    const ok = await copyText(text)
+    setStatus(ok ? 'copied' : 'failed')
     window.clearTimeout(timer.current)
     timer.current = window.setTimeout(() => setStatus('idle'), 1500)
   }

@@ -1,5 +1,10 @@
+import { useMemo } from 'react'
 import { Copy, Check, RefreshCw } from 'lucide-react'
 import { useCronGenerator, type Frequency } from '@renderer/tools/cron-generator/useCronGenerator'
+import {
+  parseCronExpressionDetailed,
+  validateCronConfig
+} from '@renderer/tools/cron-generator/cron-utils'
 
 const FREQUENCIES: { id: Frequency; label: string }[] = [
   { id: 'every-minute', label: '每分钟' },
@@ -52,6 +57,12 @@ export default function CronGenerator(): React.JSX.Element {
     QUICK_TEMPLATES
   } = useCronGenerator()
 
+  const configIssue = useMemo(() => validateCronConfig(config), [config])
+  const parseResult = useMemo(
+    () => (mode === 'parser' && parserInput.trim() ? parseCronExpressionDetailed(parserInput) : null),
+    [mode, parserInput]
+  )
+
   const renderField = (
     label: string,
     value: string,
@@ -96,7 +107,11 @@ export default function CronGenerator(): React.JSX.Element {
     )
   }
 
-  const renderNextRuns = (dates: Date[], countControl?: React.JSX.Element): React.JSX.Element => (
+  const renderNextRuns = (
+    dates: Date[],
+    countControl?: React.JSX.Element,
+    emptyMessage = '40 年内没有匹配的执行时间，请检查日期与月份组合。'
+  ): React.JSX.Element => (
     <div className="cron-runs">
       {countControl && <div className="cron-runs-head">{countControl}</div>}
       {dates.length > 0 ? (
@@ -109,7 +124,7 @@ export default function CronGenerator(): React.JSX.Element {
           ))}
         </div>
       ) : (
-        <div className="cron-empty">没有可用的执行时间。</div>
+        <div className="cron-empty">{emptyMessage}</div>
       )}
     </div>
   )
@@ -255,7 +270,14 @@ export default function CronGenerator(): React.JSX.Element {
           <div className="cron-expression">
             <code>{cronExpression}</code>
           </div>
-          <p className="cron-description">{description}</p>
+          {configIssue ? (
+            <p className="cron-config-error" role="status">
+              {configIssue.field}「{configIssue.value}」超出有效范围（{configIssue.min}–
+              {configIssue.max}），当前表达式不会触发。
+            </p>
+          ) : (
+            <p className="cron-description">{description}</p>
+          )}
         </section>
 
         <section className="tool-panel cron-preview">
@@ -275,7 +297,11 @@ export default function CronGenerator(): React.JSX.Element {
               ))}
             </div>
           </div>
-          {renderNextRuns(nextRuns)}
+          {renderNextRuns(
+            nextRuns,
+            undefined,
+            configIssue ? '表达式无效，无法计算执行时间。' : undefined
+          )}
         </section>
       </div>
     </div>
@@ -303,9 +329,11 @@ export default function CronGenerator(): React.JSX.Element {
           />
           <span className="cron-parser-hint">分 时 日 月 周</span>
         </div>
-        {!parsedConfig && parserInput && (
+        {parseResult?.error && (
           <p className="cron-error" role="status">
-            无效的 Cron 表达式，请输入 5 个字段（分 时 日 月 周）。
+            {parseResult.error === 'part-count'
+              ? `Cron 表达式需要 5 个字段（分 时 日 月 周），当前为 ${parseResult.partCount} 个。`
+              : '字段值或语法无效：支持 *、数字、a-b 范围、*/n 步长、逗号列表，以及 JAN–DEC / SUN–SAT 缩写。'}
           </p>
         )}
       </section>

@@ -103,7 +103,8 @@
 
 .v4c-output-row {
   display: grid;
-  grid-template-columns: 108px minmax(0, 1fr) 24px;
+  /* 窄屏触控目标会把复制按钮撑到 44px，固定列宽会被面板裁掉。 */
+  grid-template-columns: 108px minmax(0, 1fr) auto;
   align-items: center;
   gap: 10px;
   min-width: 0;
@@ -167,6 +168,6 @@
   }
 
   .v4c-output-row {
-    grid-template-columns: 92px minmax(0, 1fr) 24px;
+    grid-template-columns: 92px minmax(0, 1fr) auto;
   }
 }

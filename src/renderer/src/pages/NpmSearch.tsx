@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Copy, Check, Search, ExternalLink, Package, Loader } from 'lucide-react'
 import { searchNpm, getNpmPackage, type NpmSearchResult, type NpmPackageDetail } from '@renderer/lib/npm-api'
+import CopyToast from '@renderer/components/CopyToast'
+import { copyText } from '@renderer/lib/clipboard'
 import '../styles/npm-search.css'
 
 const REQUEST_TIMEOUT_MS = 15000
@@ -53,6 +55,7 @@ export default function NpmSearch(): React.JSX.Element {
   const [detailLoading, setDetailLoading] = useState(false)
   const [detailError, setDetailError] = useState('')
   const [copied, setCopied] = useState<string | null>(null)
+  const [copyError, setCopyError] = useState(false)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const searchRequestRef = useRef(0)
   const detailRequestRef = useRef(0)
@@ -169,11 +172,13 @@ export default function NpmSearch(): React.JSX.Element {
 
   const copyDep = useCallback(async (name: string, version: string) => {
     const dep = `"${name}": "^${version}"`
-    try {
-      await navigator.clipboard.writeText(dep)
-      setCopied(`${name}@${version}`)
-      setTimeout(() => setCopied(null), 1500)
-    } catch { /* ignore */ }
+    if (!(await copyText(dep))) {
+      setCopyError(true)
+      setTimeout(() => setCopyError(false), 1800)
+      return
+    }
+    setCopied(`${name}@${version}`)
+    setTimeout(() => setCopied(null), 1500)
   }, [])
 
   return (
@@ -296,6 +301,7 @@ export default function NpmSearch(): React.JSX.Element {
           <div className="npm-empty" role="status" aria-live="polite">未找到匹配的包</div>
         )}
       </div>
+      <CopyToast message={copyError ? '复制失败，请手动选择' : null} />
     </div>
   )
 }

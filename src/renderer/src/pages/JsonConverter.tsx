@@ -1,6 +1,8 @@
 import { useState, useMemo, useCallback } from 'react'
 import { Copy, Check, RotateCcw, ArrowRight, FileText } from 'lucide-react'
 import TextFileBar from '@renderer/components/TextFileBar'
+import CopyToast from '@renderer/components/CopyToast'
+import { copyText } from '@renderer/lib/clipboard'
 import {
   parseJsonDocument,
   stringifyTomlDocument,
@@ -137,6 +139,7 @@ export default function JsonConverter(): React.JSX.Element {
   const [mode, setMode] = useState<ConvertMode>('ts')
   const [input, setInput] = useState('')
   const [copied, setCopied] = useState(false)
+  const [copyError, setCopyError] = useState(false)
 
   const modeDef = MODES.find((m) => m.id === mode) ?? MODES[0]
 
@@ -146,13 +149,13 @@ export default function JsonConverter(): React.JSX.Element {
   const clear = useCallback(() => setInput(''), [])
   const copy = useCallback(async () => {
     if (!result.output) return
-    try {
-      await navigator.clipboard.writeText(result.output)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 1500)
-    } catch {
-      /* clipboard permissions can be denied; the text stays selectable */
+    if (!(await copyText(result.output))) {
+      setCopyError(true)
+      setTimeout(() => setCopyError(false), 1800)
+      return
     }
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1500)
   }, [result.output])
 
   return (
@@ -243,6 +246,7 @@ export default function JsonConverter(): React.JSX.Element {
           </ul>
         )}
       </div>
+      <CopyToast message={copyError ? '复制失败，请手动选择' : null} />
     </div>
   )
 }

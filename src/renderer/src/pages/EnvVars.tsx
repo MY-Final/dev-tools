@@ -1,5 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { Search, Copy, Check, RefreshCw, Eye, EyeOff } from 'lucide-react'
+import CopyToast from '@renderer/components/CopyToast'
+import { copyText } from '@renderer/lib/clipboard'
 
 export default function EnvVars(): React.JSX.Element {
   const [vars, setVars] = useState<Record<string, string>>({})
@@ -7,6 +9,7 @@ export default function EnvVars(): React.JSX.Element {
   const [error, setError] = useState(false)
   const [search, setSearch] = useState('')
   const [copiedKey, setCopiedKey] = useState<string | null>(null)
+  const [copyError, setCopyError] = useState(false)
   const [maskSensitive, setMaskSensitive] = useState(true)
 
   // Initial load — async IPC, no synchronous setState in effect body
@@ -82,26 +85,28 @@ export default function EnvVars(): React.JSX.Element {
 
   const copyToClipboard = useCallback(
     async (key: string) => {
-      try {
-        await navigator.clipboard.writeText(vars[key])
-        setCopiedKey(key)
-        setTimeout(() => setCopiedKey(null), 1500)
-      } catch {
-        // ignore
+      const ok = await copyText(vars[key])
+      if (!ok) {
+        setCopyError(true)
+        setTimeout(() => setCopyError(false), 1800)
+        return
       }
+      setCopiedKey(key)
+      setTimeout(() => setCopiedKey(null), 1500)
     },
     [vars]
   )
 
   const copyAll = useCallback(async () => {
     const text = sortedEntries.map(([k, v]) => `${k}=${v}`).join('\n')
-    try {
-      await navigator.clipboard.writeText(text)
-      setCopiedKey('__all__')
-      setTimeout(() => setCopiedKey(null), 1500)
-    } catch {
-      // ignore
+    const ok = await copyText(text)
+    if (!ok) {
+      setCopyError(true)
+      setTimeout(() => setCopyError(false), 1800)
+      return
     }
+    setCopiedKey('__all__')
+    setTimeout(() => setCopiedKey(null), 1500)
   }, [sortedEntries])
 
   return (
@@ -213,6 +218,7 @@ export default function EnvVars(): React.JSX.Element {
           </div>
         )}
       </section>
+      <CopyToast message={copyError ? '复制失败，请手动选择' : null} />
     </div>
   )
 }

@@ -1,5 +1,7 @@
 import { useState, useCallback } from 'react'
 import { Copy, Check, RefreshCw, AlertTriangle } from 'lucide-react'
+import CopyToast from '@renderer/components/CopyToast'
+import { copyText } from '@renderer/lib/clipboard'
 
 type RangeType = 'dynamic' | 'registered' | 'well-known' | 'custom'
 
@@ -63,6 +65,7 @@ export default function PortGenerator(): React.JSX.Element {
   const [ports, setPorts] = useState<number[]>([])
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null)
   const [copiedAll, setCopiedAll] = useState(false)
+  const [copyError, setCopyError] = useState(false)
 
   const getRange = useCallback((): { min: number; max: number } => {
     if (rangeType === 'custom') {
@@ -82,26 +85,29 @@ export default function PortGenerator(): React.JSX.Element {
     setPorts(newPorts)
   }, [getRange, count, excludeCommon])
 
-  const copyPort = useCallback(async (port: number, index: number) => {
-    try {
-      await navigator.clipboard.writeText(port.toString())
-      setCopiedIndex(index)
-      setTimeout(() => setCopiedIndex(null), 1500)
-    } catch {
-      // fallback
-    }
+  const showCopyError = useCallback(() => {
+    setCopyError(true)
+    setTimeout(() => setCopyError(false), 1800)
   }, [])
+
+  const copyPort = useCallback(async (port: number, index: number) => {
+    if (!(await copyText(port.toString()))) {
+      showCopyError()
+      return
+    }
+    setCopiedIndex(index)
+    setTimeout(() => setCopiedIndex(null), 1500)
+  }, [showCopyError])
 
   const copyAll = useCallback(async () => {
     if (ports.length === 0) return
-    try {
-      await navigator.clipboard.writeText(ports.join('\n'))
-      setCopiedAll(true)
-      setTimeout(() => setCopiedAll(false), 1500)
-    } catch {
-      // fallback
+    if (!(await copyText(ports.join('\n')))) {
+      showCopyError()
+      return
     }
-  }, [ports])
+    setCopiedAll(true)
+    setTimeout(() => setCopiedAll(false), 1500)
+  }, [ports, showCopyError])
 
   const selectedRange = RANGES.find((r) => r.id === rangeType)!
 
@@ -274,6 +280,7 @@ export default function PortGenerator(): React.JSX.Element {
           )}
         </section>
       </div>
+      <CopyToast message={copyError ? '复制失败，请手动选择' : null} />
     </div>
   )
 }

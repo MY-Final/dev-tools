@@ -77,12 +77,12 @@
   --jf-boolean: #8fb3d9;
   --jf-null: #948f84;
 
-  /* 尺寸标尺 */
-  --radius-xs: 4px;
-  --radius-sm: 6px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
+  /* 尺寸标尺（连续曲率下的视觉半径） */
+  --radius-xs: 5px;
+  --radius-sm: 7.5px;
+  --radius-md: 10px;
+  --radius-lg: 15px;
+  --radius-xl: 20px;
   --radius-pill: 999px;
 
   --text-2xs: 0.625rem;   /* 10px */
@@ -189,6 +189,15 @@ html {
 
 ul {
   list-style: none;
+}
+
+/* ── 连续曲率圆角 ─────────────────────────────────────────── */
+/* 圆角矩形统一采用 squircle（超椭圆）曲线，半径按 1.25× 标定
+   以保持原有视觉圆润度。正圆元素单独声明 corner-shape: round。 */
+*,
+*::before,
+*::after {
+  corner-shape: squircle;
 }
 
 body {

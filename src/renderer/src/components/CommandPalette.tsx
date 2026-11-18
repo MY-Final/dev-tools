@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback, useRef, useMemo, useId } from 'react'
 import { supportsWeb, tools } from '@renderer/tools/registry'
 import type { ToolItem as RegistryToolItem } from '@renderer/types/tool'
 import { isWebRuntime } from '@renderer/lib/platform'
+import { useSettings } from '@renderer/lib/contexts'
+import { scoreToolQuery } from '@renderer/lib/tool-search'
 import StatusMessage from '@renderer/components/StatusMessage'
 
 interface ToolItem {
@@ -11,6 +13,8 @@ interface ToolItem {
   icon: RegistryToolItem['icon']
   category: string
   platforms: RegistryToolItem['platforms']
+  usage?: string
+  tags?: string[]
 }
 
 const ALL_TOOLS = tools as unknown as ToolItem[]
@@ -30,6 +34,7 @@ const FOCUSABLE_SELECTOR = [
 ].join(',')
 
 export default function CommandPalette({ onNavigate }: Props): React.JSX.Element {
+  const { settings } = useSettings()
   const webRuntime = isWebRuntime()
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
@@ -112,16 +117,35 @@ export default function CommandPalette({ onNavigate }: Props): React.JSX.Element
     return () => window.clearTimeout(timer)
   }, [open])
 
+  // 空查询时把最近使用排在最前，按 Enter 即可回到上次的工具
+  const orderedTools = useMemo(() => {
+    const byId = new Map(ALL_TOOLS.map((tool) => [tool.id, tool]))
+    const recent = settings.recentTools
+      .map((id) => byId.get(id))
+      .filter((tool): tool is ToolItem => Boolean(tool))
+    const recentIds = new Set(recent.map((tool) => tool.id))
+    return [...recent, ...ALL_TOOLS.filter((tool) => !recentIds.has(tool.id))]
+  }, [settings.recentTools])
+
+  // 有查询时按相关度排序：名称命中优先，其次收藏与本地使用次数；
+  // 空查询保持「最近使用优先」，让 Enter 仍然回到上次的工具。
   const filtered = useMemo(() => {
-    if (!query.trim()) return ALL_TOOLS
-    const normalizedQuery = query.toLowerCase()
-    return ALL_TOOLS.filter(
-      (tool) =>
-        tool.name.toLowerCase().includes(normalizedQuery) ||
-        tool.desc.toLowerCase().includes(normalizedQuery) ||
-        tool.category.toLowerCase().includes(normalizedQuery)
-    )
-  }, [query])
+    if (!query.trim()) return orderedTools
+    const usage = settings.toolUsage ?? {}
+    return orderedTools
+      .map((tool) => ({ tool, score: scoreToolQuery(tool, query) }))
+      .filter((entry) => entry.score > 0)
+      .sort((a, b) => {
+        if (a.score !== b.score) return b.score - a.score
+        const aFavorite = settings.favorites.includes(a.tool.id) ? 1 : 0
+        const bFavorite = settings.favorites.includes(b.tool.id) ? 1 : 0
+        if (aFavorite !== bFavorite) return bFavorite - aFavorite
+        const usageDelta = (usage[b.tool.id] ?? 0) - (usage[a.tool.id] ?? 0)
+        if (usageDelta !== 0) return usageDelta
+        return a.tool.name.localeCompare(b.tool.name)
+      })
+      .map((entry) => entry.tool)
+  }, [query, orderedTools, settings.favorites, settings.toolUsage])
 
   const maxIndex = Math.max(filtered.length - 1, 0)
   const activeIndex = Math.min(selectedIndex, maxIndex)

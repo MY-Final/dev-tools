@@ -1,5 +1,7 @@
 import { useState, useMemo } from 'react'
 import { MonitorSmartphone, Copy, Check, RotateCcw } from 'lucide-react'
+import CopyToast from '@renderer/components/CopyToast'
+import { copyText } from '@renderer/lib/clipboard'
 import '../styles/user-agent-parser.css'
 
 interface UAResult {
@@ -171,6 +173,7 @@ function InfoRow({ label, value }: InfoRowProps): React.JSX.Element {
 export default function UserAgentParser(): React.JSX.Element {
   const [input, setInput] = useState(() => (typeof navigator !== 'undefined' ? navigator.userAgent : ''))
   const [copied, setCopied] = useState(false)
+  const [copyError, setCopyError] = useState(false)
 
   const result = useMemo(() => parseUA(input), [input])
 
@@ -179,7 +182,7 @@ export default function UserAgentParser(): React.JSX.Element {
     setInput(typeof navigator !== 'undefined' ? navigator.userAgent : '')
   }
 
-  const copyResult = (): void => {
+  const copyResult = async (): Promise<void> => {
     if (!result) return
     const text = [
       `浏览器: ${result.browser.name} ${result.browser.version}`,
@@ -187,10 +190,13 @@ export default function UserAgentParser(): React.JSX.Element {
       `操作系统: ${result.os.name} ${result.os.version}`,
       `设备: ${result.device.type} ${result.device.vendor} ${result.device.model}`.trim()
     ].join('\n')
-    navigator.clipboard.writeText(text).then(() => {
-      setCopied(true)
-      setTimeout(() => setCopied(false), 1500)
-    })
+    if (!(await copyText(text))) {
+      setCopyError(true)
+      setTimeout(() => setCopyError(false), 1800)
+      return
+    }
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1500)
   }
 
 
@@ -253,6 +259,7 @@ export default function UserAgentParser(): React.JSX.Element {
           <span>输入 User-Agent 字符串查看解析结果</span>
         </div>
       )}
+      <CopyToast message={copyError ? '复制失败，请手动选择' : null} />
     </div>
   )
 }

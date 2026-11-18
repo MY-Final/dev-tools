@@ -1,9 +1,10 @@
 import { useState, useMemo } from 'react'
-import { Search, Layers, Star } from 'lucide-react'
+import { Search, Layers, Star, History, X } from 'lucide-react'
 import { supportsWeb, tools } from '@renderer/tools/registry'
 import type { ToolItem } from '@renderer/types/tool'
 import { useSettings } from '@renderer/lib/contexts'
 import { isWebRuntime } from '@renderer/lib/platform'
+import { matchesToolQuery } from '@renderer/lib/tool-search'
 import '../styles/home.css'
 
 // ── Tags ──────────────────────────────────────────────────────
@@ -25,27 +26,120 @@ const CATEGORY_TONE: Record<string, number> = {
   备忘录: 9
 }
 
+// 首页卡片的方向键导航：按几何位置找最近的卡片，跨分类也能连续移动。
+function handleGridKeyDown(event: React.KeyboardEvent<HTMLElement>): void {
+  const directions: Record<string, { x: number; y: number }> = {
+    ArrowRight: { x: 1, y: 0 },
+    ArrowLeft: { x: -1, y: 0 },
+    ArrowDown: { x: 0, y: 1 },
+    ArrowUp: { x: 0, y: -1 }
+  }
+  const direction = directions[event.key]
+  if (!direction) return
+
+  const target = event.target as HTMLElement
+  if (!target.classList.contains('home-tool-card-main')) return
+  const section = target.closest('.home-tools-section')
+  if (!section) return
+
+  const from = target.getBoundingClientRect()
+  let best: HTMLElement | null = null
+  let bestScore = Number.POSITIVE_INFINITY
+
+  for (const card of section.querySelectorAll<HTMLElement>('.home-tool-card-main')) {
+    if (card === target) continue
+    const rect = card.getBoundingClientRect()
+    const dx = rect.left - from.left
+    const dy = rect.top - from.top
+    const primary = dx * direction.x + dy * direction.y
+    if (primary <= 2) continue
+    const secondary = Math.abs(dx * direction.y - dy * direction.x)
+    const score = primary + secondary * 2
+    if (score < bestScore) {
+      bestScore = score
+      best = card
+    }
+  }
+
+  if (!best) return
+  event.preventDefault()
+  best.focus({ preventScroll: true })
+  best.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+}
+
+interface ToolCardProps {
+  tool: ToolItem
+  favorite: boolean
+  webRuntime: boolean
+  onSelect: (id: string) => void
+  onToggleFavorite: (id: string) => void
+}
+
+function ToolCard({
+  tool,
+  favorite,
+  webRuntime,
+  onSelect,
+  onToggleFavorite
+}: ToolCardProps): React.JSX.Element {
+  const Icon = tool.icon
+
+  return (
+    <div className="home-tool-card">
+      <button type="button" className="home-tool-card-main" onClick={() => onSelect(tool.id)}>
+        <span className="home-tool-icon" aria-hidden="true">
+          <Icon size={17} />
+        </span>
+        <span className="home-tool-body">
+          <span className="home-tool-title-row">
+            <span className="home-tool-name">{tool.name}</span>
+            {tool.isNew && <span className="home-tool-badge">新</span>}
+            {webRuntime && !supportsWeb(tool) && (
+              <span className="home-tool-badge" title="该工具需要下载桌面版">
+                桌面端
+              </span>
+            )}
+          </span>
+          <span className="home-tool-desc">{tool.desc}</span>
+        </span>
+      </button>
+      <button
+        type="button"
+        className={`home-tool-star ${favorite ? 'active' : ''}`}
+        onClick={() => onToggleFavorite(tool.id)}
+        title={favorite ? '取消收藏' : '收藏'}
+        aria-pressed={favorite}
+        aria-label={favorite ? `取消收藏${tool.name}` : `收藏${tool.name}`}
+      >
+        <Star size={13} fill={favorite ? 'currentColor' : 'none'} />
+      </button>
+    </div>
+  )
+}
+
 interface HomeProps {
   onSelectTool: (id: string) => void
 }
 
 export default function Home({ onSelectTool }: HomeProps): React.JSX.Element {
-  const { settings, updateFavorites } = useSettings()
+  const { settings, updateFavorites, clearRecentTools } = useSettings()
   const favorites = settings.favorites
   const webRuntime = isWebRuntime()
   const [search, setSearch] = useState('')
   const [selectedTag, setSelectedTag] = useState<string | null>(null)
 
+  // 最近使用：按运行环境过滤掉不可用的工具
+  const recentTools = useMemo(() => {
+    const resolved = settings.recentTools
+      .map((id) => tools.find((t) => t.id === id))
+      .filter((t): t is ToolItem => Boolean(t))
+    return webRuntime ? resolved.filter((t) => supportsWeb(t)) : resolved
+  }, [settings.recentTools, webRuntime])
+
   const filteredTools = useMemo(() => {
     let list = tools
     if (search.trim()) {
-      const q = search.toLowerCase()
-      list = list.filter(
-        (t) =>
-          t.name.toLowerCase().includes(q) ||
-          t.desc.toLowerCase().includes(q) ||
-          t.category.toLowerCase().includes(q)
-      )
+      list = list.filter((t) => matchesToolQuery(t, search))
     }
     if (selectedTag) {
       list = list.filter((t) => t.tags?.includes(selectedTag))
@@ -117,7 +211,40 @@ export default function Home({ onSelectTool }: HomeProps): React.JSX.Element {
         </div>
       </header>
 
-      <section className="home-tools-section">
+      <section className="home-tools-section" onKeyDown={handleGridKeyDown}>
+        {recentTools.length > 0 && !search.trim() && !selectedTag && (
+          <div className="home-category home-recent">
+            <div className="home-category-header">
+              <span className="home-category-mark" aria-hidden="true" />
+              <History size={14} className="home-recent-icon" aria-hidden="true" />
+              <h2 className="home-category-title">最近使用</h2>
+              <span className="home-category-count">{recentTools.length}</span>
+              <button
+                type="button"
+                className="home-recent-clear"
+                onClick={() => void clearRecentTools()}
+                title="清空最近使用"
+                aria-label="清空最近使用"
+              >
+                <X size={12} aria-hidden="true" />
+                清空
+              </button>
+            </div>
+            <div className="home-tool-grid">
+              {recentTools.map((t) => (
+                <ToolCard
+                  key={t.id}
+                  tool={t}
+                  favorite={favorites.includes(t.id)}
+                  webRuntime={webRuntime}
+                  onSelect={onSelectTool}
+                  onToggleFavorite={updateFavorites}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
         {[...categories.entries()].map(([category, { tools: categoryTools }]) => {
           const tone = CATEGORY_TONE[category] ?? 1
           return (
@@ -128,45 +255,16 @@ export default function Home({ onSelectTool }: HomeProps): React.JSX.Element {
                 <span className="home-category-count">{categoryTools.length}</span>
               </div>
               <div className="home-tool-grid">
-                {categoryTools.map((t) => {
-                  const Icon = t.icon
-                  const isFavorite = favorites.includes(t.id)
-                  return (
-                    <div key={t.id} className="home-tool-card">
-                      <button
-                        type="button"
-                        className="home-tool-card-main"
-                        onClick={() => onSelectTool(t.id)}
-                      >
-                        <span className="home-tool-icon" aria-hidden="true">
-                          <Icon size={17} />
-                        </span>
-                        <span className="home-tool-body">
-                          <span className="home-tool-title-row">
-                            <span className="home-tool-name">{t.name}</span>
-                            {t.isNew && <span className="home-tool-badge">新</span>}
-                            {webRuntime && !supportsWeb(t) && (
-                              <span className="home-tool-badge" title="该工具需要下载桌面版">
-                                桌面端
-                              </span>
-                            )}
-                          </span>
-                          <span className="home-tool-desc">{t.desc}</span>
-                        </span>
-                      </button>
-                      <button
-                        type="button"
-                        className={`home-tool-star ${isFavorite ? 'active' : ''}`}
-                        onClick={() => updateFavorites(t.id)}
-                        title={isFavorite ? '取消收藏' : '收藏'}
-                        aria-pressed={isFavorite}
-                        aria-label={isFavorite ? `取消收藏${t.name}` : `收藏${t.name}`}
-                      >
-                        <Star size={13} fill={isFavorite ? 'currentColor' : 'none'} />
-                      </button>
-                    </div>
-                  )
-                })}
+                {categoryTools.map((t) => (
+                  <ToolCard
+                    key={t.id}
+                    tool={t}
+                    favorite={favorites.includes(t.id)}
+                    webRuntime={webRuntime}
+                    onSelect={onSelectTool}
+                    onToggleFavorite={updateFavorites}
+                  />
+                ))}
               </div>
             </div>
           )

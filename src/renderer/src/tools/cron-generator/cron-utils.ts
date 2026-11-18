@@ -239,9 +239,13 @@ function buildDateDescription(config: CronConfig): string {
     if (config.month.startsWith('*/')) {
       parts.push(`every ${config.month.slice(2)} months`)
     } else {
+      // 解析模式保留原始写法（JAN / 1），描述里统一还原成月份全称。
       const monthNames = config.month
         .split(',')
-        .map((value) => MONTHS.find((month) => month.value === value)?.label ?? value)
+        .map((value) => {
+          const numeric = MONTH_NAMES[value.toUpperCase()] ?? Number(value)
+          return MONTHS.find((month) => month.value === String(numeric))?.label ?? value
+        })
         .join(', ')
       parts.push(`in ${monthNames}`)
     }
@@ -274,20 +278,73 @@ export function buildCronExpression(config: CronConfig): string {
   return `${config.minute} ${config.hour} ${config.dayOfMonth} ${config.month} ${weekdays}`
 }
 
-export function parseCronExpression(cron: string): CronConfig | null {
+export type CronParseError = 'empty' | 'part-count' | 'invalid-field'
+
+export interface CronParseResult {
+  config: CronConfig | null
+  error: CronParseError | null
+  /** 实际字段数，用于把「需要 5 段」和「字段值无效」区分开。 */
+  partCount: number
+}
+
+export function parseCronExpressionDetailed(cron: string): CronParseResult {
+  if (!cron.trim()) return { config: null, error: 'empty', partCount: 0 }
+
   const parts = cron.trim().split(/\s+/)
-  if (parts.length !== 5) return null
+  if (parts.length !== 5) return { config: null, error: 'part-count', partCount: parts.length }
 
   const schedule = parseSchedule(parts)
-  if (!schedule) return null
+  if (!schedule) return { config: null, error: 'invalid-field', partCount: 5 }
 
   return {
-    minute: parts[0],
-    hour: parts[1],
-    dayOfMonth: parts[2],
-    month: parts[3],
-    dayOfWeek: parts[4] === '*' ? [] : sortWeekdays([...schedule.dayOfWeek.values])
+    config: {
+      minute: parts[0],
+      hour: parts[1],
+      dayOfMonth: parts[2],
+      month: parts[3],
+      dayOfWeek: parts[4] === '*' ? [] : sortWeekdays([...schedule.dayOfWeek.values])
+    },
+    error: null,
+    partCount: 5
   }
+}
+
+export function parseCronExpression(cron: string): CronConfig | null {
+  return parseCronExpressionDetailed(cron).config
+}
+
+export interface CronConfigIssue {
+  field: string
+  value: string
+  min: number
+  max: number
+}
+
+/** 生成器里的「指定」输入可能被键入越界值，先校验再展示，避免静默生成无效表达式。 */
+export function validateCronConfig(config: CronConfig): CronConfigIssue | null {
+  const checks: { field: string; spec: FieldSpec; value: string }[] = [
+    { field: '分钟', spec: MINUTE_SPEC, value: config.minute },
+    { field: '小时', spec: HOUR_SPEC, value: config.hour },
+    { field: '日期', spec: DAY_OF_MONTH_SPEC, value: config.dayOfMonth },
+    { field: '月份', spec: MONTH_SPEC, value: config.month }
+  ]
+  for (const check of checks) {
+    if (!parseField(check.value, check.spec)) {
+      return {
+        field: check.field,
+        value: check.value,
+        min: check.spec.min,
+        max: check.spec.max
+      }
+    }
+  }
+
+  const badWeekday = config.dayOfWeek.find((day) => !parseField(day, DAY_OF_WEEK_SPEC))
+  if (badWeekday !== undefined) {
+    return { field: '星期', value: badWeekday, min: 0, max: 6 }
+  }
+
+  return null
 }
 
 export function generateDescription(config: CronConfig): string {

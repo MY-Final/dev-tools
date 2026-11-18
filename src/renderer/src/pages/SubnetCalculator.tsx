@@ -1,5 +1,7 @@
 import { useState, useMemo, useCallback } from 'react'
 import { Network, Copy, Check } from 'lucide-react'
+import CopyToast from '@renderer/components/CopyToast'
+import { copyText } from '@renderer/lib/clipboard'
 
 interface SubnetInfo {
   networkAddress: string
@@ -13,17 +15,21 @@ interface SubnetInfo {
   totalHosts: number
   usableHosts: number
   ipClass: string
-  isPrivate: boolean
+  addressType: string
   ipBinary: string
 }
 
+const OCTET_RE = /^\d{1,3}$/
+
 function ipToNumber(ip: string): number | null {
-  const parts = ip.split('.')
+  const parts = ip.trim().split('.')
   if (parts.length !== 4) return null
   let result = 0
   for (const part of parts) {
-    const num = parseInt(part, 10)
-    if (isNaN(num) || num < 0 || num > 255) return null
+    // 整段必须是十进制数字：parseInt 会把 "1x" 静默解析成 1，导致非法 IP 也能算出结果。
+    if (!OCTET_RE.test(part)) return null
+    const num = Number(part)
+    if (num > 255) return null
     result = (result << 8) | num
   }
   return result >>> 0
@@ -39,20 +45,27 @@ function formatBinaryIp(num: number): string {
 }
 
 function getIpClass(ip: string): string {
-  const first = parseInt(ip.split('.')[0], 10)
-  if (first >= 1 && first <= 126) return 'A'
-  if (first >= 128 && first <= 191) return 'B'
-  if (first >= 192 && first <= 223) return 'C'
-  if (first >= 224 && first <= 239) return 'D (Multicast)'
+  const first = Number(ip.split('.')[0])
+  if (first <= 127) return 'A'
+  if (first <= 191) return 'B'
+  if (first <= 223) return 'C'
+  if (first <= 239) return 'D (Multicast)'
   return 'E (Reserved)'
 }
 
-function isPrivateIp(ip: string): boolean {
-  const parts = ip.split('.').map(Number)
-  if (parts[0] === 10) return true
-  if (parts[0] === 172 && parts[1] >= 16 && parts[1] <= 31) return true
-  if (parts[0] === 192 && parts[1] === 168) return true
-  return false
+/** 除 RFC 1918 外，回环、链路本地、CGNAT 等也不应显示成“公网”。 */
+function getAddressType(ip: string): string {
+  const [a, b] = ip.split('.').map(Number)
+  if (a === 127) return '回环（Loopback）'
+  if (a === 10 || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168)) {
+    return '私有（RFC 1918）'
+  }
+  if (a === 100 && b >= 64 && b <= 127) return '运营商级 NAT（100.64/10）'
+  if (a === 169 && b === 254) return '链路本地（Link-local）'
+  if (a === 0) return '本网络（0.0.0.0/8）'
+  if (a >= 224 && a <= 239) return '组播（Multicast）'
+  if (a >= 240) return '保留（Reserved）'
+  return '公网（Public）'
 }
 
 function calculateSubnet(ip: string, cidr: number): SubnetInfo | null {
@@ -80,7 +93,7 @@ function calculateSubnet(ip: string, cidr: number): SubnetInfo | null {
     totalHosts,
     usableHosts,
     ipClass: getIpClass(ip),
-    isPrivate: isPrivateIp(ip),
+    addressType: getAddressType(ip),
     ipBinary: formatBinaryIp(ipNum)
   }
 }
@@ -125,11 +138,17 @@ export default function SubnetCalculator(): React.JSX.Element {
   const [ipInput, setIpInput] = useState('192.168.1.100')
   const [cidrInput, setCidrInput] = useState('24')
   const [copied, setCopied] = useState<string | null>(null)
+  const [copyError, setCopyError] = useState(false)
 
+  // 不静默截断：输入 99 时若按 /32 计算，结果会误导；宁可提示错误。
   const cidr = useMemo(() => {
-    const num = parseInt(cidrInput, 10)
-    return isNaN(num) ? -1 : Math.max(0, Math.min(32, num))
+    const trimmed = cidrInput.trim()
+    if (!/^\d{1,2}$/.test(trimmed)) return -1
+    const num = Number(trimmed)
+    return num <= 32 ? num : -1
   }, [cidrInput])
+
+  const ipValid = useMemo(() => ipToNumber(ipInput) !== null, [ipInput])
 
   const info = useMemo(() => {
     if (cidr < 0) return null
@@ -145,13 +164,14 @@ export default function SubnetCalculator(): React.JSX.Element {
   }, [])
 
   const copyValue = useCallback(async (value: string, key: string) => {
-    try {
-      await navigator.clipboard.writeText(value)
-      setCopied(key)
-      setTimeout(() => setCopied(null), 1500)
-    } catch {
-      // fallback
+    const ok = await copyText(value)
+    if (!ok) {
+      setCopyError(true)
+      setTimeout(() => setCopyError(false), 1800)
+      return
     }
+    setCopied(key)
+    setTimeout(() => setCopied(null), 1500)
   }, [])
 
   return (
@@ -216,7 +236,12 @@ export default function SubnetCalculator(): React.JSX.Element {
         </div>
         {!info && (
           <p className="sc-error" role="status">
-            请输入有效的 IPv4 地址，前缀长度需在 0–32 之间。
+            {[
+              !ipValid && 'IP 地址无效：四段均需为 0–255 的十进制数字，例如 192.168.1.100。',
+              cidr < 0 && '前缀长度需为 0–32 的整数。'
+            ]
+              .filter(Boolean)
+              .join(' ')}
           </p>
         )}
       </section>
@@ -295,7 +320,7 @@ export default function SubnetCalculator(): React.JSX.Element {
               </div>
               <div className="sc-info-item">
                 <span className="sc-info-label">地址类型</span>
-                <span className="sc-info-value">{info.isPrivate ? 'Private' : 'Public'}</span>
+                <span className="sc-info-value">{info.addressType}</span>
               </div>
               <div className="sc-info-item">
                 <span className="sc-info-label">前缀长度</span>
@@ -320,6 +345,7 @@ export default function SubnetCalculator(): React.JSX.Element {
           <span>输入有效的 IPv4 地址和 CIDR 后显示结果</span>
         </section>
       )}
+      <CopyToast message={copyError ? '复制失败，请手动选择' : null} />
     </div>
   )
 }

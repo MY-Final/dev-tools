@@ -1,6 +1,8 @@
 import { useState, useCallback, useRef } from 'react'
 import { Languages, ArrowLeftRight, Copy, Check, Trash2, Loader2, X } from 'lucide-react'
 import { useSettings } from '@renderer/lib/contexts'
+import CopyToast from '@renderer/components/CopyToast'
+import { copyText } from '@renderer/lib/clipboard'
 import '../styles/translator.css'
 
 interface LangPair {
@@ -36,6 +38,7 @@ export default function Translator(): React.JSX.Element {
   const [notice, setNotice] = useState('')
   const [truncated, setTruncated] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [copyError, setCopyError] = useState(false)
   const [elapsed, setElapsed] = useState(0)
   // Bumped on every new request and on cancel, so responses to stale requests are ignored.
   const requestSeq = useRef(0)
@@ -106,13 +109,13 @@ export default function Translator(): React.JSX.Element {
 
   const copy = useCallback(async () => {
     if (!result) return
-    try {
-      await navigator.clipboard.writeText(result)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 1500)
-    } catch {
-      /* ignore */
+    if (!(await copyText(result))) {
+      setCopyError(true)
+      setTimeout(() => setCopyError(false), 1800)
+      return
     }
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1500)
   }, [result])
 
   const clear = useCallback(() => {
@@ -239,6 +242,7 @@ export default function Translator(): React.JSX.Element {
           </div>
         )}
       </div>
+      <CopyToast message={copyError ? '复制失败，请手动选择' : null} />
     </div>
   )
 }

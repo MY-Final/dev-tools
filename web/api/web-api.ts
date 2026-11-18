@@ -12,8 +12,10 @@
 import pkg from '../../package.json'
 import {
   createDefaultSettings,
+  incrementToolUsage,
   normalizeSettings,
   TODOS_VERSION,
+  RECENT_TOOLS_LIMIT,
   type AppSettings,
   type CreateTodoInput,
   type SettingsAPI,
@@ -219,6 +221,31 @@ const webSettingsAPI = {
     return settings
   },
 
+  async recordRecentTool(toolId: string): Promise<AppSettings> {
+    const settings = loadSettings()
+    settings.recentTools = [toolId, ...settings.recentTools.filter((id) => id !== toolId)].slice(
+      0,
+      RECENT_TOOLS_LIMIT
+    )
+    settings.toolUsage = incrementToolUsage(settings.toolUsage, toolId)
+    saveSettings(settings)
+    return settings
+  },
+
+  async clearRecentTools(): Promise<AppSettings> {
+    const settings = loadSettings()
+    settings.recentTools = []
+    saveSettings(settings)
+    return settings
+  },
+
+  async clearToolUsage(): Promise<AppSettings> {
+    const settings = loadSettings()
+    settings.toolUsage = {}
+    saveSettings(settings)
+    return settings
+  },
+
   getSettingsPath: (): Promise<string> => Promise.resolve('localStorage'),
 
   onSettingsChanged(callback: (settings: AppSettings) => void): () => void {
@@ -229,6 +256,15 @@ const webSettingsAPI = {
 
   async resetToDefaults(): Promise<AppSettings> {
     const settings = createDefaultSettings()
+    saveSettings(settings)
+    return settings
+  },
+
+  async importSettings(input: unknown): Promise<AppSettings> {
+    if (!input || typeof input !== 'object' || Array.isArray(input)) {
+      throw new Error('配置文件格式不正确')
+    }
+    const settings = normalizeSettings(input)
     saveSettings(settings)
     return settings
   }

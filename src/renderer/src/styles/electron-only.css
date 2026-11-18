@@ -13,7 +13,7 @@
   width: 100%;
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);
-  border-radius: 16px;
+  border-radius: 20px;
   padding: 48px 36px;
   text-align: center;
   box-shadow: var(--shadow-xl);
@@ -26,7 +26,7 @@
   width: 72px;
   height: 72px;
   background: var(--color-accent-soft-subtle);
-  border-radius: 16px;
+  border-radius: 20px;
   color: var(--color-accent-soft);
   margin-bottom: 24px;
 }
@@ -52,6 +52,33 @@
   font-weight: 600;
   color: var(--color-accent-soft);
   font-family: 'JetBrains Mono', monospace;
+}
+
+.electron-only-download {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 18px;
+  padding: 9px 18px;
+  border-radius: 12.5px;
+  background: var(--color-accent-soft);
+  color: var(--color-text-inverse);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition:
+    filter 0.14s ease,
+    transform 0.14s ease;
+}
+
+.electron-only-download:hover {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+
+.electron-only-download:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
 }
 
 .electron-only-divider {

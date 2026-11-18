@@ -81,7 +81,8 @@
 
 .si-field {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) 24px;
+  /* 粗指针设备的触控目标会把复制按钮撑到 44px，固定列宽会被裁切。 */
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 12px;
   min-width: 0;
@@ -146,7 +147,7 @@
   }
 
   .si-field {
-    grid-template-columns: minmax(0, 1fr) 24px;
+    grid-template-columns: minmax(0, 1fr) auto;
     row-gap: 2px;
   }
 

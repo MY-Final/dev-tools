@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Copy, Check, Zap } from 'lucide-react'
 import { useConverter, type Unit } from '@renderer/tools/converter/useConverter'
 import '../styles/converter.css'
@@ -14,13 +15,20 @@ const UNIT_NAMES: Record<Unit, string> = {
   TiB: 'Tebibytes'
 }
 
-const QUICK_CONVERSIONS: { from: string; unit: Unit; label: string }[] = [
+const BINARY_QUICK: { from: string; unit: Unit; label: string }[] = [
+  { from: '1', unit: 'KiB', label: '1 KiB → B' },
+  { from: '1024', unit: 'KiB', label: '1024 KiB → MiB' },
+  { from: '1024', unit: 'MiB', label: '1024 MiB → GiB' },
+  { from: '1', unit: 'GiB', label: '1 GiB → MiB' },
+  { from: '1', unit: 'TiB', label: '1 TiB → GiB' }
+]
+
+const DECIMAL_QUICK: { from: string; unit: Unit; label: string }[] = [
   { from: '1', unit: 'KB', label: '1 KB → B' },
-  { from: '1024', unit: 'KB', label: '1024 KB → MB' },
-  { from: '1024', unit: 'MB', label: '1024 MB → GB' },
+  { from: '1000', unit: 'KB', label: '1000 KB → MB' },
+  { from: '1000', unit: 'MB', label: '1000 MB → GB' },
   { from: '1', unit: 'GB', label: '1 GB → MB' },
-  { from: '1', unit: 'TB', label: '1 TB → GB' },
-  { from: '1', unit: 'GiB', label: '1 GiB → MiB' }
+  { from: '1', unit: 'TB', label: '1 TB → GB' }
 ]
 
 export default function Converter(): React.JSX.Element {
@@ -28,6 +36,10 @@ export default function Converter(): React.JSX.Element {
     mode,
     precision,
     activeUnit,
+    parsedUnit,
+    invalid,
+    hasValues,
+    activeValue,
     toast,
     copiedUnit,
     units,
@@ -39,6 +51,10 @@ export default function Converter(): React.JSX.Element {
     handleCopyValue,
     handleCopyAll
   } = useConverter()
+
+  // 编辑中的行显示原始输入（支持“10 MB”和长数字），失焦后再显示换算结果。
+  const [editingUnit, setEditingUnit] = useState<Unit | null>(null)
+  const quickConversions = mode === 'binary' ? BINARY_QUICK : DECIMAL_QUICK
 
   return (
     <div className="converter-page tool-page dsv-page">
@@ -81,7 +97,12 @@ export default function Converter(): React.JSX.Element {
               ))}
             </select>
           </label>
-          <button type="button" className="tool-btn tool-btn--outline" onClick={handleCopyAll}>
+          <button
+            type="button"
+            className="tool-btn tool-btn--outline"
+            onClick={handleCopyAll}
+            disabled={!hasValues}
+          >
             <Copy size={14} aria-hidden="true" />
             复制全部
           </button>
@@ -90,6 +111,15 @@ export default function Converter(): React.JSX.Element {
 
       <div className="tool-split dsv-layout">
         <section className="tool-panel dsv-panel" aria-label="单位换算">
+          {invalid ? (
+            <p className="dsv-note dsv-note--error" role="status">
+              请输入有效数值，例如 10 MB 或 1024
+            </p>
+          ) : parsedUnit !== activeUnit && activeValue.trim() !== '' ? (
+            <p className="dsv-note" role="status">
+              已按输入的 {parsedUnit} 换算
+            </p>
+          ) : null}
           <div className="dsv-rows">
             {(units as readonly Unit[]).map((unit) => (
               <div
@@ -112,8 +142,14 @@ export default function Converter(): React.JSX.Element {
                   inputMode="decimal"
                   autoComplete="off"
                   spellCheck={false}
-                  value={values[unit] || ''}
+                  value={
+                    unit === activeUnit && (editingUnit === unit || invalid)
+                      ? activeValue
+                      : values[unit] || ''
+                  }
                   onChange={(e) => handleInputChange(unit, e.target.value)}
+                  onFocus={() => setEditingUnit(unit)}
+                  onBlur={() => setEditingUnit(null)}
                   placeholder="0"
                   aria-label={`${unit} (${UNIT_NAMES[unit]}) 数值`}
                 />
@@ -143,7 +179,7 @@ export default function Converter(): React.JSX.Element {
               快捷换算
             </h3>
             <div className="dsv-chips">
-              {QUICK_CONVERSIONS.map((item) => (
+              {quickConversions.map((item) => (
                 <button
                   key={item.label}
                   type="button"

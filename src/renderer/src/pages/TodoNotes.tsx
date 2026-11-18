@@ -212,6 +212,7 @@ export default function TodoNotes(): React.JSX.Element {
             className="tn-icon-btn"
             onClick={() => setSelectedDate((date) => shiftDate(date, -1))}
             title="前一天"
+            aria-label="前一天"
           >
             <ChevronLeft size={16} />
           </button>
@@ -226,6 +227,7 @@ export default function TodoNotes(): React.JSX.Element {
             className="tn-icon-btn"
             onClick={() => setSelectedDate((date) => shiftDate(date, 1))}
             title="后一天"
+            aria-label="后一天"
           >
             <ChevronRight size={16} />
           </button>

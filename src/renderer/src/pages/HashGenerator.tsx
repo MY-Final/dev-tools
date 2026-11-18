@@ -1,5 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { Copy, Check, RotateCcw, Upload, File, X } from 'lucide-react'
+import CopyToast from '@renderer/components/CopyToast'
+import { copyText } from '@renderer/lib/clipboard'
 import '../styles/hash-generator.css'
 import { bytesToHex, md5Hex } from '../lib/crypto-utils'
 
@@ -50,20 +52,75 @@ export default function HashGenerator(): React.JSX.Element {
   const [uppercase, setUppercase] = useState(false)
   const [copiedAlgo, setCopiedAlgo] = useState<string | null>(null)
   const [copiedAll, setCopiedAll] = useState(false)
+  const [copyError, setCopyError] = useState(false)
   const [results, setResults] = useState<Record<Algorithm, string>>(EMPTY)
   const [computing, setComputing] = useState(false)
   const [dragging, setDragging] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  // 文本与文件各自的任务序号：切换模式 / 清空 / 换文件后，旧任务的结果直接丢弃。
+  const textJobRef = useRef(0)
+  const fileJobRef = useRef(0)
+
+  const cancelJobs = useCallback(() => {
+    textJobRef.current += 1
+    fileJobRef.current += 1
+  }, [])
+
+  const resetResult = useCallback(() => {
+    setResults(EMPTY)
+    setComputing(false)
+  }, [])
+
+  const computeFile = useCallback((f: File) => {
+    const jobId = ++fileJobRef.current
+    setFile(f)
+    resetResult()
+    setComputing(true)
+
+    void (async () => {
+      try {
+        const fileBuffer = await f.arrayBuffer()
+        if (fileJobRef.current !== jobId) return
+
+        const data = new Uint8Array(fileBuffer)
+        const r: Record<Algorithm, string> = { ...EMPTY }
+        r.MD5 = md5Hex(data)
+        await Promise.all(
+          (Object.entries(WEB_ALGO) as [Algorithm, string][]).map(async ([id, algo]) => {
+            const buf = await crypto.subtle.digest(algo, fileBuffer)
+            r[id] = bytesToHex(new Uint8Array(buf))
+          })
+        )
+
+        if (fileJobRef.current !== jobId) return
+        setResults(r)
+      } finally {
+        if (fileJobRef.current === jobId) setComputing(false)
+      }
+    })()
+  }, [resetResult])
+
+  const handleFile = useCallback(
+    (f: File) => {
+      // 允许重复选择同一个文件再次触发 onChange。
+      if (fileInputRef.current) fileInputRef.current.value = ''
+      computeFile(f)
+    },
+    [computeFile]
+  )
 
   // Text hashing (async via useEffect)
   useEffect(() => {
-    let cancelled = false
+    const jobId = ++textJobRef.current
 
     const run = async (): Promise<void> => {
       await Promise.resolve()
-      if (cancelled) return
+      if (textJobRef.current !== jobId) return
 
-      if (mode !== 'text' || !textInput) {
+      // 文件模式只由 computeFile 管理结果，避免文本任务覆盖文件哈希。
+      if (mode !== 'text') return
+
+      if (!textInput) {
         setResults(EMPTY)
         setComputing(false)
         return
@@ -77,73 +134,57 @@ export default function HashGenerator(): React.JSX.Element {
           r[id] = await digest(textInput, algo)
         })
       )
-      if (!cancelled) {
-        setResults(r)
-        setComputing(false)
-      }
+      if (textJobRef.current !== jobId) return
+      setResults(r)
+      setComputing(false)
     }
 
     void run()
-    return () => {
-      cancelled = true
-    }
   }, [textInput, mode])
-  // File hashing
-  const handleFile = useCallback((f: File) => {
-    setFile(f)
-    setTextInput('')
-    setComputing(true)
 
-    void (async () => {
-      try {
-        const fileBuffer = await f.arrayBuffer()
-        const data = new Uint8Array(fileBuffer)
-        const r: Record<Algorithm, string> = { ...EMPTY }
-
-        r.MD5 = md5Hex(data)
-        await Promise.all(
-          (Object.entries(WEB_ALGO) as [Algorithm, string][]).map(async ([id, algo]) => {
-            const buf = await crypto.subtle.digest(algo, fileBuffer)
-            r[id] = bytesToHex(new Uint8Array(buf))
-          })
-        )
-
-        setResults(r)
-      } finally {
-        setComputing(false)
-      }
-    })()
-  }, [])
+  const switchMode = useCallback(
+    (next: InputMode) => {
+      if (next === mode) return
+      cancelJobs()
+      setMode(next)
+      resetResult()
+      // 文件仍在时切回文件模式，直接重算；切换回文本模式则由 effect 重新计算。
+      if (next === 'file' && file) computeFile(file)
+    },
+    [mode, cancelJobs, resetResult, file, computeFile]
+  )
   const formatHash = useCallback(
     (hash: string) => (uppercase ? hash.toUpperCase() : hash.toLowerCase()),
     [uppercase]
   )
   const clear = useCallback(() => {
+    cancelJobs()
     setTextInput('')
     setFile(null)
-    setResults(EMPTY)
-    setComputing(false)
+    resetResult()
     if (fileInputRef.current) fileInputRef.current.value = ''
-  }, [])
+  }, [cancelJobs, resetResult])
   const copyHash = useCallback(async (algo: string, hash: string) => {
-    try {
-      await navigator.clipboard.writeText(hash)
-      setCopiedAlgo(algo)
-      setTimeout(() => setCopiedAlgo(null), 1500)
-    } catch {
-      /* ignore */
+    const ok = await copyText(hash)
+    if (!ok) {
+      setCopyError(true)
+      setTimeout(() => setCopyError(false), 1800)
+      return
     }
+    setCopiedAlgo(algo)
+    setTimeout(() => setCopiedAlgo(null), 1500)
   }, [])
   const copyAll = useCallback(async () => {
     if (!Object.values(results).some(Boolean)) return
     const t = ALGORITHMS.map(({ id, label }) => `${label}: ${formatHash(results[id])}`).join('\n')
-    try {
-      await navigator.clipboard.writeText(t)
-      setCopiedAll(true)
-      setTimeout(() => setCopiedAll(false), 1500)
-    } catch {
-      /* ignore */
+    const ok = await copyText(t)
+    if (!ok) {
+      setCopyError(true)
+      setTimeout(() => setCopyError(false), 1800)
+      return
     }
+    setCopiedAll(true)
+    setTimeout(() => setCopiedAll(false), 1500)
   }, [results, formatHash])
 
   const hasResults = Object.values(results).some((v) => v)
@@ -169,7 +210,7 @@ export default function HashGenerator(): React.JSX.Element {
             <button
               type="button"
               className={`tool-seg ${mode === 'text' ? 'active' : ''}`}
-              onClick={() => setMode('text')}
+              onClick={() => switchMode('text')}
               aria-pressed={mode === 'text'}
             >
               文本输入
@@ -177,7 +218,7 @@ export default function HashGenerator(): React.JSX.Element {
             <button
               type="button"
               className={`tool-seg ${mode === 'file' ? 'active' : ''}`}
-              onClick={() => setMode('file')}
+              onClick={() => switchMode('file')}
               aria-pressed={mode === 'file'}
             >
               文件上传
@@ -253,14 +294,20 @@ export default function HashGenerator(): React.JSX.Element {
                   <span className="hg-file-meta">
                     {formatSize(file.size)} · {file.type || '未知类型'}
                   </span>
+                  {file.size > 32 * 1024 * 1024 && (
+                    <span className="hg-file-warn">
+                      大文件会先读入内存，MD5 在主线程计算，期间界面可能短暂无响应
+                    </span>
+                  )}
                 </div>
                 <button
                   type="button"
                   className="tool-icon-btn hg-file-remove"
                   onClick={() => {
+                    cancelJobs()
                     setFile(null)
-                    setResults(EMPTY)
-                    setComputing(false)
+                    resetResult()
+                    if (fileInputRef.current) fileInputRef.current.value = ''
                   }}
                   aria-label="移除文件"
                   title="移除文件"
@@ -309,7 +356,7 @@ export default function HashGenerator(): React.JSX.Element {
         </div>
 
         {computing ? (
-          <div className="hg-state">
+          <div className="hg-state" role="status" aria-live="polite">
             <span className="hg-spinner" aria-hidden="true" />
             正在计算…
           </div>
@@ -347,6 +394,7 @@ export default function HashGenerator(): React.JSX.Element {
           <div className="hg-state">输入文本或选择文件后自动计算，五种算法同时生成。</div>
         )}
       </section>
+      <CopyToast message={copyError ? '复制失败，请手动选择' : null} />
     </div>
   )
 }

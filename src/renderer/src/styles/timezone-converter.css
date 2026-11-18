@@ -96,6 +96,23 @@
   font-variant-numeric: tabular-nums;
 }
 
+.tzc-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 32px 16px;
+}
+
+.tzc-empty-text {
+  margin: 0;
+  max-width: 360px;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  line-height: 1.6;
+  text-align: center;
+}
+
 .tzc-list {
   display: flex;
   flex-direction: column;
@@ -103,7 +120,7 @@
 
 .tzc-item {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto 132px 28px;
+  grid-template-columns: minmax(0, 1fr) auto 132px auto;
   align-items: center;
   gap: 16px;
   min-height: 56px;
@@ -177,11 +194,34 @@
 
 @media (max-width: 600px) {
   .tzc-item {
-    grid-template-columns: minmax(0, 1fr) auto 28px;
-    gap: 10px;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    grid-template-areas:
+      'info time remove'
+      'info date remove';
+    column-gap: 10px;
+    row-gap: 1px;
   }
 
+  .tzc-item-info {
+    grid-area: info;
+    align-self: center;
+  }
+
+  .tzc-item-time {
+    grid-area: time;
+    align-self: end;
+  }
+
+  /* 时区可能跨日，窄屏也不能省略日期；放到时间下方而不是隐藏。 */
   .tzc-item-date {
-    display: none;
+    grid-area: date;
+    display: block;
+    align-self: start;
+    font-size: var(--text-2xs);
+  }
+
+  .tzc-item-remove {
+    grid-area: remove;
+    align-self: center;
   }
 }

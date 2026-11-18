@@ -79,7 +79,7 @@ export default function MyIp(): React.JSX.Element {
       </section>
 
       {toast && (
-        <div className="myip-toast">
+        <div className="myip-toast" role="status" aria-live="polite">
           <Check size={14} aria-hidden="true" />
           {toast}
         </div>

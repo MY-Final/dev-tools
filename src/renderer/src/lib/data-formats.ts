@@ -2,6 +2,7 @@ import Papa from 'papaparse'
 import { parse as parseYamlText, stringify as stringifyYamlData, YAMLParseError } from 'yaml'
 import { parse as parseTomlText, stringify as stringifyTomlData, TomlError } from 'smol-toml'
 import { XMLBuilder, XMLParser, XMLValidator } from 'fast-xml-parser'
+import { describeJsonParseError } from './json-error'
 
 // ── Data Formats ───────────────────────────────────────────────
 // One conversion core shared by the data tools, so a document converted
@@ -430,15 +431,15 @@ export function parseJsonDocument(text: string): ParseOutcome {
 
 /** Turns V8's position offset into a line/column message. */
 export function formatJsonError(text: string, err: Error): string {
+  const description = describeJsonParseError(err.message)
   const match = /position (\d+)/.exec(err.message)
-  if (!match) return `JSON 格式错误：${err.message}`
+  if (!match) return `JSON 格式错误：${description}`
 
   const position = Number(match[1])
   const before = text.slice(0, position)
   const line = before.split('\n').length
   const column = position - before.lastIndexOf('\n')
-  const snippet = text.split('\n')[line - 1]?.slice(0, 80) ?? ''
-  return `JSON 格式错误（第 ${line} 行第 ${column} 列）：${snippet.trim()}`
+  return `JSON 格式错误（第 ${line} 行第 ${column} 列）：${description}`
 }
 
 export function stringifyJsonDocument(data: unknown, indent = 2): string {

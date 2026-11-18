@@ -13,6 +13,7 @@ import { getPageComponent } from '@renderer/pages/registry'
 import { getTool, supportsWeb } from '@renderer/tools/registry'
 import { SettingsProvider, useSettings } from '@renderer/lib/contexts'
 import { UpdaterProvider, useUpdater } from '@renderer/lib/updater-context'
+import { isWebRuntime } from '@renderer/lib/platform'
 import { matchShortcut } from '@renderer/lib/shortcuts'
 
 function UpdatePrompt(): React.JSX.Element {
@@ -73,9 +74,21 @@ function UpdatePrompt(): React.JSX.Element {
 }
 
 function AppContent(): React.JSX.Element {
-  const { settings, updateAppearance } = useSettings()
+  const { settings, updateAppearance, recordRecentTool } = useSettings()
   const [currentPage, setCurrentPage] = useState('home')
   const shortcuts = settings.shortcuts
+
+  // 记录最近使用（仅记录当前运行环境下可用的工具）
+  const navigate = useCallback(
+    (page: string): void => {
+      setCurrentPage(page)
+      const tool = getTool(page)
+      if (tool && (!isWebRuntime() || supportsWeb(tool))) {
+        void recordRecentTool(page)
+      }
+    },
+    [recordRecentTool]
+  )
 
   // 应用主题
   useEffect(() => {
@@ -120,8 +133,14 @@ function AppContent(): React.JSX.Element {
         return
       }
 
-      // 返回首页（非输入框中）
-      if (matchShortcut(shortcuts.goHome, e) && !isInput && currentPage !== 'home') {
+      // 返回首页（非输入框中，且没有弹层正在处理 Esc）
+      const hasOpenDialog = document.querySelector('[role="dialog"]') !== null
+      if (
+        matchShortcut(shortcuts.goHome, e) &&
+        !isInput &&
+        !hasOpenDialog &&
+        currentPage !== 'home'
+      ) {
         setCurrentPage('home')
         return
       }
@@ -134,9 +153,9 @@ function AppContent(): React.JSX.Element {
   // ── Render ──────────────────────────────────────────────────
   const renderPage = (): React.JSX.Element => {
     // Special pages
-    if (currentPage === 'home') return <Home onSelectTool={setCurrentPage} />
+    if (currentPage === 'home') return <Home onSelectTool={navigate} />
     if (currentPage === 'about') return <About />
-    if (currentPage === 'settings') return <SettingsPage />
+    if (currentPage === 'settings') return <SettingsPage onSelectTool={navigate} />
 
     // Tool pages via registry
     const PageComponent = getPageComponent(currentPage)
@@ -165,7 +184,7 @@ function AppContent(): React.JSX.Element {
     }
 
     // Fallback
-    return <Home onSelectTool={setCurrentPage} />
+    return <Home onSelectTool={navigate} />
   }
 
   return (
@@ -175,14 +194,14 @@ function AppContent(): React.JSX.Element {
       </a>
       <Sidebar
         currentPage={currentPage}
-        onNavigate={setCurrentPage}
+        onNavigate={navigate}
         collapsed={settings.appearance.sidebarCollapsed}
         onToggleCollapse={handleToggleCollapse}
       />
       <main id="main-content" className="main-content" tabIndex={-1}>
         {renderPage()}
       </main>
-      <CommandPalette currentPage={currentPage} onNavigate={setCurrentPage} />
+      <CommandPalette currentPage={currentPage} onNavigate={navigate} />
       <UpdatePrompt />
     </div>
   )

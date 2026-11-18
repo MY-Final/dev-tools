@@ -1,4 +1,6 @@
 import { useState, useCallback } from 'react'
+import CopyToast from '@renderer/components/CopyToast'
+import { copyText } from '@renderer/lib/clipboard'
 import {
   ShieldOff,
   Send,
@@ -90,6 +92,7 @@ export default function CorsChecker(): React.JSX.Element {
   const [error, setError] = useState('')
   const [allowMutation, setAllowMutation] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [copyError, setCopyError] = useState(false)
 
   const handleTest = useCallback(async () => {
     const targetUrl = url.trim()
@@ -198,10 +201,15 @@ export default function CorsChecker(): React.JSX.Element {
     )
       .map(([k, v]) => `  ${k}: ${v}`)
       .join('\n')}\n\n${result.conclusion.message}`
-    navigator.clipboard.writeText(text).then(() => {
+    void (async () => {
+      if (!(await copyText(text))) {
+        setCopyError(true)
+        setTimeout(() => setCopyError(false), 1800)
+        return
+      }
       setCopied(true)
       setTimeout(() => setCopied(false), 1500)
-    })
+    })()
   }, [result])
 
   return (
@@ -399,6 +407,7 @@ export default function CorsChecker(): React.JSX.Element {
           </div>
         )
       )}
+      <CopyToast message={copyError ? '复制失败，请手动选择' : null} />
     </div>
   )
 }

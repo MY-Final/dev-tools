@@ -1,6 +1,8 @@
 import { useCallback, useDeferredValue, useMemo, useRef, useState } from 'react'
 import { Wand2, Copy, Check, RotateCcw } from 'lucide-react'
 import TextFileBar from '@renderer/components/TextFileBar'
+import CopyToast from '@renderer/components/CopyToast'
+import { copyText } from '@renderer/lib/clipboard'
 import {
   analyzeText,
   characterFrequency,
@@ -252,6 +254,7 @@ export default function TextAnalyzer(): React.JSX.Element {
     newlines: true
   })
   const [genCopied, setGenCopied] = useState(false)
+  const [copyError, setCopyError] = useState(false)
   const [generated, setGenerated] = useState('')
   const [genError, setGenError] = useState('')
 
@@ -307,13 +310,14 @@ export default function TextAnalyzer(): React.JSX.Element {
   }, [generated])
 
   const handleCopyGenerated = useCallback(async () => {
-    try {
-      await navigator.clipboard.writeText(generated)
-      setGenCopied(true)
-      setTimeout(() => setGenCopied(false), 1500)
-    } catch {
-      // ignore
+    const ok = await copyText(generated)
+    if (!ok) {
+      setCopyError(true)
+      setTimeout(() => setCopyError(false), 1800)
+      return
     }
+    setGenCopied(true)
+    setTimeout(() => setGenCopied(false), 1500)
   }, [generated])
 
   const updateGenConfig = useCallback(<K extends keyof GenConfig>(key: K, value: GenConfig[K]) => {
@@ -495,6 +499,7 @@ export default function TextAnalyzer(): React.JSX.Element {
           </section>
         </div>
       </div>
+      <CopyToast message={copyError ? '复制失败，请手动选择' : null} />
     </div>
   )
 }

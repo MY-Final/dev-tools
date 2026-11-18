@@ -1,5 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { Trash2, Copy, Check, MousePointer2 } from 'lucide-react'
+import CopyToast from '@renderer/components/CopyToast'
+import { copyText } from '@renderer/lib/clipboard'
 
 interface MouseEventInfo {
   type: string
@@ -55,6 +57,7 @@ export default function MouseTester(): React.JSX.Element {
   const [history, setHistory] = useState<MouseEventInfo[]>([])
   const [focused, setFocused] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [copyError, setCopyError] = useState(false)
   const areaRef = useRef<HTMLDivElement>(null)
 
   const addEvent = useCallback(
@@ -167,7 +170,7 @@ export default function MouseTester(): React.JSX.Element {
     setLastEvent(null)
   }, [])
 
-  const copyEvent = useCallback(() => {
+  const copyEvent = useCallback(async () => {
     if (!lastEvent) return
     const data = {
       type: lastEvent.type,
@@ -182,7 +185,11 @@ export default function MouseTester(): React.JSX.Element {
       altKey: lastEvent.altKey,
       metaKey: lastEvent.metaKey
     }
-    navigator.clipboard.writeText(JSON.stringify(data, null, 2))
+    if (!(await copyText(JSON.stringify(data, null, 2)))) {
+      setCopyError(true)
+      setTimeout(() => setCopyError(false), 1800)
+      return
+    }
     setCopied(true)
     setTimeout(() => setCopied(false), 1500)
   }, [lastEvent])
@@ -369,6 +376,7 @@ export default function MouseTester(): React.JSX.Element {
           )}
         </section>
       </div>
+      <CopyToast message={copyError ? '复制失败，请手动选择' : null} />
     </div>
   )
 }

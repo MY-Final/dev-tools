@@ -1,5 +1,7 @@
 import { useState, useMemo, useCallback } from 'react'
 import { Copy, Check, RotateCcw, Type } from 'lucide-react'
+import CopyToast from '@renderer/components/CopyToast'
+import { copyText } from '@renderer/lib/clipboard'
 import '../styles/lorem-ipsum.css'
 
 // ── Lorem Ipsum word pool ──────────────────────────────────────
@@ -240,6 +242,7 @@ export default function LoremIpsum(): React.JSX.Element {
   const [output, setOutput] = useState('')
   const [outputLang, setOutputLang] = useState<Lang>('latin')
   const [copied, setCopied] = useState(false)
+  const [copyError, setCopyError] = useState(false)
 
   const generate = useCallback(() => {
     const result = generateLoremIpsum(lang, genType, count)
@@ -250,13 +253,13 @@ export default function LoremIpsum(): React.JSX.Element {
 
   const copy = useCallback(async () => {
     if (!output) return
-    try {
-      await navigator.clipboard.writeText(output)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 1500)
-    } catch {
-      // ignore
+    if (!(await copyText(output))) {
+      setCopyError(true)
+      setTimeout(() => setCopyError(false), 1800)
+      return
     }
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1500)
   }, [output])
 
   const clear = useCallback(() => {
@@ -401,6 +404,7 @@ export default function LoremIpsum(): React.JSX.Element {
           </div>
         )}
       </div>
+      <CopyToast message={copyError ? '复制失败，请手动选择' : null} />
     </div>
   )
 }

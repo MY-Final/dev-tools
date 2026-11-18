@@ -3,6 +3,8 @@ import {
   Radio, Plug, PlugZap, Send, Trash2, Copy, Check,
   Plus, X, KeyRound, Code, Shield, SendHorizonal
 } from 'lucide-react'
+import CopyToast from '@renderer/components/CopyToast'
+import { copyText } from '@renderer/lib/clipboard'
 import { isWebRuntime } from '@renderer/lib/platform'
 import '../styles/websocket-tester.css'
 
@@ -116,6 +118,7 @@ export default function WebSocketTester(): React.JSX.Element {
   const [inputMsg, setInputMsg] = useState('')
   const [logs, setLogs] = useState<LogEntry[]>([])
   const [copiedIdx, setCopiedIdx] = useState(-1)
+  const [copyError, setCopyError] = useState(false)
   const wsRef = useRef<WebSocket | null>(null)
   const logEndRef = useRef<HTMLDivElement>(null)
   const autoAuthedRef = useRef(false)
@@ -342,10 +345,13 @@ export default function WebSocketTester(): React.JSX.Element {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); void handleSend() }
   }, [handleSend])
 
-  const copyLog = useCallback((text: string, idx: number) => {
-    navigator.clipboard.writeText(text).then(() => {
-      setCopiedIdx(idx); setTimeout(() => setCopiedIdx(-1), 1500)
-    })
+  const copyLog = useCallback(async (text: string, idx: number) => {
+    if (!(await copyText(text))) {
+      setCopyError(true)
+      setTimeout(() => setCopyError(false), 1800)
+      return
+    }
+    setCopiedIdx(idx); setTimeout(() => setCopiedIdx(-1), 1500)
   }, [])
   const clearLogs = useCallback(() => setLogs([]), [])
 
@@ -554,6 +560,7 @@ export default function WebSocketTester(): React.JSX.Element {
         ))}
         <div ref={logEndRef} />
       </div>
+      <CopyToast message={copyError ? '复制失败，请手动选择' : null} />
     </div>
   )
 }

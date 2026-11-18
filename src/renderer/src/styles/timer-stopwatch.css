@@ -18,7 +18,7 @@
   max-width: 480px;
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);
-  border-radius: 16px;
+  border-radius: 20px;
   padding: 32px;
   box-shadow: var(--shadow-xl);
   text-align: center;
@@ -51,7 +51,7 @@
   padding: 4px;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: 12px;
+  border-radius: 15px;
   margin-bottom: 28px;
 }
 
@@ -62,7 +62,7 @@
   gap: 5px;
   padding: 8px 4px;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   background: transparent;
   font-size: 0.75rem;
   font-weight: 500;
@@ -91,7 +91,7 @@
   padding: 20px 16px;
   background: var(--color-editor-bg);
   border: 2px solid var(--color-border);
-  border-radius: 16px;
+  border-radius: 20px;
   margin-bottom: 10px;
 }
 
@@ -110,7 +110,7 @@
   padding: 4px 14px;
   background: var(--color-accent-soft-subtle);
   border: 1px solid var(--color-accent-soft);
-  border-radius: 16px;
+  border-radius: 20px;
   font-size: 0.75rem;
   font-weight: 600;
   color: var(--color-accent-soft);
@@ -121,7 +121,7 @@
 .ts-progress-track {
   height: 4px;
   background: var(--color-border);
-  border-radius: 2px;
+  border-radius: 2.5px;
   overflow: hidden;
   margin-top: 4px;
 }
@@ -129,7 +129,7 @@
 .ts-progress-fill {
   height: 100%;
   background: var(--color-accent-soft);
-  border-radius: 2px;
+  border-radius: 2.5px;
   transition: width 0.1s linear;
 }
 
@@ -152,7 +152,7 @@
   gap: 6px;
   padding: 10px 22px;
   border: 1.5px solid var(--color-border);
-  border-radius: 12px;
+  border-radius: 15px;
   background: var(--color-surface);
   color: var(--color-text);
   font-size: 0.8125rem;
@@ -195,7 +195,7 @@
 .ts-preset-btn {
   padding: 5px 12px;
   border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: 10px;
   background: var(--color-surface);
   font-size: 0.75rem;
   font-weight: 500;
@@ -226,7 +226,7 @@
   text-align: center;
   background: var(--color-editor-bg);
   border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 1rem;
   font-weight: 700;
   font-family: 'JetBrains Mono', monospace;
@@ -245,7 +245,7 @@
   padding: 10px 14px;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: 10px;
   margin-bottom: 8px;
   font-size: 0.8125rem;
   color: var(--color-text);
@@ -257,7 +257,7 @@
   text-align: center;
   background: var(--color-editor-bg);
   border: 1px solid var(--color-border);
-  border-radius: 6px;
+  border-radius: 7.5px;
   font-size: 0.8125rem;
   font-weight: 600;
   font-family: 'JetBrains Mono', monospace;
@@ -306,7 +306,7 @@
   padding: 8px 12px;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: 10px;
   margin-bottom: 4px;
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.8125rem;
@@ -340,7 +340,7 @@
   padding: 1px 6px;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: 4px;
+  border-radius: 5px;
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.625rem;
 }
@@ -354,7 +354,7 @@
 
   .ts-card {
     padding: 24px 18px;
-    border-radius: 16px;
+    border-radius: 20px;
   }
 
   .ts-time {

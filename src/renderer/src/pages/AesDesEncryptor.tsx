@@ -1,5 +1,7 @@
 import { useState, useCallback } from 'react'
 import { Lock, Unlock, Copy, Check, RotateCcw, RefreshCw } from 'lucide-react'
+import CopyToast from '@renderer/components/CopyToast'
+import { copyText } from '@renderer/lib/clipboard'
 import forge from 'node-forge'
 import {
   aesGcmDecrypt,
@@ -190,6 +192,7 @@ export default function AesDesEncryptor(): React.JSX.Element {
   const [error, setError] = useState('')
   const [copied, setCopied] = useState(false)
   const [copiedTag, setCopiedTag] = useState(false)
+  const [copyError, setCopyError] = useState(false)
 
   const mode = cipherType === 'AES' ? aesMode : desMode
   const needsIv = mode === 'CBC' || mode === 'GCM' || mode === 'CTR'
@@ -298,24 +301,26 @@ export default function AesDesEncryptor(): React.JSX.Element {
 
   const copyOutput = useCallback(async () => {
     if (!outputData) return
-    try {
-      await navigator.clipboard.writeText(outputData)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 1500)
-    } catch {
-      /* ignore */
+    const ok = await copyText(outputData)
+    if (!ok) {
+      setCopyError(true)
+      setTimeout(() => setCopyError(false), 1800)
+      return
     }
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1500)
   }, [outputData])
 
   const copyTag = useCallback(async () => {
     if (!outputTag) return
-    try {
-      await navigator.clipboard.writeText(outputTag)
-      setCopiedTag(true)
-      setTimeout(() => setCopiedTag(false), 1500)
-    } catch {
-      /* ignore */
+    const ok = await copyText(outputTag)
+    if (!ok) {
+      setCopyError(true)
+      setTimeout(() => setCopyError(false), 1800)
+      return
     }
+    setCopiedTag(true)
+    setTimeout(() => setCopiedTag(false), 1500)
   }, [outputTag])
 
   const clear = useCallback(() => {
@@ -615,6 +620,7 @@ export default function AesDesEncryptor(): React.JSX.Element {
           )}
         </section>
       </div>
+      <CopyToast message={copyError ? '复制失败，请手动选择' : null} />
     </div>
   )
 }

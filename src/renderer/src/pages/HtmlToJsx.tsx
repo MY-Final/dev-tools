@@ -1,5 +1,7 @@
 import { useState, useMemo, useCallback } from 'react'
 import { Copy, Check, RotateCcw } from 'lucide-react'
+import CopyToast from '@renderer/components/CopyToast'
+import { copyText } from '@renderer/lib/clipboard'
 import '../styles/html-to-jsx.css'
 
 // ── HTML to JSX conversion ─────────────────────────────────────
@@ -210,18 +212,19 @@ const SAMPLES = [
 export default function HtmlToJsx(): React.JSX.Element {
   const [input, setInput] = useState('')
   const [copied, setCopied] = useState(false)
+  const [copyError, setCopyError] = useState(false)
 
   const output = useMemo(() => htmlToJsx(input), [input])
 
   const copy = useCallback(async () => {
     if (!output) return
-    try {
-      await navigator.clipboard.writeText(output)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 1500)
-    } catch {
-      /* ignore */
+    if (!(await copyText(output))) {
+      setCopyError(true)
+      setTimeout(() => setCopyError(false), 1800)
+      return
     }
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1500)
   }, [output])
 
   return (
@@ -284,6 +287,7 @@ export default function HtmlToJsx(): React.JSX.Element {
           </div>
         </div>
       </div>
+      <CopyToast message={copyError ? '复制失败，请手动选择' : null} />
     </div>
   )
 }

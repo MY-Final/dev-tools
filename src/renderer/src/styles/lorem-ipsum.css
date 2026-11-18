@@ -18,7 +18,7 @@
   max-width: 620px;
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);
-  border-radius: 16px;
+  border-radius: 20px;
   padding: 32px;
   box-shadow: var(--shadow-xl);
 }
@@ -53,7 +53,7 @@
   padding: 20px;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: 12px;
+  border-radius: 15px;
 }
 
 .li-control-group {
@@ -76,7 +76,7 @@
   padding: 3px;
   background: var(--color-segmented-track, var(--color-editor-bg));
   border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: 10px;
   align-self: flex-start;
 }
 
@@ -84,7 +84,7 @@
   padding: 6px 16px;
   background: transparent;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 0.8125rem;
   font-weight: 500;
   color: var(--color-text-secondary);
@@ -124,7 +124,7 @@
   appearance: none;
   height: 6px;
   background: var(--color-border);
-  border-radius: 4px;
+  border-radius: 5px;
   outline: none;
 }
 
@@ -134,6 +134,7 @@
   height: 20px;
   background: var(--color-accent-soft);
   border-radius: 50%;
+  corner-shape: round;
   cursor: pointer;
   border: 2px solid var(--color-surface);
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
@@ -144,6 +145,7 @@
   height: 20px;
   background: var(--color-accent-soft);
   border-radius: 50%;
+  corner-shape: round;
   cursor: pointer;
   border: 2px solid var(--color-surface);
 }
@@ -164,7 +166,7 @@
   justify-content: center;
   gap: 6px;
   padding: 10px 20px;
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 0.8125rem;
   font-weight: 600;
   cursor: pointer;
@@ -228,7 +230,7 @@
   padding: 18px;
   background: var(--color-editor-bg);
   border: 1px solid var(--color-border);
-  border-radius: 12px;
+  border-radius: 15px;
   font-size: 0.875rem;
   line-height: 1.7;
   color: var(--color-text);
@@ -247,7 +249,7 @@
   padding: 14px 18px;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: 12px;
+  border-radius: 15px;
 }
 
 .li-stat {
@@ -294,7 +296,7 @@
 
   .li-card {
     padding: 24px 20px;
-    border-radius: 16px;
+    border-radius: 20px;
   }
 
   .li-output {

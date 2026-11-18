@@ -156,7 +156,7 @@
   justify-content: space-between;
   padding: 14px 18px;
   border-top: 1px solid var(--color-border);
-  border-radius: 12px 12px 0 0;
+  border-radius: 15px 15px 0 0;
   cursor: pointer;
   user-select: none;
   transition:
@@ -166,7 +166,7 @@
 
 .settings-section-header:has(+ .settings-section-body:not(.open)) {
   border-bottom: 1px solid var(--color-border);
-  border-radius: 12px;
+  border-radius: 15px;
 }
 
 .settings-section-header:hover {
@@ -191,7 +191,7 @@
   justify-content: center;
   width: 24px;
   height: 24px;
-  border-radius: 8px;
+  border-radius: 10px;
   background: transparent;
   color: var(--color-accent-soft);
 }
@@ -211,7 +211,7 @@
   opacity: 0;
   padding: 0 18px;
   border-bottom: 0;
-  border-radius: 0 0 12px 12px;
+  border-radius: 0 0 15px 15px;
   transition:
     max-height 0.28s ease,
     opacity 0.2s ease,
@@ -265,11 +265,113 @@
 .settings-item-description code {
   padding: 1px 5px;
   border: 1px solid var(--color-border);
-  border-radius: 4px;
+  border-radius: 5px;
   background: var(--color-editor-bg);
   color: var(--color-text-secondary);
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.6875rem;
+}
+
+.settings-file-input {
+  display: none;
+}
+
+.settings-backup-status {
+  grid-column: 1 / -1;
+  margin: -4px 0 0;
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  line-height: 1.55;
+}
+
+.settings-backup-status--error {
+  color: var(--color-danger);
+}
+
+.settings-usage-list {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-editor-bg);
+  list-style: none;
+}
+
+.settings-usage-row {
+  display: grid;
+  grid-template-columns: 18px minmax(90px, 180px) minmax(60px, 1fr) auto 14px;
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+  margin: 0;
+  padding: 4px 6px;
+  border: 0;
+  border-radius: 7.5px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 0.75rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.settings-usage-row:hover {
+  background: var(--color-surface-hover);
+}
+
+.settings-usage-row:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+.settings-usage-open {
+  color: var(--color-text-muted);
+}
+
+.settings-usage-rank {
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.settings-usage-name {
+  overflow: hidden;
+  color: var(--color-text);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.settings-usage-bar {
+  height: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--color-border);
+}
+
+.settings-usage-bar > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--color-accent);
+}
+
+.settings-usage-count {
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.settings-usage-empty,
+.settings-usage-more {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  line-height: 1.55;
 }
 
 .settings-item-column {
@@ -284,7 +386,7 @@
 .settings-textarea {
   width: 100%;
   border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: 10px;
   background: var(--color-editor-bg);
   color: var(--color-text);
   font-family: 'JetBrains Mono', monospace;
@@ -356,6 +458,7 @@
   left: 3px;
   top: 3px;
   border-radius: 50%;
+  corner-shape: round;
   background: #fff;
   box-shadow: 0 2px 7px rgba(0, 0, 0, 0.2);
   transition: transform 0.22s ease;
@@ -392,7 +495,7 @@
   gap: 3px;
   padding: 4px;
   border: 1px solid var(--color-border);
-  border-radius: 12px;
+  border-radius: 15px;
   background: var(--color-editor-bg);
 }
 
@@ -440,7 +543,7 @@
   min-height: 38px;
   padding: 0 16px;
   border: 1px solid transparent;
-  border-radius: 12px;
+  border-radius: 15px;
   font-size: 0.8125rem;
   font-weight: 700;
   line-height: 1;
@@ -485,7 +588,7 @@
   min-height: 30px;
   padding: 0 10px;
   border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: 10px;
   background: transparent;
   color: var(--color-accent-soft);
   font-size: 0.75rem;
@@ -506,7 +609,7 @@
   white-space: nowrap;
   padding: 5px 8px;
   border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: 10px;
   background: var(--color-editor-bg);
   color: var(--color-text-secondary);
   font-family: 'JetBrains Mono', monospace;
@@ -588,7 +691,7 @@
 .shortcut-recorder kbd {
   padding: 3px 7px;
   border: 1px solid var(--color-border);
-  border-radius: 6px;
+  border-radius: 7.5px;
   background: var(--color-editor-bg);
   color: var(--color-text);
   font-family: 'JetBrains Mono', monospace;
@@ -605,7 +708,7 @@
   min-height: 36px;
   padding: 0 12px;
   border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: 10px;
   background: var(--color-surface);
   color: var(--color-text);
   cursor: pointer;
@@ -646,7 +749,7 @@
   flex-direction: column;
   overflow: hidden;
   border: 1px solid var(--color-border);
-  border-radius: 16px;
+  border-radius: 20px;
   background: var(--color-surface);
   box-shadow: var(--shadow-xl);
 }
@@ -686,7 +789,7 @@
   width: 34px;
   height: 34px;
   border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: 10px;
   background: transparent;
   color: var(--color-text-muted);
   cursor: pointer;
@@ -746,7 +849,7 @@
 .settings-modal-notes code {
   padding: 1px 6px;
   border: 1px solid var(--color-border);
-  border-radius: 4px;
+  border-radius: 5px;
   background: var(--color-editor-bg);
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.75rem;
@@ -802,6 +905,19 @@
   .settings-item {
     grid-template-columns: 1fr;
     gap: 12px;
+  }
+
+  .settings-usage-row {
+    grid-template-columns: 18px minmax(0, 1fr) auto;
+  }
+
+  .settings-usage-bar {
+    grid-row: 2;
+    grid-column: 2 / -1;
+  }
+
+  .settings-usage-open {
+    display: none;
   }
 
   .settings-segmented {

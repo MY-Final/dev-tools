@@ -18,7 +18,7 @@
   max-width: 560px;
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);
-  border-radius: 16px;
+  border-radius: 20px;
   padding: 32px;
   box-shadow: var(--shadow-xl);
 }
@@ -45,7 +45,7 @@
 
 .im-dropzone {
   border: 2px dashed var(--color-border);
-  border-radius: 16px;
+  border-radius: 20px;
   padding: 48px 24px;
   text-align: center;
   cursor: pointer;
@@ -86,7 +86,7 @@
 .im-preview-area {
   position: relative;
   margin-bottom: 16px;
-  border-radius: 12px;
+  border-radius: 15px;
   overflow: hidden;
   background: var(--color-editor-bg);
 }
@@ -139,7 +139,7 @@
   right: 10px;
   width: 32px;
   height: 32px;
-  border-radius: 8px;
+  border-radius: 10px;
   border: 1px solid rgba(0, 0, 0, 0.1);
   background: rgba(0, 0, 0, 0.5);
   color: var(--color-text-inverse);
@@ -167,7 +167,7 @@
   padding: 10px 14px;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: 10px;
 }
 
 .im-info-label {
@@ -200,7 +200,7 @@
   align-items: center;
   gap: 6px;
   padding: 8px 16px;
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 0.75rem;
   font-weight: 600;
   cursor: pointer;
@@ -232,7 +232,7 @@
   padding: 14px 16px;
   background: var(--color-editor-bg);
   border: 1px solid var(--color-border);
-  border-radius: 12px;
+  border-radius: 15px;
 }
 
 .im-output-header {
@@ -265,7 +265,7 @@
   }
   .im-card {
     padding: 24px 18px;
-    border-radius: 16px;
+    border-radius: 20px;
   }
   .im-info-grid {
     grid-template-columns: 1fr;

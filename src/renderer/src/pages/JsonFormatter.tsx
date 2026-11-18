@@ -22,14 +22,17 @@ import {
   Hammer,
   FileType2,
   Crosshair,
-  ListTree
+  ListTree,
+  AlertCircle,
+  Info
 } from 'lucide-react'
-import CodeMirror from '@uiw/react-codemirror'
+import CodeMirror, { type ReactCodeMirrorRef } from '@uiw/react-codemirror'
 import { json } from '@codemirror/lang-json'
 import { EditorView } from '@codemirror/view'
 import { search } from '@codemirror/search'
 import { useJsonFormatter, type Indent } from '@renderer/tools/json-formatter/useJsonFormatter'
 import { jsonToTypeScript, repairJsonText, type JsonRepairResult } from '@renderer/lib/data-format-utils'
+import { copyText } from '@renderer/lib/clipboard'
 import TextFileBar from '@renderer/components/TextFileBar'
 
 const INDENTS: Indent[] = [2, 4, 6, 8]
@@ -78,7 +81,7 @@ const customTheme = EditorView.theme({
   '.cm-tooltip': {
     backgroundColor: 'var(--color-surface)',
     border: '1px solid var(--color-border)',
-    borderRadius: '8px',
+    borderRadius: '10px',
     boxShadow: 'var(--shadow-md)',
     color: 'var(--color-text)'
   },
@@ -113,7 +116,16 @@ interface ContextMenuInfo {
 }
 
 type JsonTreeValue = string | number | boolean | null | JsonTreeValue[] | { [key: string]: JsonTreeValue }
-type ToastKind = 'value' | 'key' | 'path' | 'jsonpath' | 'query' | 'types' | 'repair' | 'node'
+type ToastKind =
+  | 'value'
+  | 'key'
+  | 'path'
+  | 'jsonpath'
+  | 'query'
+  | 'types'
+  | 'repair'
+  | 'node'
+  | 'error'
 type SidePanel = 'node' | 'types' | null
 
 interface SelectedNodeInfo {
@@ -475,6 +487,7 @@ export default function JsonFormatter(): React.JSX.Element {
     indent,
     viewMode,
     copied,
+    toast,
     parsedData,
     handleFormat,
     handleMinify,
@@ -486,6 +499,7 @@ export default function JsonFormatter(): React.JSX.Element {
     handleViewModeChange
   } = useJsonFormatter()
 
+  const editorRef = useRef<ReactCodeMirrorRef>(null)
   const leftPanelRef = useRef<HTMLDivElement>(null)
   const rightPanelRef = useRef<HTMLDivElement>(null)
   const isSyncingScroll = useRef(false)
@@ -675,20 +689,39 @@ export default function JsonFormatter(): React.JSX.Element {
   }, [jsonData])
 
   const handleCopyText = useCallback(
-    (text: string, kind: ToastKind) => {
-      navigator.clipboard.writeText(text)
-      showCopiedToast(kind)
+    async (text: string, kind: ToastKind) => {
+      const ok = await copyText(text)
+      showCopiedToast(ok ? kind : 'error')
     },
     [showCopiedToast]
   )
+
+  const handleLocateError = useCallback(() => {
+    if (!error?.line || !error.column) return
+    const view = editorRef.current?.view
+    if (!view) return
+    const lines = input.split('\n')
+    let position = 0
+    for (let i = 0; i < error.line - 1 && i < lines.length; i++) {
+      position += lines[i].length + 1
+    }
+    position += Math.max(error.column - 1, 0)
+    view.dispatch({
+      selection: { anchor: Math.min(position, view.state.doc.length) },
+      scrollIntoView: true
+    })
+    view.focus()
+  }, [error, input])
 
   // 同步滚动
   const handleLeftScroll = useCallback(() => {
     if (isSyncingScroll.current) return
     isSyncingScroll.current = true
-    if (leftPanelRef.current && rightPanelRef.current) {
-      rightPanelRef.current.scrollTop = leftPanelRef.current.scrollTop
-      rightPanelRef.current.scrollLeft = leftPanelRef.current.scrollLeft
+    const left = leftPanelRef.current?.querySelector('.cm-scroller')
+    const right = rightPanelRef.current?.querySelector('.cm-scroller')
+    if (left && right) {
+      right.scrollTop = left.scrollTop
+      right.scrollLeft = left.scrollLeft
     }
     requestAnimationFrame(() => {
       isSyncingScroll.current = false
@@ -698,9 +731,11 @@ export default function JsonFormatter(): React.JSX.Element {
   const handleRightScroll = useCallback(() => {
     if (isSyncingScroll.current) return
     isSyncingScroll.current = true
-    if (leftPanelRef.current && rightPanelRef.current) {
-      leftPanelRef.current.scrollTop = rightPanelRef.current.scrollTop
-      leftPanelRef.current.scrollLeft = rightPanelRef.current.scrollLeft
+    const left = leftPanelRef.current?.querySelector('.cm-scroller')
+    const right = rightPanelRef.current?.querySelector('.cm-scroller')
+    if (left && right) {
+      left.scrollTop = right.scrollTop
+      left.scrollLeft = right.scrollLeft
     }
     requestAnimationFrame(() => {
       isSyncingScroll.current = false
@@ -745,35 +780,31 @@ export default function JsonFormatter(): React.JSX.Element {
 
   const handleCopyValue = useCallback(() => {
     if (contextMenu) {
-      navigator.clipboard.writeText(contextMenu.value)
-      showCopiedToast('value')
+      void handleCopyText(contextMenu.value, 'value')
       setContextMenu(null)
     }
-  }, [contextMenu, showCopiedToast])
+  }, [contextMenu, handleCopyText])
 
   const handleCopyKey = useCallback(() => {
     if (contextMenu) {
-      navigator.clipboard.writeText(contextMenu.key)
-      showCopiedToast('key')
+      void handleCopyText(contextMenu.key, 'key')
       setContextMenu(null)
     }
-  }, [contextMenu, showCopiedToast])
+  }, [contextMenu, handleCopyText])
 
   const handleCopyPath = useCallback(() => {
     if (contextMenu) {
-      navigator.clipboard.writeText(contextMenu.path)
-      showCopiedToast('path')
+      void handleCopyText(contextMenu.path, 'path')
       setContextMenu(null)
     }
-  }, [contextMenu, showCopiedToast])
+  }, [contextMenu, handleCopyText])
 
   const handleCopyJsonPath = useCallback(() => {
     if (contextMenu) {
-      navigator.clipboard.writeText(contextMenu.path)
-      showCopiedToast('jsonpath')
+      void handleCopyText(contextMenu.path, 'jsonpath')
       setContextMenu(null)
     }
-  }, [contextMenu, showCopiedToast])
+  }, [contextMenu, handleCopyText])
 
   const handleCloseContextMenu = useCallback(() => {
     setContextMenu(null)
@@ -901,10 +932,15 @@ export default function JsonFormatter(): React.JSX.Element {
               {error.message}
               {error.line && error.column && (
                 <span className="jf-error-pos">
-                  &nbsp;at line {error.line}, col {error.column}
+                  &nbsp;第 {error.line} 行，第 {error.column} 列
                 </span>
               )}
             </span>
+            {error.line && error.column && (
+              <button type="button" className="jf-error-locate" onClick={handleLocateError}>
+                定位到错误
+              </button>
+            )}
           </div>
         )}
 
@@ -1074,6 +1110,7 @@ export default function JsonFormatter(): React.JSX.Element {
             </div>
             <div className="jf-editor-area" ref={leftPanelRef}>
               <CodeMirror
+                ref={editorRef}
                 value={input}
                 onChange={handleEditorChange}
                 extensions={editorExtensions}
@@ -1280,9 +1317,23 @@ export default function JsonFormatter(): React.JSX.Element {
       )}
 
       {/* Toast */}
+      {toast && !copiedItem && (
+        <div className="jf-toast" role="status" aria-live="polite">
+          <Info size={14} aria-hidden="true" />
+          <span>{toast}</span>
+        </div>
+      )}
       {copiedItem && (
-        <div className="jf-toast">
-          <Check size={14} />
+        <div
+          className={`jf-toast ${copiedItem === 'error' ? 'jf-toast--error' : ''}`}
+          role="status"
+          aria-live="polite"
+        >
+          {copiedItem === 'error' ? (
+            <AlertCircle size={14} aria-hidden="true" />
+          ) : (
+            <Check size={14} aria-hidden="true" />
+          )}
           <span>
             {copiedItem === 'value' && '已复制值'}
             {copiedItem === 'key' && '已复制键名'}
@@ -1292,6 +1343,7 @@ export default function JsonFormatter(): React.JSX.Element {
             {copiedItem === 'types' && '已复制 TypeScript 类型'}
             {copiedItem === 'repair' && '已尝试修复 JSON'}
             {copiedItem === 'node' && '已复制节点值'}
+            {copiedItem === 'error' && '复制失败，请手动选择'}
           </span>
         </div>
       )}

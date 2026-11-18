@@ -1,4 +1,6 @@
 import { useState, useMemo, useCallback, useRef } from 'react'
+import CopyToast from '@renderer/components/CopyToast'
+import { copyText as writeClipboard } from '@renderer/lib/clipboard'
 import {
   Table,
   Copy,
@@ -87,6 +89,7 @@ function detectDelimiter(text: string): string {
 export default function CsvEditor(): React.JSX.Element {
   const [input, setInput] = useState(SAMPLE_CSV)
   const [copied, setCopied] = useState<'csv' | 'json' | null>(null)
+  const [copyError, setCopyError] = useState(false)
   const [editingCell, setEditingCell] = useState<{ row: number; col: number } | null>(null)
   const [editValue, setEditValue] = useState('')
   const [delimiterChoice, setDelimiterChoice] = useState<DelimiterChoice>('auto')
@@ -259,13 +262,13 @@ export default function CsvEditor(): React.JSX.Element {
   }, [])
 
   const copyText = useCallback(async (kind: 'csv' | 'json', text: string) => {
-    try {
-      await navigator.clipboard.writeText(text)
-      setCopied(kind)
-      setTimeout(() => setCopied(null), 1500)
-    } catch {
-      /* ignore */
+    if (!(await writeClipboard(text))) {
+      setCopyError(true)
+      setTimeout(() => setCopyError(false), 1800)
+      return
     }
+    setCopied(kind)
+    setTimeout(() => setCopied(null), 1500)
   }, [])
 
   const handleCopyCSV = useCallback(() => {
@@ -571,6 +574,7 @@ export default function CsvEditor(): React.JSX.Element {
           </div>
         )}
       </div>
+      <CopyToast message={copyError ? '复制失败，请手动选择' : null} />
     </div>
   )
 }

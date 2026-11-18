@@ -163,6 +163,12 @@
   font-size: var(--text-2xs);
 }
 
+.hg-file-warn {
+  color: var(--color-warning);
+  font-size: var(--text-2xs);
+  line-height: 1.45;
+}
+
 .hg-file-remove {
   margin-left: auto;
   flex-shrink: 0;
@@ -190,7 +196,8 @@
 
 .hg-result-row {
   display: grid;
-  grid-template-columns: 92px minmax(0, 1fr) 28px;
+  /* 窄屏触控目标会把复制按钮撑到 44px，固定列宽会被面板裁掉。 */
+  grid-template-columns: 92px minmax(0, 1fr) auto;
   align-items: start;
   gap: 12px;
   padding: 10px 14px;
@@ -259,6 +266,7 @@
   border: 2px solid var(--color-border);
   border-top-color: var(--color-text-secondary);
   border-radius: 50%;
+  corner-shape: round;
   animation: spin 0.8s linear infinite;
 }
 
@@ -266,7 +274,7 @@
 
 @container tool (max-width: 560px) {
   .hg-result-row {
-    grid-template-columns: 74px minmax(0, 1fr) 26px;
+    grid-template-columns: 74px minmax(0, 1fr) auto;
     gap: 8px;
   }
 

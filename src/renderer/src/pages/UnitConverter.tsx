@@ -1,5 +1,7 @@
 import { useState, useMemo, useCallback } from 'react'
 import { Copy, Check, RotateCcw } from 'lucide-react'
+import CopyToast from '@renderer/components/CopyToast'
+import { copyText } from '@renderer/lib/clipboard'
 import '../styles/unit-converter.css'
 
 // ── Unit definitions ───────────────────────────────────────────
@@ -208,6 +210,15 @@ function toNum(v: number | ((v: number) => number), val: number): number {
   return typeof v === 'function' ? v(val) : val * v
 }
 
+/** 严格解析整个输入，避免 parseFloat('12kg') 静默得到 12。 */
+function parseNumberInput(input: string): number | null {
+  const trimmed = input.trim()
+  if (!trimmed) return null
+  if (!/^[+-]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?$/.test(trimmed)) return null
+  const value = Number(trimmed)
+  return Number.isFinite(value) ? value : null
+}
+
 function formatResult(n: number): string {
   if (Math.abs(n) < 1e-15) return '0'
   if (Math.abs(n) >= 1e12 || (Math.abs(n) < 1e-9 && n !== 0)) return n.toExponential(6)
@@ -227,34 +238,44 @@ function formatResult(n: number): string {
 
 export default function UnitConverter(): React.JSX.Element {
   const [activeCat, setActiveCat] = useState('length')
+  const [fromUnit, setFromUnit] = useState('km')
   const [input, setInput] = useState('')
   const [copiedKey, setCopiedKey] = useState<string | null>(null)
+  const [copyError, setCopyError] = useState(false)
 
   const category = useMemo(() => CATEGORIES.find((c) => c.id === activeCat)!, [activeCat])
+  const sourceUnit = category.units.find((u) => u.symbol === fromUnit) ?? category.units[0]
 
-  const numValue = useMemo(() => {
-    if (!input.trim()) return null
-    const n = parseFloat(input)
-    return isNaN(n) ? null : n
-  }, [input])
+  const selectCategory = useCallback(
+    (id: string) => {
+      if (id === activeCat) return
+      const next = CATEGORIES.find((c) => c.id === id)
+      if (!next) return
+      setActiveCat(next.id)
+      setFromUnit(next.units[0].symbol)
+    },
+    [activeCat]
+  )
+
+  const numValue = useMemo(() => parseNumberInput(input), [input])
 
   const results = useMemo(() => {
     if (numValue === null) return null
-    const baseValue = toNum(category.units[0].toBase, numValue)
+    const baseValue = toNum(sourceUnit.toBase, numValue)
     return category.units.map((u) => {
       const fromBase = toNum(u.fromBase, baseValue)
       return { ...u, value: formatResult(fromBase) }
     })
-  }, [numValue, category])
+  }, [numValue, category, sourceUnit])
 
   const copyToClipboard = useCallback(async (key: string, text: string) => {
-    try {
-      await navigator.clipboard.writeText(text)
-      setCopiedKey(key)
-      setTimeout(() => setCopiedKey(null), 1500)
-    } catch {
-      // ignore
+    if (!(await copyText(text))) {
+      setCopyError(true)
+      setTimeout(() => setCopyError(false), 1800)
+      return
     }
+    setCopiedKey(key)
+    setTimeout(() => setCopiedKey(null), 1500)
   }, [])
 
   const clear = useCallback(() => setInput(''), [])
@@ -279,7 +300,7 @@ export default function UnitConverter(): React.JSX.Element {
               role="tab"
               aria-selected={activeCat === cat.id}
               className={`uc-tab ${activeCat === cat.id ? 'active' : ''}`}
-              onClick={() => setActiveCat(cat.id)}
+              onClick={() => selectCategory(cat.id)}
             >
               {cat.label}
             </button>
@@ -300,7 +321,18 @@ export default function UnitConverter(): React.JSX.Element {
             placeholder="输入数值"
             autoFocus
           />
-          <span className="uc-input-unit">{category.units[0].symbol}</span>
+          <select
+            className="tool-select uc-unit-select"
+            value={sourceUnit.symbol}
+            onChange={(e) => setFromUnit(e.target.value)}
+            aria-label="输入单位"
+          >
+            {category.units.map((u) => (
+              <option key={u.symbol} value={u.symbol}>
+                {u.symbol} · {u.name}
+              </option>
+            ))}
+          </select>
           <button type="button" className="tool-btn" onClick={clear} disabled={!input}>
             <RotateCcw size={14} aria-hidden="true" />
             清空
@@ -313,15 +345,19 @@ export default function UnitConverter(): React.JSX.Element {
           <div className="tool-panel-head">
             <h3 className="tool-panel-title">换算结果</h3>
             <span className="uc-result-base">
-              基准 {category.units[0].symbol} · {category.units[0].name}
+              输入 {sourceUnit.symbol} · {sourceUnit.name}
             </span>
           </div>
           <div className="uc-result-grid">
             {results.map((u) => (
-              <div key={u.symbol} className="uc-result-item">
+              <div
+                key={u.symbol}
+                className={`uc-result-item${u.symbol === sourceUnit.symbol ? ' uc-result-item--source' : ''}`}
+              >
                 <div className="uc-result-info">
                   <span className="uc-result-symbol">{u.symbol}</span>
                   <span className="uc-result-name">{u.name}</span>
+                  {u.symbol === sourceUnit.symbol && <span className="uc-result-tag">输入</span>}
                 </div>
                 <div className="uc-result-right">
                   <code className="uc-result-value">{u.value}</code>
@@ -330,7 +366,7 @@ export default function UnitConverter(): React.JSX.Element {
                     className="tool-icon-btn"
                     title={`复制 ${u.name}`}
                     aria-label={`复制 ${u.name} 数值`}
-                    onClick={() => copyToClipboard(u.symbol, u.value)}
+                    onClick={() => copyToClipboard(u.symbol, u.value.replace(/,/g, ''))}
                   >
                     {copiedKey === u.symbol ? (
                       <Check size={14} aria-hidden="true" />
@@ -347,9 +383,10 @@ export default function UnitConverter(): React.JSX.Element {
 
       {!results && input && (
         <p className="uc-hint" role="status">
-          请输入有效数值
+          请输入有效数值（支持小数、负数与科学计数法）
         </p>
       )}
+      <CopyToast message={copyError ? '复制失败，请手动选择' : null} />
     </div>
   )
 }

@@ -18,7 +18,7 @@
   max-width: 640px;
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);
-  border-radius: 16px;
+  border-radius: 20px;
   padding: 32px;
   box-shadow: var(--shadow-xl);
 }
@@ -50,7 +50,7 @@
   padding: 12px 16px;
   background: var(--color-editor-bg);
   border: 1px solid var(--color-border);
-  border-radius: 12px;
+  border-radius: 15px;
   margin-bottom: 24px;
   color: var(--color-text-muted);
 }
@@ -79,7 +79,7 @@
 .cs-category {
   background: var(--color-editor-bg);
   border: 1px solid var(--color-border);
-  border-radius: 12px;
+  border-radius: 15px;
   overflow: hidden;
 }
 
@@ -109,7 +109,7 @@
   color: var(--color-text-muted);
   background: var(--color-border);
   padding: 2px 8px;
-  border-radius: 8px;
+  border-radius: 10px;
 }
 
 /* 命令列表 */
@@ -132,7 +132,7 @@
   padding: 10px 12px;
   cursor: pointer;
   transition: all 0.15s ease;
-  border-radius: 8px;
+  border-radius: 10px;
 }
 
 .cs-command:hover {
@@ -169,7 +169,7 @@
   height: 28px;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: 6px;
+  border-radius: 7.5px;
   color: var(--color-text-muted);
   cursor: pointer;
   transition: all 0.15s ease;
@@ -230,7 +230,7 @@
   padding: 6px 10px;
   background: var(--color-editor-bg);
   border: 1px solid var(--color-border);
-  border-radius: 6px;
+  border-radius: 7.5px;
 }
 
 .cs-param-flag {
@@ -253,7 +253,7 @@
   padding: 10px 12px;
   background: var(--color-editor-bg);
   border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: 10px;
 }
 
 .cs-detail-code code {
@@ -283,7 +283,7 @@
 
   .cs-card {
     padding: 24px 20px;
-    border-radius: 16px;
+    border-radius: 20px;
   }
 
   .cs-title {

@@ -1,5 +1,7 @@
 import { useState, useMemo, useCallback } from 'react'
 import { Copy, Check, RotateCcw } from 'lucide-react'
+import CopyToast from '@renderer/components/CopyToast'
+import { copyText } from '@renderer/lib/clipboard'
 import '../styles/uuid-decoder.css'
 
 interface UUIDInfo {
@@ -14,6 +16,18 @@ interface UUIDInfo {
   timestamp: string | null
   clockSequence: number | null
   nodeMac: string | null
+}
+
+function toIsoTime(ms: number): string | null {
+  if (!Number.isFinite(ms)) return null
+  const date = new Date(ms)
+  return Number.isNaN(date.getTime()) ? null : date.toISOString()
+}
+
+/** 60-bit 100ns intervals since 1582-10-15 → ISO time. */
+function gregorianTimestamp(timeHex: string): string | null {
+  const ticks = BigInt('0x' + timeHex) - 122192928000000000n
+  return toIsoTime(Number(ticks / 10000n))
 }
 
 function parseUUID(input: string): UUIDInfo | null {
@@ -41,15 +55,16 @@ function parseUUID(input: string): UUIDInfo | null {
   else if ((variantBits & 0xE0) === 0xC0) variant = 'Microsoft (2)'
   else variant = 'Reserved (3)'
 
-  // Timestamp for version 1
+  // Timestamp: v1 stores a Gregorian 60-bit clock, v6 reorders the same clock,
+  // v7 stores Unix milliseconds in the first 48 bits.
   let timestamp: string | null = null
   if (version === 1) {
     const timeHex = `${timeHighAndVersion.substring(1)}${timeMid}${timeLow}`
-    // Convert to 100-nanosecond intervals since 1582-10-15
-    const timeInt = BigInt('0x' + timeHex)
-    const ticks = timeInt - 122192928000000000n
-    const ms = Number(ticks / 10000n)
-    timestamp = new Date(ms).toISOString()
+    timestamp = gregorianTimestamp(timeHex)
+  } else if (version === 6) {
+    timestamp = gregorianTimestamp(hex.substring(0, 12) + hex.substring(13, 16))
+  } else if (version === 7) {
+    timestamp = toIsoTime(Number(BigInt('0x' + hex.substring(0, 12))))
   }
 
   const clockSequence = variant === 'RFC 4122'
@@ -78,6 +93,26 @@ function parseUUID(input: string): UUIDInfo | null {
   }
 }
 
+function BitRow({
+  label,
+  value,
+  version
+}: {
+  label: string
+  value: string
+  version?: number
+}): React.JSX.Element {
+  return (
+    <div className="ud-bit-row">
+      <span className="ud-bit-label">{label}</span>
+      <code className="ud-bit-value">
+        {value}
+        {version !== undefined && <span className="ud-bit-version">v{version}</span>}
+      </code>
+    </div>
+  )
+}
+
 const VERSION_NAMES: Record<number, string> = {
   0: 'Nil UUID',
   1: 'Time-based (MAC)',
@@ -94,12 +129,15 @@ const SAMPLES = [
   '550e8400-e29b-41d4-a716-446655440000',
   'f47ac10b-58cc-4372-a567-0e02b2c3d479',
   '00000000-0000-0000-0000-000000000000',
-  '6ba7b810-9dad-11d1-80b4-00c04fd430c8'
+  '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
+  '1e0b3a2e-9e0b-6d1a-8000-000000000000',
+  '01920000-7d2a-7c3b-9a1e-2b3c4d5e6f70'
 ]
 
 export default function UUIDDecoder(): React.JSX.Element {
   const [input, setInput] = useState('')
   const [copied, setCopied] = useState<string | null>(null)
+  const [copyError, setCopyError] = useState(false)
 
   const info = useMemo(() => parseUUID(input), [input])
 
@@ -108,11 +146,13 @@ export default function UUIDDecoder(): React.JSX.Element {
     : null
 
   const copy = useCallback(async (key: string, text: string) => {
-    try {
-      await navigator.clipboard.writeText(text)
-      setCopied(key)
-      setTimeout(() => setCopied(null), 1500)
-    } catch { /* ignore */ }
+    if (!(await copyText(text))) {
+      setCopyError(true)
+      setTimeout(() => setCopyError(false), 1800)
+      return
+    }
+    setCopied(key)
+    setTimeout(() => setCopied(null), 1500)
   }, [])
 
   const clear = useCallback(() => setInput(''), [])
@@ -130,7 +170,12 @@ export default function UUIDDecoder(): React.JSX.Element {
             <span className="ud-input-label">UUID</span>
             <div className="ud-samples">
               {SAMPLES.map((s) => (
-                <button key={s} className="ud-sample-btn" onClick={() => setInput(s)}>
+                <button
+                  key={s}
+                  className="ud-sample-btn"
+                  onClick={() => setInput(s)}
+                  title={s}
+                >
                   {s.slice(0, 8)}…
                 </button>
               ))}
@@ -184,10 +229,10 @@ export default function UUIDDecoder(): React.JSX.Element {
               </div>
             </div>
 
-            {/* Timestamp (v1) */}
+            {/* Timestamp (v1 / v6 / v7) */}
             {info.timestamp && (
               <div className="ud-section">
-                <h4 className="ud-section-title">时间戳 (v1)</h4>
+                <h4 className="ud-section-title">时间戳 (v{info.version})</h4>
                 <div className="ud-row"><span className="ud-row-label">UTC</span><code className="ud-row-value">{info.timestamp}</code></div>
               </div>
             )}
@@ -208,37 +253,46 @@ export default function UUIDDecoder(): React.JSX.Element {
             <div className="ud-section">
               <h4 className="ud-section-title">位布局</h4>
               <div className="ud-bit-layout">
-                <div className="ud-bit-row">
-                  <span className="ud-bit-label">time_low</span>
-                  <code className="ud-bit-value">{info.timeLow}</code>
-                </div>
-                <div className="ud-bit-row">
-                  <span className="ud-bit-label">time_mid</span>
-                  <code className="ud-bit-value">{info.timeMid}</code>
-                </div>
-                <div className="ud-bit-row">
-                  <span className="ud-bit-label">time_hi_and_version</span>
-                  <code className="ud-bit-value">{info.timeHighAndVersion}
-                    <span className="ud-bit-version">v{info.version}</span>
-                  </code>
-                </div>
-                <div className="ud-bit-row">
-                  <span className="ud-bit-label">clk_seq_hi_res</span>
-                  <code className="ud-bit-value">{info.clockSeqAndVariant.substring(0, 2)}</code>
-                </div>
-                <div className="ud-bit-row">
-                  <span className="ud-bit-label">clk_seq_low</span>
-                  <code className="ud-bit-value">{info.clockSeqAndVariant.substring(2, 4)}</code>
-                </div>
-                <div className="ud-bit-row">
-                  <span className="ud-bit-label">node</span>
-                  <code className="ud-bit-value">{info.node}</code>
-                </div>
+                {info.version === 7 ? (
+                  <>
+                    <BitRow label="unix_ts_ms" value={info.hex.substring(0, 12)} />
+                    <BitRow label="ver + rand_a" value={info.hex.substring(12, 16)} version={7} />
+                    <BitRow label="var + rand_b" value={info.hex.substring(16, 32)} />
+                  </>
+                ) : info.version === 6 ? (
+                  <>
+                    <BitRow label="time_high" value={info.hex.substring(0, 12)} />
+                    <BitRow label="ver + time_low" value={info.hex.substring(12, 16)} version={6} />
+                    <BitRow
+                      label="clk_seq_hi_res"
+                      value={info.clockSeqAndVariant.substring(0, 2)}
+                    />
+                    <BitRow label="clk_seq_low" value={info.clockSeqAndVariant.substring(2, 4)} />
+                    <BitRow label="node" value={info.node} />
+                  </>
+                ) : (
+                  <>
+                    <BitRow label="time_low" value={info.timeLow} />
+                    <BitRow label="time_mid" value={info.timeMid} />
+                    <BitRow
+                      label="time_hi_and_version"
+                      value={info.timeHighAndVersion}
+                      version={info.version}
+                    />
+                    <BitRow
+                      label="clk_seq_hi_res"
+                      value={info.clockSeqAndVariant.substring(0, 2)}
+                    />
+                    <BitRow label="clk_seq_low" value={info.clockSeqAndVariant.substring(2, 4)} />
+                    <BitRow label="node" value={info.node} />
+                  </>
+                )}
               </div>
             </div>
           </>
         )}
       </div>
+      <CopyToast message={copyError ? '复制失败，请手动选择' : null} />
     </div>
   )
 }

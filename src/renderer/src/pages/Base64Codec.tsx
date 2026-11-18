@@ -1,5 +1,7 @@
 import { useState, useCallback, useMemo } from 'react'
 import { Copy, Check, ArrowLeftRight, RotateCcw, Braces, AlertTriangle } from 'lucide-react'
+import CopyToast from '@renderer/components/CopyToast'
+import { copyText } from '@renderer/lib/clipboard'
 
 type Mode = 'encode' | 'decode'
 type Variant = 'standard' | 'url'
@@ -29,14 +31,36 @@ function base64Decode(str: string, variant: Variant): string {
   for (let i = 0; i < binary.length; i++) {
     bytes[i] = binary.charCodeAt(i)
   }
-  const decoder = new TextDecoder()
-  return decoder.decode(bytes)
+  // fatal 模式避免把二进制数据静默显示成一串替换字符。
+  try {
+    return new TextDecoder('utf-8', { fatal: true }).decode(bytes)
+  } catch {
+    throw new Error('INVALID_UTF8')
+  }
 }
 
+/** 结合“能解码且是可读 UTF-8”判断，避免把 hello、test 之类的普通单词误报为 Base64。 */
 function looksLikeBase64(str: string): boolean {
   const cleaned = str.trim()
-  if (!cleaned) return false
-  return /^[A-Za-z0-9+/_-]+=*$/.test(cleaned) && cleaned.length >= 4
+  if (cleaned.length < 8) return false
+  if (!/^[A-Za-z0-9+/_-]+={0,2}$/.test(cleaned)) return false
+
+  const normalized = cleaned.replace(/-/g, '+').replace(/_/g, '/').replace(/=+$/, '')
+  if (normalized.length % 4 === 1) return false
+
+  try {
+    const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, '=')
+    const binary = atob(padded)
+    const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0))
+    const text = new TextDecoder('utf-8', { fatal: true }).decode(bytes)
+    if (!text.length) return false
+    return ![...text].some((ch) => {
+      const code = ch.codePointAt(0) ?? 0
+      return code < 9 || (code > 13 && code < 32)
+    })
+  } catch {
+    return false
+  }
 }
 
 function tryFormatJSON(text: string): string | null {
@@ -60,8 +84,12 @@ function computeOutput(input: string, mode: Mode, variant: Variant): DecodeResul
       return { output: base64Encode(input, variant), error: '' }
     }
     return { output: base64Decode(input, variant), error: '' }
-  } catch {
-    return { output: '', error: '无效的 Base64 字符串' }
+  } catch (e) {
+    const invalidUtf8 = e instanceof Error && e.message === 'INVALID_UTF8'
+    return {
+      output: '',
+      error: invalidUtf8 ? '解码结果不是有效的 UTF-8 文本' : '无效的 Base64 字符串'
+    }
   }
 }
 
@@ -70,6 +98,8 @@ export default function Base64Codec(): React.JSX.Element {
   const [variant, setVariant] = useState<Variant>('standard')
   const [input, setInput] = useState('')
   const [copied, setCopied] = useState(false)
+  const [copyError, setCopyError] = useState(false)
+  const [formattedFor, setFormattedFor] = useState<string | null>(null)
 
   const { output, error } = useMemo(
     () => computeOutput(input, mode, variant),
@@ -83,33 +113,36 @@ export default function Base64Codec(): React.JSX.Element {
     return null
   }, [mode, output])
 
+  // 记住“格式化视图是为哪份输出打开的”：输出变化后自动回到原始结果，无需副作用。
+  const showFormatted = formattedFor !== null && formattedFor === output
+  const displayedOutput = showFormatted && formattedJSON ? formattedJSON : output
+
   const copyOutput = useCallback(async () => {
-    if (!output) return
-    try {
-      await navigator.clipboard.writeText(output)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 1500)
-    } catch {
-      // fallback
+    if (!displayedOutput) return
+    const ok = await copyText(displayedOutput)
+    if (!ok) {
+      setCopyError(true)
+      setTimeout(() => setCopyError(false), 1800)
+      return
     }
-  }, [output])
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1500)
+  }, [displayedOutput])
 
   const swap = useCallback(() => {
-    if (output) {
-      setInput(output)
+    if (displayedOutput) {
+      setInput(displayedOutput)
       setMode(mode === 'encode' ? 'decode' : 'encode')
     }
-  }, [output, mode])
+  }, [displayedOutput, mode])
 
   const clear = useCallback(() => {
     setInput('')
   }, [])
 
-  const formatJSON = useCallback(() => {
-    if (formattedJSON) {
-      setInput(formattedJSON)
-    }
-  }, [formattedJSON])
+  const toggleFormatted = useCallback(() => {
+    setFormattedFor((prev) => (prev === output ? null : output))
+  }, [output])
 
   const switchToDecode = useCallback(() => {
     setMode('decode')
@@ -208,7 +241,7 @@ export default function Base64Codec(): React.JSX.Element {
             type="button"
             className="tool-icon-btn b64-swap-btn"
             onClick={swap}
-            disabled={!output}
+            disabled={!displayedOutput}
             title="交换输入与输出"
             aria-label="交换输入与输出"
           >
@@ -220,13 +253,18 @@ export default function Base64Codec(): React.JSX.Element {
           <div className="tool-panel-head">
             <h3 className="tool-panel-title">输出</h3>
             <div className="b64-output-actions">
-              {formattedJSON && (
-                <button type="button" className="tool-btn" onClick={formatJSON}>
+              {formattedJSON && formattedJSON !== output && (
+                <button type="button" className="tool-btn" onClick={toggleFormatted}>
                   <Braces size={13} aria-hidden="true" />
-                  格式化 JSON
+                  {showFormatted ? '还原输出' : '格式化 JSON'}
                 </button>
               )}
-              <button type="button" className="tool-btn" onClick={copyOutput} disabled={!output}>
+              <button
+                type="button"
+                className="tool-btn"
+                onClick={copyOutput}
+                disabled={!displayedOutput}
+              >
                 {copied ? (
                   <Check size={13} aria-hidden="true" />
                 ) : (
@@ -238,7 +276,7 @@ export default function Base64Codec(): React.JSX.Element {
           </div>
           <textarea
             className={`b64-textarea b64-output ${error ? 'b64-output--error' : ''}`}
-            value={error || output}
+            value={error || displayedOutput}
             readOnly
             placeholder="结果将在这里显示…"
             aria-label="转换结果"
@@ -246,6 +284,7 @@ export default function Base64Codec(): React.JSX.Element {
           />
         </section>
       </div>
+      <CopyToast message={copyError ? '复制失败，请手动选择' : null} />
     </div>
   )
 }

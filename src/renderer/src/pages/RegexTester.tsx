@@ -1,16 +1,17 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import { Check, ChevronLeft, ChevronRight, Copy, Library, RotateCcw, Search } from 'lucide-react'
 import TextFileBar from '@renderer/components/TextFileBar'
+import CopyToast from '@renderer/components/CopyToast'
+import { copyText as writeClipboard } from '@renderer/lib/clipboard'
 import { Popover, PopoverContent, PopoverTrigger } from '@renderer/components/ui/popover'
 import {
-  applyReplacement,
   buildHighlightSegments,
-  collectMatchesResult,
   compileRegex,
   formatRegexLiteral,
   MAX_MATCHES,
   type MatchInfo
 } from '@renderer/lib/regex-match'
+import { REGEX_RUN_TIMEOUT_MS, useRegexRun } from '@renderer/lib/use-regex-run'
 import {
   REGEX_PRESET_CATEGORIES,
   filterRegexPresets,
@@ -157,6 +158,7 @@ export default function RegexTester(): React.JSX.Element {
   const [presetOpen, setPresetOpen] = useState(false)
   const [presetQuery, setPresetQuery] = useState('')
   const [copiedKey, setCopiedKey] = useState<string | null>(null)
+  const [copyError, setCopyError] = useState(false)
   const currentRef = useRef<HTMLElement | null>(null)
 
   const compiled = useMemo(() => compileRegex(pattern, flags), [pattern, flags])
@@ -164,10 +166,15 @@ export default function RegexTester(): React.JSX.Element {
   const literal = useMemo(() => formatRegexLiteral(pattern, flags), [pattern, flags])
   const hasIndices = flags.includes('d')
 
-  const collected = useMemo(
-    () => (regex && testString ? collectMatchesResult(regex, testString, MAX_MATCHES) : null),
-    [regex, testString]
-  )
+  // Matching runs in a worker: a pathological pattern must never freeze the page.
+  const run = useRegexRun({
+    pattern: regex ? pattern : '',
+    flags,
+    input: testString,
+    replacement,
+    mode
+  })
+  const collected = run.result
   const matchList = collected?.matches
   const matchCount = matchList?.length ?? 0
   const current = matchCount > 0 ? Math.min(activeIndex, matchCount - 1) : -1
@@ -181,13 +188,7 @@ export default function RegexTester(): React.JSX.Element {
     [testString, matchList, activeGroup]
   )
 
-  const replaced = useMemo(
-    () =>
-      regex && testString && mode === 'replace'
-        ? applyReplacement(testString, regex, replacement, MAX_MATCHES)
-        : null,
-    [regex, testString, replacement, mode]
-  )
+  const replaced = run.result?.replacement ?? null
 
   const presetGroups = useMemo(
     () => filterRegexPresets(REGEX_PRESET_CATEGORIES, presetQuery),
@@ -210,13 +211,14 @@ export default function RegexTester(): React.JSX.Element {
   }, [])
 
   const copyText = useCallback(async (key: string, text: string) => {
-    try {
-      await navigator.clipboard.writeText(text)
-      setCopiedKey(key)
-      setTimeout(() => setCopiedKey((k) => (k === key ? null : k)), 1500)
-    } catch {
-      // Clipboard can be unavailable; the text is still selectable.
+    const ok = await writeClipboard(text)
+    if (!ok) {
+      setCopyError(true)
+      setTimeout(() => setCopyError(false), 1800)
+      return
     }
+    setCopiedKey(key)
+    setTimeout(() => setCopiedKey((k) => (k === key ? null : k)), 1500)
   }, [])
 
   const applyPreset = useCallback((preset: RegexPreset) => {
@@ -458,6 +460,22 @@ export default function RegexTester(): React.JSX.Element {
           </button>
         </div>
 
+        {run.status === 'timeout' && (
+          <div className="rx-timeout" role="alert">
+            <strong>计算已中止</strong>
+            <p>
+              该正则与这段文本超过 {REGEX_RUN_TIMEOUT_MS / 1000} 秒仍未完成，可能存在灾难性回溯（例如{' '}
+              <code>(a+)+</code>）。请减少嵌套量词或缩短测试文本。
+            </p>
+          </div>
+        )}
+
+        {run.status === 'error' && (
+          <div className="rx-error" role="alert">
+            {run.error}
+          </div>
+        )}
+
         {/* Match results */}
         {mode === 'match' && regex && !testString && (
           <div className="rx-no-match">输入测试文本以查看匹配</div>
@@ -632,6 +650,7 @@ export default function RegexTester(): React.JSX.Element {
           </div>
         )}
       </div>
+      <CopyToast message={copyError ? '复制失败，请手动选择' : null} />
     </div>
   )
 }

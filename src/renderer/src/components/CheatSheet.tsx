@@ -1,5 +1,7 @@
 import { useState, useMemo, useCallback } from 'react'
 import { Copy, Check, Search } from 'lucide-react'
+import CopyToast from '@renderer/components/CopyToast'
+import { copyText } from '@renderer/lib/clipboard'
 
 export interface CheatSheetCommand {
   command: string
@@ -31,6 +33,7 @@ export default function CheatSheet({
   const [search, setSearch] = useState('')
   const [expandedKey, setExpandedKey] = useState<string | null>(null)
   const [copied, setCopied] = useState<string | null>(null)
+  const [copyError, setCopyError] = useState(false)
 
   const filteredCategories = useMemo(() => {
     if (!search.trim()) return categories
@@ -49,13 +52,14 @@ export default function CheatSheet({
   }, [search, categories])
 
   const copyCommand = useCallback(async (command: string) => {
-    try {
-      await navigator.clipboard.writeText(command)
-      setCopied(command)
-      setTimeout(() => setCopied(null), 1500)
-    } catch {
-      // fallback
+    const ok = await copyText(command)
+    if (!ok) {
+      setCopyError(true)
+      setTimeout(() => setCopyError(false), 1800)
+      return
     }
+    setCopied(command)
+    setTimeout(() => setCopied(null), 1500)
   }, [])
 
   const toggleExpand = useCallback((key: string) => {
@@ -149,6 +153,7 @@ export default function CheatSheet({
 
         {filteredCategories.length === 0 && <div className="cs-empty">未找到匹配的命令</div>}
       </div>
+      <CopyToast message={copyError ? '复制失败，请手动选择' : null} />
     </div>
   )
 }

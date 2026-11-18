@@ -1,5 +1,7 @@
 import { useState, useCallback, useRef } from 'react'
 import { Copy, Check, Upload, X, AlertTriangle, CheckCircle, XCircle } from 'lucide-react'
+import CopyToast from '@renderer/components/CopyToast'
+import { copyText } from '@renderer/lib/clipboard'
 import forge from 'node-forge'
 import '../styles/certificate-parser.css'
 
@@ -210,6 +212,7 @@ export default function CertificateParser(): React.JSX.Element {
   const [certInfo, setCertInfo] = useState<CertInfo | null>(null)
   const [error, setError] = useState('')
   const [copiedField, setCopiedField] = useState<string | null>(null)
+  const [copyError, setCopyError] = useState(false)
   const [dragging, setDragging] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -241,13 +244,14 @@ export default function CertificateParser(): React.JSX.Element {
   )
 
   const copyField = useCallback(async (key: string, value: string) => {
-    try {
-      await navigator.clipboard.writeText(value)
-      setCopiedField(key)
-      setTimeout(() => setCopiedField(null), 1500)
-    } catch {
-      /* ignore */
+    const ok = await copyText(value)
+    if (!ok) {
+      setCopyError(true)
+      setTimeout(() => setCopyError(false), 1800)
+      return
     }
+    setCopiedField(key)
+    setTimeout(() => setCopiedField(null), 1500)
   }, [])
 
   const clear = useCallback(() => {
@@ -532,6 +536,7 @@ export default function CertificateParser(): React.JSX.Element {
         aria-hidden="true"
         tabIndex={-1}
       />
+      <CopyToast message={copyError ? '复制失败，请手动选择' : null} />
     </div>
   )
 }

@@ -1,5 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { Search, Star, Download, Copy, Check, Terminal, Tag, ChevronDown, ChevronRight } from 'lucide-react'
+import CopyToast from '@renderer/components/CopyToast'
+import { copyText } from '@renderer/lib/clipboard'
 import '../styles/dockerhub-search.css'
 
 const REQUEST_TIMEOUT_MS = 15000
@@ -65,6 +67,7 @@ export default function DockerHubSearch(): React.JSX.Element {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [copied, setCopied] = useState('')
+  const [copyError, setCopyError] = useState(false)
   const [expandedImg, setExpandedImg] = useState('')
   const [tags, setTags] = useState<{ name: string; digest: string; digestShort: string; size: number; arch: string; os: string; lastUpdated: string }[]>([])
   const [tagsLoading, setTagsLoading] = useState(false)
@@ -148,7 +151,13 @@ export default function DockerHubSearch(): React.JSX.Element {
   }, [])
 
   const copyCmd = useCallback(async (text: string) => {
-    try { await navigator.clipboard.writeText(text); setCopied(text); setTimeout(() => setCopied(''), 1500) } catch { /* ignore */ }
+    if (!(await copyText(text))) {
+      setCopyError(true)
+      setTimeout(() => setCopyError(false), 1800)
+      return
+    }
+    setCopied(text)
+    setTimeout(() => setCopied(''), 1500)
   }, [])
 
   const toggleTags = useCallback(async (imageName: string) => {
@@ -303,6 +312,7 @@ export default function DockerHubSearch(): React.JSX.Element {
           ))}
         </div>
       </div>
+      <CopyToast message={copyError ? '复制失败，请手动选择' : null} />
     </div>
   )
 }

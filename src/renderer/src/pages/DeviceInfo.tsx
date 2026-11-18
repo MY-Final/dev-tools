@@ -312,8 +312,8 @@ export default function DeviceInfo(): React.JSX.Element {
       </div>
 
       {toast && (
-        <div className="device-toast">
-          <Check size={14} />
+        <div className="device-toast" role="status" aria-live="polite">
+          <Check size={14} aria-hidden="true" />
           {toast}
         </div>
       )}

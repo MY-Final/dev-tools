@@ -25,6 +25,15 @@ export default function ElectronOnlyPage({
           当前浏览器中无法使用。
         </p>
         <p className="electron-only-hint">请下载 Dev Tools 桌面版来使用此功能</p>
+        <a
+          className="electron-only-download"
+          href="https://github.com/MY-Final/dev-tools/releases/latest"
+          target="_blank"
+          rel="noreferrer"
+        >
+          <Download size={15} aria-hidden="true" />
+          下载桌面版
+        </a>
         <div className="electron-only-divider" />
         <p className="electron-only-alt">其他大部分工具在浏览器中均可正常使用，尽情探索吧！</p>
       </div>

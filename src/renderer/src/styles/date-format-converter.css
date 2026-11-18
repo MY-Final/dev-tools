@@ -44,7 +44,7 @@
 
 .dfc-formats {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr));
   gap: 1px;
   background: var(--color-border);
 }
@@ -150,6 +150,21 @@
 
   .dfc-input {
     flex-basis: calc(100% - 62px);
+  }
+
+  .dfc-input-row .tool-btn {
+    flex: 1 0 100%;
+    justify-content: center;
+  }
+
+  .dfc-format-label {
+    width: 92px;
+  }
+
+  .dfc-format-value {
+    font-size: var(--text-xs);
+    white-space: normal;
+    overflow-wrap: anywhere;
   }
 
   .dfc-custom-value {

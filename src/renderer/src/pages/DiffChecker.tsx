@@ -1,6 +1,8 @@
 import { useCallback, useMemo, useState } from 'react'
 import { diffArrays, diffWordsWithSpace, type ChangeObject } from 'diff'
 import { ArrowLeftRight, Check, Copy, FileText, FolderOpen, RotateCcw } from 'lucide-react'
+import CopyToast from '@renderer/components/CopyToast'
+import { copyText } from '@renderer/lib/clipboard'
 import '../styles/diff-checker.css'
 
 interface DiffLine {
@@ -306,6 +308,7 @@ export default function DiffChecker(): React.JSX.Element {
   const [ignoreCase, setIgnoreCase] = useState(false)
   const [expandedGaps, setExpandedGaps] = useState<Record<string, boolean>>({})
   const [copied, setCopied] = useState<CopyTarget | null>(null)
+  const [copyError, setCopyError] = useState(false)
   const [leftName, setLeftName] = useState<string | null>(null)
   const [rightName, setRightName] = useState<string | null>(null)
   const [opening, setOpening] = useState<Side | null>(null)
@@ -434,24 +437,26 @@ export default function DiffChecker(): React.JSX.Element {
         return `  ${line.text}`
       })
       .join('\n')
-    try {
-      await navigator.clipboard.writeText(text)
-      setCopied('diff')
-      window.setTimeout(() => setCopied(null), 1500)
-    } catch {
-      // 剪贴板不可用时保持静默，与其它工具一致
+    const ok = await copyText(text)
+    if (!ok) {
+      setCopyError(true)
+      window.setTimeout(() => setCopyError(false), 1800)
+      return
     }
+    setCopied('diff')
+    window.setTimeout(() => setCopied(null), 1500)
   }, [diff])
 
   const copyMerged = useCallback(async (): Promise<void> => {
     if (!mergedText) return
-    try {
-      await navigator.clipboard.writeText(mergedText)
-      setCopied('merge')
-      window.setTimeout(() => setCopied(null), 1500)
-    } catch {
-      // ignore
+    const ok = await copyText(mergedText)
+    if (!ok) {
+      setCopyError(true)
+      window.setTimeout(() => setCopyError(false), 1800)
+      return
     }
+    setCopied('merge')
+    window.setTimeout(() => setCopied(null), 1500)
   }, [mergedText])
 
   const renderSplitRow = (
@@ -799,6 +804,7 @@ export default function DiffChecker(): React.JSX.Element {
           )}
         </section>
       </div>
+      <CopyToast message={copyError ? '复制失败，请手动选择' : null} />
     </div>
   )
 }

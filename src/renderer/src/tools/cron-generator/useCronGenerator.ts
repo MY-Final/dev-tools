@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo } from 'react'
+import { copyText } from '@renderer/lib/clipboard'
 import {
   FREQUENCY_PRESETS,
   MONTHS,
@@ -126,14 +127,14 @@ export function useCronGenerator() {
     showToast('已重置')
   }, [showToast])
 
-  const copyCron = useCallback(() => {
-    void navigator.clipboard.writeText(cronExpression)
-    showToast('已复制到剪贴板')
+  const copyCron = useCallback(async () => {
+    const ok = await copyText(cronExpression)
+    showToast(ok ? '已复制到剪贴板' : '复制失败，请手动选择')
   }, [cronExpression, showToast])
 
-  const copyParserCron = useCallback(() => {
-    void navigator.clipboard.writeText(parserInput)
-    showToast('已复制到剪贴板')
+  const copyParserCron = useCallback(async () => {
+    const ok = await copyText(parserInput)
+    showToast(ok ? '已复制到剪贴板' : '复制失败，请手动选择')
   }, [parserInput, showToast])
 
   return {

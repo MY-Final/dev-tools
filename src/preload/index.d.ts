@@ -56,6 +56,8 @@ export interface AppSettings {
     goHome: string
   }
   favorites: string[]
+  recentTools: string[]
+  toolUsage: Record<string, number>
 }
 
 export interface SettingsAPI {
@@ -76,9 +78,13 @@ export interface SettingsAPI {
   updateProxy: (updates: Partial<{ enabled: boolean; url: string }>) => Promise<AppSettings>
   updateShortcuts: (updates: Partial<AppSettings['shortcuts']>) => Promise<AppSettings>
   updateFavorites: (toolId: string) => Promise<AppSettings>
+  recordRecentTool: (toolId: string) => Promise<AppSettings>
+  clearRecentTools: () => Promise<AppSettings>
+  clearToolUsage: () => Promise<AppSettings>
   getSettingsPath: () => Promise<string>
   onSettingsChanged: (callback: (settings: AppSettings) => void) => () => void
   resetToDefaults: () => Promise<AppSettings>
+  importSettings: (settings: unknown) => Promise<AppSettings>
 }
 
 export interface TodoItem {

@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo, useEffect } from 'react'
+import { copyText } from '@renderer/lib/clipboard'
 import {
   base64UrlDecodeText,
   base64UrlEncodeText,
@@ -299,11 +300,10 @@ export function useJWTGenerator() {
     [showToast]
   )
 
-  const copyJWT = useCallback(() => {
-    if (jwt) {
-      navigator.clipboard.writeText(jwt)
-      showToast('已复制到剪贴板')
-    }
+  const copyJWT = useCallback(async () => {
+    if (!jwt) return
+    const ok = await copyText(jwt)
+    showToast(ok ? '已复制到剪贴板' : '复制失败，请手动选择')
   }, [jwt, showToast])
 
   return {

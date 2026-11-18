@@ -16,7 +16,11 @@ interface SettingsContextType {
   updateProxy: (updates: Partial<{ enabled: boolean; url: string }>) => Promise<void>
   updateShortcuts: (updates: Partial<AppSettings['shortcuts']>) => Promise<void>
   updateFavorites: (toolId: string) => Promise<void>
+  recordRecentTool: (toolId: string) => Promise<void>
+  clearRecentTools: () => Promise<void>
+  clearToolUsage: () => Promise<void>
   resetToDefaults: () => Promise<void>
+  importSettings: (settings: unknown) => Promise<void>
 }
 
 const SettingsContext = createContext<SettingsContextType | null>(null)
@@ -133,6 +137,38 @@ export function SettingsProvider({ children }: { children: ReactNode }): React.J
     }
   }, [])
 
+  const recordRecentTool = useCallback(async (toolId: string) => {
+    try {
+      const updated = await window.api.recordRecentTool(toolId)
+      setSettings(updated)
+    } catch {
+      // 忽略错误
+    }
+  }, [])
+
+  const clearRecentTools = useCallback(async () => {
+    try {
+      const updated = await window.api.clearRecentTools()
+      setSettings(updated)
+    } catch {
+      // 忽略错误
+    }
+  }, [])
+
+  const clearToolUsage = useCallback(async () => {
+    try {
+      const updated = await window.api.clearToolUsage()
+      setSettings(updated)
+    } catch {
+      // 忽略错误
+    }
+  }, [])
+
+  const importSettings = useCallback(async (value: unknown) => {
+    const updated = await window.api.importSettings(value)
+    setSettings(updated)
+  }, [])
+
   const resetToDefaults = useCallback(async () => {
     try {
       const reset = await window.api.resetToDefaults()
@@ -144,7 +180,25 @@ export function SettingsProvider({ children }: { children: ReactNode }): React.J
 
   return (
     <SettingsContext.Provider
-      value={{ settings, loading, updateAppearance, updateEditor, updateUpdater, updateWindow, updateTranslator, updateNpmRegistry, updateMavenSearchUrl, updateProxy, updateShortcuts, updateFavorites, resetToDefaults }}
+      value={{
+        settings,
+        loading,
+        updateAppearance,
+        updateEditor,
+        updateUpdater,
+        updateWindow,
+        updateTranslator,
+        updateNpmRegistry,
+        updateMavenSearchUrl,
+        updateProxy,
+        updateShortcuts,
+        updateFavorites,
+        recordRecentTool,
+        clearRecentTools,
+        clearToolUsage,
+        resetToDefaults,
+        importSettings
+      }}
     >
       {children}
     </SettingsContext.Provider>

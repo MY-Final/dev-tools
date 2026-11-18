@@ -1,5 +1,7 @@
 import { useState, useMemo, useCallback } from 'react'
 import { Copy, Check, RotateCcw, ArrowRight, ArrowLeftRight, FileText } from 'lucide-react'
+import CopyToast from '@renderer/components/CopyToast'
+import { copyText } from '@renderer/lib/clipboard'
 import {
   DATA_FORMATS,
   convertDocument,
@@ -61,6 +63,7 @@ export default function DataConverter(): React.JSX.Element {
   const [to, setTo] = useState<FormatId>('json')
   const [input, setInput] = useState('')
   const [copied, setCopied] = useState(false)
+  const [copyError, setCopyError] = useState(false)
 
   const conversion = useMemo(() => {
     if (!input.trim()) return null
@@ -73,18 +76,25 @@ export default function DataConverter(): React.JSX.Element {
 
   const loadSample = useCallback(() => setInput(SAMPLES[from]), [from])
 
-  const openFile = useCallback((content: string) => {
-    setInput(content)
-    // Guess the source format from the first non-empty line so opening a
-    // file does not silently convert it with the wrong reader.
-    const head = content.trimStart().slice(0, 200)
-    if (/^[[{]/.test(head)) setFrom('json')
-    else if (/^<\?xml|^<[A-Za-z_]/i.test(head)) setFrom('xml')
-    else if (/^[^:\n]+:\s/m.test(head) && !head.includes(',')) setFrom('yaml')
-    else if (/^[A-Za-z0-9_.-]+\s*=\s*/m.test(head)) setFrom('toml')
-    else if (head.split('\n')[0]?.includes('\t')) setFrom('tsv')
-    else setFrom('csv')
-  }, [])
+  const openFile = useCallback(
+    (content: string) => {
+      setInput(content)
+      // Guess the source format from the first non-empty line so opening a
+      // file does not silently convert it with the wrong reader.
+      const head = content.trimStart().slice(0, 200)
+      let detected: FormatId = 'csv'
+      if (/^[[{]/.test(head)) detected = 'json'
+      else if (/^<\?xml|^<[A-Za-z_]/i.test(head)) detected = 'xml'
+      else if (/^[^:\n]+:\s/m.test(head) && !head.includes(',')) detected = 'yaml'
+      else if (/^[A-Za-z0-9_.-]+\s*=\s*/m.test(head)) detected = 'toml'
+      else if (head.split('\n')[0]?.includes('\t')) detected = 'tsv'
+
+      // 文件识别出的源格式若正好是当前目标格式，交换方向，保持下拉框有效。
+      if (detected === to) setTo(from)
+      setFrom(detected)
+    },
+    [from, to]
+  )
 
   const swap = useCallback(() => {
     if (output) setInput(output)
@@ -92,17 +102,27 @@ export default function DataConverter(): React.JSX.Element {
     setTo(from)
   }, [output, from, to])
 
+  // 目标格式始终排除源格式。若把源格式改成当前目标，就交换方向，
+  // 避免出现「选择框显示 YAML、状态却是 JSON」的不一致。
+  const handleFromChange = useCallback(
+    (next: FormatId) => {
+      if (next === to) setTo(from)
+      setFrom(next)
+    },
+    [from, to]
+  )
+
   const clear = useCallback(() => setInput(''), [])
 
   const copy = useCallback(async () => {
     if (!output) return
-    try {
-      await navigator.clipboard.writeText(output)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 1500)
-    } catch {
-      /* ignore */
+    if (!(await copyText(output))) {
+      setCopyError(true)
+      setTimeout(() => setCopyError(false), 1800)
+      return
     }
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1500)
   }, [output])
 
   const fromInfo = getFormatInfo(from)
@@ -143,7 +163,7 @@ export default function DataConverter(): React.JSX.Element {
 
         {/* Format row */}
         <div className="dc-format-row">
-          <FormatSelect value={from} onChange={setFrom} label="源格式" />
+          <FormatSelect value={from} onChange={handleFromChange} label="源格式" />
           <button className="dc-swap-btn" onClick={swap} title="交换源格式与目标格式">
             {output ? <ArrowLeftRight size={15} /> : <ArrowRight size={15} />}
           </button>
@@ -206,6 +226,7 @@ export default function DataConverter(): React.JSX.Element {
           </ul>
         )}
       </div>
+      <CopyToast message={copyError ? '复制失败，请手动选择' : null} />
     </div>
   )
 }

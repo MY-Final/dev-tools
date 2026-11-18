@@ -18,7 +18,7 @@
   max-width: 640px;
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);
-  border-radius: 16px;
+  border-radius: 20px;
   padding: 32px;
   box-shadow: var(--shadow-xl);
 }
@@ -67,7 +67,7 @@
   padding: 10px 14px;
   background: var(--color-editor-bg);
   border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: 10px;
   color: var(--color-text);
   font-size: 1rem;
   font-weight: 600;
@@ -86,14 +86,14 @@
   padding: 3px;
   background: var(--color-editor-bg);
   border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: 10px;
 }
 
 .fg-unit-btn {
   padding: 8px 16px;
   background: transparent;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   color: var(--color-text-muted);
   font-size: 0.8125rem;
   font-weight: 500;
@@ -133,7 +133,7 @@
   padding: 12px 14px;
   background: var(--color-editor-bg);
   border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: 10px;
   color: var(--color-text-secondary);
   cursor: pointer;
   transition: all 0.15s ease;
@@ -177,7 +177,7 @@
   background: var(--color-accent-soft);
   color: var(--color-text-inverse);
   border: none;
-  border-radius: 12px;
+  border-radius: 15px;
   font-size: 0.875rem;
   font-weight: 600;
   cursor: pointer;
@@ -200,6 +200,7 @@
   border: 2px solid rgba(255, 255, 255, 0.3);
   border-top-color: white;
   border-radius: 50%;
+  corner-shape: round;
   animation: fg-spin 0.8s linear infinite;
 }
 
@@ -217,7 +218,7 @@
   padding: 10px 14px;
   background: var(--color-warning-subtle);
   border: 1px solid var(--color-warning);
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 0.75rem;
   color: var(--color-warning);
 }
@@ -230,7 +231,7 @@
 
   .fg-card {
     padding: 24px 20px;
-    border-radius: 16px;
+    border-radius: 20px;
   }
 
   .fg-title {
