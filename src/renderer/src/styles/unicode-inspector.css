@@ -253,7 +253,7 @@
 .ui-swatch {
   width: 10px;
   height: 10px;
-  border-radius: 2px;
+  border-radius: 2.5px;
   background: var(--hl, var(--color-text-muted));
 }
 
@@ -354,6 +354,7 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
+  corner-shape: round;
   flex-shrink: 0;
 }
 

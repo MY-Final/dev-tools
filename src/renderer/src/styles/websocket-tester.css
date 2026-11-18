@@ -23,7 +23,7 @@
   padding: 10px 14px;
   background: var(--color-surface);
   border: 1.5px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: 10px;
   color: var(--color-text);
   font-size: 0.8125rem;
   font-family: 'JetBrains Mono', monospace;
@@ -47,7 +47,7 @@
   gap: 6px;
   padding: 8px 16px;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 0.75rem;
   font-weight: 600;
   cursor: pointer;
@@ -113,7 +113,7 @@
   gap: 5px;
   padding: 6px 14px;
   border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: 10px;
   background: var(--color-surface);
   color: var(--color-text-muted);
   font-size: 0.6875rem;
@@ -143,7 +143,7 @@
   font-size: 0.625rem;
   font-weight: 700;
   padding: 1px 5px;
-  border-radius: 4px;
+  border-radius: 5px;
   background: var(--color-accent-soft-subtle);
   color: var(--color-accent-soft);
 }
@@ -158,7 +158,7 @@
   padding: 8px 12px;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: 10px;
   cursor: pointer;
   color: var(--color-text-secondary);
   font-size: 0.75rem;
@@ -195,7 +195,7 @@
   padding: 12px;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: 10px;
   max-height: 240px;
   overflow-y: auto;
 }
@@ -224,7 +224,7 @@
   gap: 3px;
   padding: 3px 8px;
   border: 1px solid var(--color-border);
-  border-radius: 4px;
+  border-radius: 5px;
   background: transparent;
   color: var(--color-text-muted);
   font-size: 0.625rem;
@@ -268,7 +268,7 @@
   padding: 6px 10px;
   background: var(--color-background);
   border: 1.5px solid var(--color-border);
-  border-radius: 6px;
+  border-radius: 7.5px;
   color: var(--color-text);
   font-size: 0.75rem;
   font-family: 'JetBrains Mono', monospace;
@@ -298,7 +298,7 @@
   gap: 4px;
   padding: 4px 10px;
   border: 1px solid var(--color-border);
-  border-radius: 6px;
+  border-radius: 7.5px;
   background: transparent;
   color: var(--color-text-muted);
   font-size: 0.6875rem;
@@ -325,7 +325,7 @@
   padding: 6px 10px;
   background: var(--color-background);
   border: 1.5px solid var(--color-border);
-  border-radius: 6px;
+  border-radius: 7.5px;
   color: var(--color-text);
   font-size: 0.75rem;
   font-family: 'JetBrains Mono', monospace;
@@ -353,7 +353,7 @@
   padding: 6px 10px;
   background: var(--color-background);
   border: 1.5px solid var(--color-border);
-  border-radius: 6px;
+  border-radius: 7.5px;
   color: var(--color-text);
   font-size: 0.75rem;
   font-family: 'JetBrains Mono', monospace;
@@ -376,7 +376,7 @@
   width: 26px;
   height: 26px;
   border: 1px solid var(--color-border);
-  border-radius: 6px;
+  border-radius: 7.5px;
   background: transparent;
   color: var(--color-text-muted);
   cursor: pointer;
@@ -430,6 +430,7 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
+  corner-shape: round;
 }
 
 .wst-status.connected .wst-status-dot {
@@ -473,7 +474,7 @@
   padding: 10px 14px;
   background: var(--color-surface);
   border: 1.5px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: 10px;
   color: var(--color-text);
   font-size: 0.8125rem;
   font-family: 'JetBrains Mono', monospace;
@@ -534,7 +535,7 @@
   align-items: flex-start;
   gap: 8px;
   padding: 5px 10px;
-  border-radius: 6px;
+  border-radius: 7.5px;
   font-size: 0.75rem;
   font-family: 'JetBrains Mono', monospace;
   transition: background 0.1s;
@@ -573,7 +574,7 @@
   font-size: 0.625rem;
   font-weight: 600;
   padding: 1px 6px;
-  border-radius: 4px;
+  border-radius: 5px;
   flex-shrink: 0;
   background: var(--color-surface);
   border: 1px solid var(--color-border);

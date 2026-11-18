@@ -96,6 +96,7 @@
   height: 10px;
   border: 1px solid color-mix(in srgb, var(--color-text) 18%, transparent);
   border-radius: 50%;
+  corner-shape: round;
 }
 
 .cv-error {

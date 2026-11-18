@@ -48,14 +48,14 @@
   padding: 4px;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: 10px;
 }
 
 .jc-tab {
   padding: 8px 6px;
   background: transparent;
   border: none;
-  border-radius: 6px;
+  border-radius: 7.5px;
   font-size: 0.75rem;
   font-weight: 500;
   color: var(--color-text-secondary);
@@ -113,6 +113,7 @@
   width: 7px;
   height: 7px;
   border-radius: 50%;
+  corner-shape: round;
 }
 
 .jc-dot-input {
@@ -135,7 +136,7 @@
   gap: 4px;
   background: transparent;
   border: 1px solid var(--color-border);
-  border-radius: 6px;
+  border-radius: 7.5px;
   padding: 4px 10px;
   font-size: 0.6875rem;
   font-weight: 500;
@@ -171,7 +172,7 @@
   padding: 12px 14px;
   background: var(--color-editor-bg, var(--color-surface));
   border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: 10px;
   color: var(--color-text);
   font-size: 0.75rem;
   font-family: 'JetBrains Mono', monospace;
@@ -198,7 +199,7 @@
   padding: 12px 14px;
   background: var(--color-editor-bg, var(--color-surface));
   border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 0.75rem;
   font-family: 'JetBrains Mono', monospace;
   color: var(--color-text);
@@ -219,7 +220,7 @@
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-left: 2px solid var(--color-danger);
-  border-radius: 8px;
+  border-radius: 10px;
   color: var(--color-danger);
   font-size: 0.75rem;
   font-family: 'JetBrains Mono', monospace;
@@ -231,7 +232,7 @@
   padding: 10px 14px 10px 30px;
   border: 1px solid var(--color-border);
   border-left: 2px solid var(--color-warning);
-  border-radius: 8px;
+  border-radius: 10px;
   color: var(--color-text-secondary);
   font-size: var(--text-sm);
   line-height: 1.5;

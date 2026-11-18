@@ -18,7 +18,7 @@
   background: var(--glass-bg);
   backdrop-filter: blur(20px);
   border: 1px solid var(--glass-border);
-  border-radius: 16px;
+  border-radius: 20px;
   padding: 32px;
   box-shadow: var(--shadow-xl);
   overflow: hidden;
@@ -42,7 +42,7 @@
 .gg-preview {
   width: 100%;
   height: 140px;
-  border-radius: 12px;
+  border-radius: 15px;
   margin-bottom: 24px;
   border: 1px solid var(--color-border);
   transition: background 0.3s ease;
@@ -80,14 +80,14 @@
   gap: 10px;
   background: var(--color-editor-bg);
   border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: 10px;
   padding: 6px 12px;
   min-width: 0;
 }
 .gg-color-swatch {
   width: 36px;
   height: 36px;
-  border-radius: 8px;
+  border-radius: 10px;
   border: 2px solid var(--color-border);
   flex-shrink: 0;
 }
@@ -120,7 +120,7 @@
   padding: 8px;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 0.875rem;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -160,7 +160,7 @@
   padding: 6px 10px;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: 10px;
   cursor: pointer;
   transition: all 0.15s ease;
 }
@@ -170,7 +170,7 @@
 .gg-preset-swatch {
   width: 20px;
   height: 20px;
-  border-radius: 4px;
+  border-radius: 5px;
   flex-shrink: 0;
   border: 1px solid var(--color-border);
 }
@@ -205,7 +205,7 @@
   gap: 4px;
   padding: 5px 12px;
   border: 1px solid var(--color-border);
-  border-radius: 6px;
+  border-radius: 7.5px;
   font-size: 0.6875rem;
   font-weight: 500;
   color: var(--color-text-secondary);
@@ -230,7 +230,7 @@
   padding: 14px 16px;
   background: var(--color-editor-bg);
   border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 0.75rem;
   font-family: 'JetBrains Mono', monospace;
   color: var(--color-accent-soft);
@@ -244,7 +244,7 @@
   }
   .gg-card {
     padding: 24px 18px;
-    border-radius: 16px;
+    border-radius: 20px;
   }
   .gg-color-row {
     flex-direction: column;

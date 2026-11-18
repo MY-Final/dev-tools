@@ -266,6 +266,7 @@
   border: 2px solid var(--color-border);
   border-top-color: var(--color-text-secondary);
   border-radius: 50%;
+  corner-shape: round;
   animation: spin 0.8s linear infinite;
 }
 

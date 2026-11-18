@@ -222,7 +222,7 @@
 .home-category-mark {
   width: 3px;
   height: 11px;
-  border-radius: 2px;
+  border-radius: 2.5px;
   background: var(--cat);
   flex-shrink: 0;
 }
@@ -326,7 +326,7 @@
 .home-tool-badge {
   flex-shrink: 0;
   padding: 0 4px;
-  border-radius: 4px;
+  border-radius: 5px;
   background: var(--color-accent-subtle);
   color: var(--color-accent);
   font-size: var(--text-2xs);

@@ -81,7 +81,7 @@ const customTheme = EditorView.theme({
   '.cm-tooltip': {
     backgroundColor: 'var(--color-surface)',
     border: '1px solid var(--color-border)',
-    borderRadius: '8px',
+    borderRadius: '10px',
     boxShadow: 'var(--shadow-md)',
     color: 'var(--color-text)'
   },

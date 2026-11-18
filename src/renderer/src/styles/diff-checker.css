@@ -204,6 +204,7 @@
   height: 7px;
   flex-shrink: 0;
   border-radius: 50%;
+  corner-shape: round;
 }
 
 .df-dot-old {
@@ -327,7 +328,7 @@
 .df-view-tab {
   padding: 3px 10px;
   border: 0;
-  border-radius: calc(var(--radius-sm) - 2px);
+  border-radius: calc(var(--radius-sm) - 2.5px);
   background: transparent;
   color: var(--color-text-secondary);
   font-family: inherit;
@@ -550,7 +551,7 @@
 
 .df-word {
   padding: 0 1px;
-  border-radius: 2px;
+  border-radius: 2.5px;
   color: inherit;
 }
 

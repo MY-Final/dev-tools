@@ -171,8 +171,8 @@ body { margin: 0; background: #ffffff; color: #1f2328; font-family: -apple-syste
 .mp-doc a:hover { text-decoration: underline; }
 .mp-anchor { margin-inline-start: -0.9em; padding-inline-end: 0.35em; color: #8c959f; text-decoration: none; }
 .mp-doc blockquote { padding: 0.25em 1em; border-inline-start: 4px solid #d0d7de; color: #57606a; }
-.mp-doc code { font-family: Consolas, "JetBrains Mono", monospace; font-size: 0.85em; background: #f6f8fa; padding: 0.15em 0.4em; border-radius: 4px; }
-.mp-doc pre.mp-code { position: relative; padding: 14px 16px; background: #f6f8fa; border: 1px solid #d8dee4; border-radius: 6px; overflow-x: auto; }
+.mp-doc code { font-family: Consolas, "JetBrains Mono", monospace; font-size: 0.85em; background: #f6f8fa; padding: 0.15em 0.4em; border-radius: 5px; }
+.mp-doc pre.mp-code { position: relative; padding: 14px 16px; background: #f6f8fa; border: 1px solid #d8dee4; border-radius: 7.5px; overflow-x: auto; }
 .mp-doc pre.mp-code code { background: none; padding: 0; font-size: 0.85em; line-height: 1.6; }
 .mp-doc pre.mp-code[data-lang]::before { content: attr(data-lang); position: absolute; top: 4px; right: 10px; font-size: 0.7em; color: #57606a; }
 .mp-doc .mp-table-wrap { overflow-x: auto; margin: 0 0 1em; }
