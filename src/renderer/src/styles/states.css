@@ -1,0 +1,220 @@
+/* ========================================
+   空状态与骨架屏
+   两者共用一条原则：先占住布局，再告诉用户发生了什么。
+   空状态不靠装饰，靠一句能指引下一步的说明；
+   骨架屏不闪、不位移，加载完成时内容原地替换。
+   ======================================== */
+
+/* 通用读屏隐藏：骨架/状态组件内部用 */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ── 空状态 ─────────────────────────────── */
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 36px 20px;
+  text-align: center;
+  min-width: 0;
+}
+
+.empty-state--sm {
+  gap: 4px;
+  padding: 18px 12px;
+}
+
+.empty-state-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  margin-bottom: 4px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+.empty-state--sm .empty-state-icon {
+  width: 34px;
+  height: 34px;
+  margin-bottom: 2px;
+  border-radius: var(--radius-md);
+}
+
+.empty-state-title {
+  margin: 0;
+  font-size: var(--text-base);
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--color-text-secondary);
+}
+
+.empty-state--sm .empty-state-title {
+  font-size: var(--text-sm);
+}
+
+.empty-state-desc {
+  margin: 0;
+  /* 60ch ≈ 一行 30 个汉字：中文说明尽量别断成「…试试。\n试。」 */
+  max-width: 60ch;
+  font-size: var(--text-xs);
+  line-height: 1.6;
+  color: var(--color-text-muted);
+}
+
+.empty-state--sm .empty-state-desc {
+  font-size: var(--text-2xs);
+}
+
+.empty-state--error .empty-state-title {
+  color: var(--color-danger);
+}
+
+.empty-state--error .empty-state-icon {
+  color: var(--color-danger);
+  border-color: color-mix(in srgb, var(--color-danger) 35%, var(--color-border));
+}
+
+.empty-state-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  margin-top: 8px;
+  padding: 0 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  cursor: pointer;
+  transition:
+    background-color var(--duration-fast) var(--ease-out),
+    border-color var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out),
+    transform var(--duration-instant) var(--ease-out);
+}
+
+.empty-state-action:hover {
+  background: var(--color-surface-hover);
+  border-color: var(--color-border-hover);
+  color: var(--color-text);
+}
+
+.empty-state-action:active {
+  background: var(--color-surface-active);
+  transform: scale(var(--press-scale));
+}
+
+.empty-state-action:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* ── 骨架屏 ─────────────────────────────── */
+
+.skeleton {
+  display: block;
+  flex-shrink: 0;
+  background: var(--color-surface-active);
+  position: relative;
+  overflow: hidden;
+}
+
+/* 一道横扫的微光，比整体闪烁更安静；低对比，不抢正在阅读的内容 */
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--color-text) 7%, transparent),
+    transparent
+  );
+  animation: skeleton-sweep 1.4s var(--ease-in-out) infinite;
+}
+
+@keyframes skeleton-sweep {
+  to {
+    transform: translateX(100%);
+  }
+}
+
+.skeleton-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.skeleton-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.skeleton-row:last-child {
+  border-bottom: none;
+}
+
+.skeleton-row-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  flex: 1;
+  min-width: 0;
+}
+
+/* ── 整页骨架（lazy 页面 fallback） ──────── */
+
+.page-skeleton {
+  pointer-events: none;
+}
+
+.page-skeleton-head {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0 0 20px;
+}
+
+.page-skeleton-panel {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  overflow: hidden;
+}
+
+.page-skeleton-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton::after {
+    animation: none;
+    opacity: 0;
+  }
+}

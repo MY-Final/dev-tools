@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { Clipboard, Copy, Check, Trash2, Download, Clock, X } from 'lucide-react'
 import Dialog from '../components/ui/dialog'
+import EmptyState from '@renderer/components/EmptyState'
 import { copyText } from '@renderer/lib/clipboard'
 import '../styles/clipboard-manager.css'
 
@@ -253,11 +254,11 @@ export default function ClipboardManager(): React.JSX.Element {
         </div>
 
         {history.length === 0 ? (
-          <div className="clm-empty">
-            <Clipboard size={28} className="clm-empty-icon" aria-hidden="true" />
-            <p className="clm-empty-text">暂无历史记录</p>
-            <p className="clm-empty-hint">点击「读取剪贴板」或按 Ctrl+Shift+V 开始收集</p>
-          </div>
+          <EmptyState
+            icon={Clipboard}
+            title="暂无历史记录"
+            description="点击「读取剪贴板」或按 Ctrl+Shift+V 开始收集。"
+          />
         ) : (
           <div className="clm-list">
             {history.map((item) => (

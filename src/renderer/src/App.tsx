@@ -4,6 +4,7 @@ import { Download, FileText } from 'lucide-react'
 import Sidebar from '@renderer/components/Sidebar'
 import CommandPalette from '@renderer/components/CommandPalette'
 import ShortcutHelp from '@renderer/components/ShortcutHelp'
+import { PageSkeleton } from '@renderer/components/Skeleton'
 import ToolHelp from '@renderer/components/ToolHelp'
 import ElectronOnlyPage from '@renderer/components/ElectronOnlyPage'
 import { ErrorBoundary } from '@renderer/components/ErrorBoundary'
@@ -212,7 +213,7 @@ function AppContent(): React.JSX.Element {
 
       return (
         <ErrorBoundary>
-          <Suspense fallback={<div className="page-loading">Loading…</div>}>
+          <Suspense fallback={<PageSkeleton />}>
             {tool && !supportsWeb(tool) ? (
               <ElectronOnlyPage toolName={tool.name}>{page}</ElectronOnlyPage>
             ) : (

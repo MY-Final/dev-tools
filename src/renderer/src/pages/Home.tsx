@@ -5,6 +5,7 @@ import type { ToolItem } from '@renderer/types/tool'
 import { useSettings } from '@renderer/lib/contexts'
 import { isWebRuntime } from '@renderer/lib/platform'
 import { matchesToolQuery } from '@renderer/lib/tool-search'
+import EmptyState from '@renderer/components/EmptyState'
 import '../styles/home.css'
 
 // ── Tags ──────────────────────────────────────────────────────
@@ -271,20 +272,23 @@ export default function Home({ onSelectTool }: HomeProps): React.JSX.Element {
         })}
 
         {filteredTools.length === 0 && (
-          <div className="home-empty">
-            <Layers size={28} className="home-empty-icon" aria-hidden="true" />
-            <span>没有找到匹配的工具</span>
-            <button
-              type="button"
-              className="home-empty-reset"
-              onClick={() => {
+          <EmptyState
+            icon={Layers}
+            title="没有找到匹配的工具"
+            description={
+              search.trim()
+                ? `没有与「${search.trim()}」匹配的工具，换个更短的关键词试试。`
+                : '当前场景筛选下还没有工具。'
+            }
+            action={{
+              label: '清除筛选',
+              onClick: () => {
                 setSearch('')
                 setSelectedTag(null)
-              }}
-            >
-              清除筛选
-            </button>
-          </div>
+              }
+            }}
+            live
+          />
         )}
       </section>
     </div>

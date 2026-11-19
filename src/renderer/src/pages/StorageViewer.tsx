@@ -12,6 +12,7 @@ import {
   ChevronRight
 } from 'lucide-react'
 import CopyToast from '@renderer/components/CopyToast'
+import EmptyState from '@renderer/components/EmptyState'
 import { copyText } from '@renderer/lib/clipboard'
 import '../styles/storage-viewer.css'
 
@@ -297,11 +298,11 @@ export default function StorageViewer(): React.JSX.Element {
         </div>
 
         {entries.length === 0 ? (
-          <div className="sv-empty">
-            <Database size={24} aria-hidden="true" />
-            <span>{storageType} 中暂无数据</span>
-            <span className="sv-empty-hint">点击「添加」写入第一条记录。</span>
-          </div>
+          <EmptyState
+            icon={Database}
+            title={`${storageType} 中暂无数据`}
+            description="点击「添加」写入第一条记录。"
+          />
         ) : (
           <div className="sv-entries">
             {entries.map((entry) => {

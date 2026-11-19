@@ -1,6 +1,8 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { Search, Star, Download, Copy, Check, Terminal, Tag, ChevronDown, ChevronRight } from 'lucide-react'
 import CopyToast from '@renderer/components/CopyToast'
+import EmptyState from '@renderer/components/EmptyState'
+import { SkeletonList } from '@renderer/components/Skeleton'
 import { copyText } from '@renderer/lib/clipboard'
 import '../styles/dockerhub-search.css'
 
@@ -233,20 +235,33 @@ export default function DockerHubSearch(): React.JSX.Element {
           {loading && <Terminal size={16} className="dh-spin" />}
         </div>
 
-        {loading && (
+        {loading && results.length === 0 && <SkeletonList rows={4} label="正在搜索 Docker 镜像" />}
+
+        {loading && results.length > 0 && (
           <div className="dh-empty" role="status" aria-live="polite">
-            {results.length > 0 ? '正在刷新搜索结果…' : '正在搜索…'}
+            正在刷新搜索结果…
           </div>
         )}
 
         {error && <div className="dh-error" role="alert">{error}</div>}
 
         {!loading && query.trim() && results.length === 0 && !error && (
-          <div className="dh-empty">未找到匹配的镜像</div>
+          <EmptyState
+            icon={Search}
+            title="未找到匹配的镜像"
+            description="试试官方镜像名（如 nginx、redis）或去掉版本标签。"
+            size="sm"
+            live
+          />
         )}
 
         {!loading && !query.trim() && results.length === 0 && !error && (
-          <div className="dh-empty">输入关键词搜索 Docker 镜像</div>
+          <EmptyState
+            icon={Terminal}
+            title="搜索 Docker Hub 镜像"
+            description="输入镜像名后回车，可直接复制 docker pull 命令。"
+            size="sm"
+          />
         )}
 
         <div className="dh-results" aria-busy={loading}>

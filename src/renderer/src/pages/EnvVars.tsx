@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { Search, Copy, Check, RefreshCw, Eye, EyeOff } from 'lucide-react'
 import CopyToast from '@renderer/components/CopyToast'
+import EmptyState from '@renderer/components/EmptyState'
+import { SkeletonList } from '@renderer/components/Skeleton'
 import { copyText } from '@renderer/lib/clipboard'
 
 export default function EnvVars(): React.JSX.Element {
@@ -166,11 +168,23 @@ export default function EnvVars(): React.JSX.Element {
         </div>
 
         {loading ? (
-          <div className="ev-empty">加载中…</div>
+          <SkeletonList rows={6} label="正在读取环境变量" />
         ) : error ? (
-          <div className="ev-empty ev-empty-error">加载失败，请重试</div>
+          <EmptyState
+            icon={RefreshCw}
+            title="加载失败"
+            description="读取环境变量需要桌面端，可点右上角刷新重试。"
+            tone="error"
+            live
+          />
         ) : sortedEntries.length === 0 ? (
-          <div className="ev-empty">没有匹配的环境变量</div>
+          <EmptyState
+            icon={Search}
+            title={search ? '没有匹配的环境变量' : '没有可显示的环境变量'}
+            description={search ? '换个关键词，或清空搜索框查看全部。' : '当前进程没有读取到任何环境变量。'}
+            size="sm"
+            live={Boolean(search)}
+          />
         ) : (
           <div className="ev-table-wrap">
             <table className="ev-table">

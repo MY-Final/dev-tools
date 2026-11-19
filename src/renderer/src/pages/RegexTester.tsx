@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import { Check, ChevronLeft, ChevronRight, Copy, Library, RotateCcw, Search } from 'lucide-react'
 import TextFileBar from '@renderer/components/TextFileBar'
 import CopyToast from '@renderer/components/CopyToast'
+import EmptyState from '@renderer/components/EmptyState'
 import { copyText as writeClipboard } from '@renderer/lib/clipboard'
 import { Popover, PopoverContent, PopoverTrigger } from '@renderer/components/ui/popover'
 import {
@@ -283,7 +284,7 @@ export default function RegexTester(): React.JSX.Element {
                 </div>
                 <div className="rx-preset-list">
                   {presetGroups.length === 0 && (
-                    <div className="rx-preset-empty">没有匹配的预设</div>
+                    <EmptyState icon={Search} title="没有匹配的预设" size="sm" />
                   )}
                   {presetGroups.map((category) => (
                     <div key={category.id} className="rx-preset-category">
@@ -520,7 +521,13 @@ export default function RegexTester(): React.JSX.Element {
               )}
 
               {matchCount === 0 ? (
-                <div className="rx-no-match">没有匹配结果</div>
+                <EmptyState
+                  icon={Search}
+                  title="没有匹配结果"
+                  description="试着放宽量词或去掉 ^ / $ 锚点。"
+                  size="sm"
+                  live
+                />
               ) : (
                 <div className="rx-highlight-box">
                   {segments.map((seg, i) => {

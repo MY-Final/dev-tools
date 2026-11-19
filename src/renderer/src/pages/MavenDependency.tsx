@@ -1,6 +1,8 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { Copy, Check, Search, ExternalLink, Globe, Loader } from 'lucide-react'
 import CopyToast from '@renderer/components/CopyToast'
+import EmptyState from '@renderer/components/EmptyState'
+import { SkeletonList } from '@renderer/components/Skeleton'
 import { copyText } from '@renderer/lib/clipboard'
 import type { MavenDoc } from '@renderer/lib/maven-api'
 
@@ -371,15 +373,24 @@ export default function MavenDependency(): React.JSX.Element {
 
             <div className="mvn-content">
               <div className="mvn-dep-list" aria-busy={loading}>
-                {loading && (
+                {loading && deps.length === 0 && (
+                  <SkeletonList rows={5} label="正在搜索 Maven 依赖" />
+                )}
+                {loading && deps.length > 0 && (
                   <div className="mvn-dep-empty" role="status" aria-live="polite">
                     <Loader size={20} className="updater-spin" />
-                    <span>{deps.length > 0 ? '正在刷新依赖列表...' : '搜索中...'}</span>
+                    <span>正在刷新依赖列表...</span>
                   </div>
                 )}
                 {error && <div className="npm-error" role="alert">{error}</div>}
                 {!loading && !error && deps.length === 0 && search.trim() && (
-                  <div className="mvn-dep-empty">未找到匹配的依赖</div>
+                  <EmptyState
+                    icon={Search}
+                    title="未找到匹配的依赖"
+                    description="用 artifactId 搜索（如 spring-boot-starter-web），或在设置里换一个 Maven 镜像。"
+                    size="sm"
+                    live
+                  />
                 )}
                 {deps.slice(0, 30).map((dep) => (
                   <div

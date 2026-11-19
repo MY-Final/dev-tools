@@ -58,6 +58,12 @@
 - 控件标尺: `.tool-input/select` 32px（`--lg` 38px）、`.tool-btn` 32px（`--outline` `--primary`）、`.tool-icon-btn` 28px、`.tool-segmented/.tool-seg` 26px
 - 行式数据: `.tool-rows/.tool-row`（44px 行高 + 发丝线）
 - 分栏: `.tool-split`（+`--even` `--wide`，≥980px 才并排）
+
+## 空状态与骨架屏（2026-11）
+- **组件**: `components/EmptyState.tsx`（icon / title / description / action / size `md|sm` / tone `neutral|error` / live），`components/Skeleton.tsx`（`Skeleton` 占位块、`SkeletonList` 列表骨架、`PageSkeleton` 整页骨架，已接到 App.tsx 的 Suspense fallback）
+- **样式**: `styles/states.css`（含全局 `.sr-only`），`main.css` 里紧跟 tool-layout 导入
+- **约定**: 空状态文案要给出下一步（「换个关键词」「点击添加」），不要只写「暂无数据」；搜索类结果变化时传 `live` 播报，初始态不播；骨架屏只在首屏加载时出现，刷新已有结果时保留列表 + 一行小字状态
+- **待迁移**: 各页面旧类 `.npm-empty/.dh-empty/.ev-empty/.clm-empty/.sv-empty/.tn-empty/.at-empty/.xp-no-match/.rx-no-match/.home-empty` 的 CSS 仍留在各自文件里，已无引用可删
 - 旧页面 `.xx-card/.xx-header` 被 tool-layout 统一归一化：去卡片背景、标题左对齐同字号
 
 ## 动效系统（2026-11 已建成）

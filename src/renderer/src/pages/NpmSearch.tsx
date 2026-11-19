@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Copy, Check, Search, ExternalLink, Package, Loader } from 'lucide-react'
 import { searchNpm, getNpmPackage, type NpmSearchResult, type NpmPackageDetail } from '@renderer/lib/npm-api'
 import CopyToast from '@renderer/components/CopyToast'
+import EmptyState from '@renderer/components/EmptyState'
+import { SkeletonList } from '@renderer/components/Skeleton'
 import { copyText } from '@renderer/lib/clipboard'
 import '../styles/npm-search.css'
 
@@ -207,9 +209,11 @@ export default function NpmSearch(): React.JSX.Element {
           {loading && <Loader size={16} className="npm-spin" />}
         </div>
 
-        {loading && (
+        {loading && results.length === 0 && <SkeletonList rows={4} label="正在搜索 npm 包" />}
+
+        {loading && results.length > 0 && (
           <div className="npm-empty" role="status" aria-live="polite">
-            {results.length > 0 ? '正在刷新搜索结果…' : '正在搜索…'}
+            正在刷新搜索结果…
           </div>
         )}
 
@@ -298,7 +302,13 @@ export default function NpmSearch(): React.JSX.Element {
         {detailError && <div className="npm-error" role="alert">{detailError}</div>}
 
         {!loading && !error && !detailLoading && !detailError && query.trim() && results.length === 0 && (
-          <div className="npm-empty" role="status" aria-live="polite">未找到匹配的包</div>
+          <EmptyState
+            icon={Package}
+            title="未找到匹配的包"
+            description="换个关键词，或用包名的完整拼写再试一次。"
+            size="sm"
+            live
+          />
         )}
       </div>
       <CopyToast message={copyError ? '复制失败，请手动选择' : null} />

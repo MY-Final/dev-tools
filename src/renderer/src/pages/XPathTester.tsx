@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback } from 'react'
 import { Copy, Check, RotateCcw, Search } from 'lucide-react'
 import CopyToast from '@renderer/components/CopyToast'
+import EmptyState from '@renderer/components/EmptyState'
 import { copyText } from '@renderer/lib/clipboard'
 import '../styles/xpath-tester.css'
 
@@ -348,7 +349,13 @@ export default function XPathTester(): React.JSX.Element {
             </div>
 
             {matchCount === 0 && (
-              <div className="xp-no-match">没有匹配的节点</div>
+              <EmptyState
+                icon={Search}
+                title="没有匹配的节点"
+                description="检查 XPath 语法，或换用 // 开头的相对路径再试。"
+                size="sm"
+                live
+              />
             )}
 
             <div className="xp-match-list">

@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback } from 'react'
 import { Copy, Check, Search } from 'lucide-react'
 import CopyToast from '@renderer/components/CopyToast'
+import EmptyState from '@renderer/components/EmptyState'
 import { copyText } from '@renderer/lib/clipboard'
 
 interface AsciiEntry {
@@ -165,7 +166,13 @@ export default function AsciiTable(): React.JSX.Element {
         </div>
 
         {filtered.length === 0 ? (
-          <div className="at-empty">没有匹配的字符</div>
+          <EmptyState
+            icon={Search}
+            title="没有匹配的字符"
+            description="支持十进制/十六进制编码，或字符名称（如 escape、quote）。"
+            size="sm"
+            live
+          />
         ) : (
           <div className="at-table-wrap">
             <table className="at-table">

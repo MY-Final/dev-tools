@@ -12,6 +12,8 @@ import {
   Trash2,
   X
 } from 'lucide-react'
+import EmptyState from '@renderer/components/EmptyState'
+import { SkeletonList } from '@renderer/components/Skeleton'
 import { Button } from '@renderer/components/ui/button'
 import { Calendar } from '@renderer/components/ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@renderer/components/ui/popover'
@@ -309,12 +311,9 @@ export default function TodoNotes(): React.JSX.Element {
         {error && <div className="tn-error">{error}</div>}
 
         {loading ? (
-          <div className="tn-empty">读取待办中...</div>
+          <SkeletonList rows={4} label="正在读取待办" />
         ) : visibleItems.length === 0 ? (
-          <div className="tn-empty">
-            <ListTodo size={42} className="tn-empty-icon" />
-            <p>{getEmptyText(filter)}</p>
-          </div>
+          <EmptyState icon={ListTodo} title={getEmptyText(filter)} size="sm" />
         ) : (
           <div className="tn-list">
             {visibleItems.map((item) => {
