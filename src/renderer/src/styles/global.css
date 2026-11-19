@@ -305,11 +305,22 @@
   font-size: var(--text-sm);
 }
 
+/* 分组标签：只在空查询时出现，把「命令」与「工具」两段分开 */
+.cmd-palette-group-label {
+  padding: 8px 10px 4px;
+  font-size: var(--text-2xs);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
 .cmd-palette-item {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
   padding: 9px 10px;
   border-radius: var(--radius-sm);
   cursor: pointer;
@@ -332,9 +343,23 @@
 }
 
 .cmd-palette-item-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
   font-size: var(--text-base);
   font-weight: 500;
   color: var(--color-text);
+}
+
+/* 工具与命令共用的小图标，与侧栏图标同色同尺寸语言 */
+.cmd-palette-item-icon {
+  flex-shrink: 0;
+  color: var(--color-text-muted);
+}
+
+.cmd-palette-item.selected .cmd-palette-item-icon {
+  color: var(--color-accent);
 }
 
 .cmd-palette-item-desc {
@@ -355,6 +380,27 @@
   margin-left: 12px;
 }
 
+/* 选中行右侧的行动提示：主操作 + 次要操作，只在激活时出现，
+   避免未选中的行也堆一排快捷键造成视觉噪音 */
+.cmd-palette-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  margin-left: 12px;
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.cmd-palette-item-actions kbd {
+  margin-right: 2px;
+}
+
+.cmd-palette-shortcut-hint {
+  flex-shrink: 0;
+}
+
 .cmd-palette-footer {
   display: flex;
   align-items: center;
@@ -366,7 +412,8 @@
   color: var(--color-text-muted);
 }
 
-.cmd-palette-footer kbd {
+/* 面板内所有 kbd 共用：底部提示栏与选中行的行动提示 */
+.cmd-palette kbd {
   display: inline-block;
   padding: 1px 5px;
   font-family: 'JetBrains Mono', monospace;
