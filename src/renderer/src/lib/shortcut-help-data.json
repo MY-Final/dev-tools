@@ -1,0 +1,22 @@
+{
+  "customizable": {
+    "title": "可自定义",
+    "hint": "可在设置中修改",
+    "items": [
+      { "id": "toggleSidebar", "label": "切换侧边栏" },
+      { "id": "openSettings", "label": "打开设置" },
+      { "id": "goHome", "label": "返回首页" }
+    ]
+  },
+  "fixed": {
+    "title": "固定快捷键",
+    "hint": "命令面板内",
+    "items": [
+      { "keys": ["Ctrl+K"], "label": "打开命令面板" },
+      { "keys": ["↑↓"], "label": "导航" },
+      { "keys": ["Enter"], "label": "打开/执行" },
+      { "keys": ["Ctrl+Enter"], "label": "收藏" },
+      { "keys": ["Esc"], "label": "关闭" }
+    ]
+  }
+}

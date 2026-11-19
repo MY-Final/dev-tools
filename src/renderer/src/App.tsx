@@ -3,6 +3,7 @@ import { flushSync } from 'react-dom'
 import { Download, FileText } from 'lucide-react'
 import Sidebar from '@renderer/components/Sidebar'
 import CommandPalette from '@renderer/components/CommandPalette'
+import ShortcutHelp from '@renderer/components/ShortcutHelp'
 import ToolHelp from '@renderer/components/ToolHelp'
 import ElectronOnlyPage from '@renderer/components/ElectronOnlyPage'
 import { ErrorBoundary } from '@renderer/components/ErrorBoundary'
@@ -241,6 +242,7 @@ function AppContent(): React.JSX.Element {
         {renderPage()}
       </main>
       <CommandPalette currentPage={currentPage} onNavigate={navigate} />
+      <ShortcutHelp />
       <UpdatePrompt />
     </div>
   )
