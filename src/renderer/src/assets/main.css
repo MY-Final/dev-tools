@@ -1,5 +1,6 @@
 @import './base.css';
 @import '../styles/global.css';
+@import '../styles/titlebar.css';
 @import '../styles/sidebar.css';
 @import '../styles/error-boundary.css';
 @import '../styles/tool-layout.css';

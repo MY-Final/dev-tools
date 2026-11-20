@@ -518,7 +518,8 @@
 @media (max-width: 767px) {
   .sidebar-mobile-toggle {
     position: fixed;
-    top: 10px;
+    /* 桌面端标题栏会占住顶部，窄窗口下按钮跟着下移 */
+    top: calc(var(--titlebar-height, 0px) + 10px);
     left: 12px;
     z-index: 80;
     display: flex;

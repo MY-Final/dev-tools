@@ -45,10 +45,18 @@
 
 ## 布局骨架
 ```
-.app-layout（flex，sidebar + main-content 100dvh）
-  .tool-shell（container-type: inline-size; container-name: tool）
-    .tool-shell-main（--tool-max 分档：表单 900 / 结果 1080 / 复杂 1120 / 速查 1240）
+.app-root（column，100dvh；--titlebar-height 0 或 34）
+  .titlebar（仅 Windows/macOS 桌面端渲染，34px，整条 -webkit-app-region: drag）
+  .app-layout（flex，sidebar + main-content）
+    .tool-shell（container-type: inline-size; container-name: tool）
+      .tool-shell-main（--tool-max 分档：表单 900 / 结果 1080 / 复杂 1120 / 速查 1240）
 ```
+
+### 原生窗口（2026-11）
+- **标题栏**: Windows 用 `titleBarStyle: 'hidden'` + `titleBarOverlay`（系统画最小化/最大化/关闭，保留贴靠布局与双击最大化）；macOS 用 `hiddenInset`（红绿灯内嵌，左侧留 84px）；**Linux 保持原生窗框**（overlay 在部分桌面环境不一致）
+- **颜色同步**: `src/main/window-chrome.ts` 从 `settings.appearance.theme`（system 走 `nativeTheme.shouldUseDarkColors`）推出底色与按钮色，`settings:update-appearance` / reset / import 后调用 `applyWindowChrome`，系统主题变化走 `nativeTheme 'updated'`
+- **窗口状态**: `src/main/window-state.ts` 存 `userData/window-state.json`（bounds + maximized，最大化时存 `getNormalBounds`），恢复前校验与任一显示器有 ≥120px 交集，越界就退回默认尺寸
+- **高度常量两处**: main 的 `TITLEBAR_HEIGHT` 与 CSS `--titlebar-height`（`.app-root:has(> .titlebar)` 时 34px），改一处必须改另一处
 - 宽屏 container query ≥1080px 再放大一档；工作台类（jf/mp/csv/xf/df）占满高度
 - 侧栏断点：<768 mobile drawer、<1024 tablet collapsed、desktop 用户控制
 

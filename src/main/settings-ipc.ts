@@ -1,14 +1,26 @@
 import { settingsStore, type AppSettings } from './settings'
 import { registerGuardedHandler } from './ipc-security'
 
-export function registerSettingsHandlers(): void {
+export function registerSettingsHandlers(onAppearanceChanged?: () => void): void {
   registerGuardedHandler('settings:get', () => settingsStore.getSettings())
   registerGuardedHandler('settings:get-appearance', () => settingsStore.getAppearance())
   registerGuardedHandler('settings:get-editor', () => settingsStore.getEditor())
-  registerGuardedHandler('settings:update-appearance', (_event, updates: Partial<AppSettings['appearance']>) => settingsStore.updateAppearance(updates))
+  registerGuardedHandler('settings:update-appearance', (_event, updates: Partial<AppSettings['appearance']>) => {
+    const next = settingsStore.updateAppearance(updates)
+    onAppearanceChanged?.()
+    return next
+  })
   registerGuardedHandler('settings:update-editor', (_event, updates: Partial<AppSettings['editor']>) => settingsStore.updateEditor(updates))
-  registerGuardedHandler('settings:reset', () => settingsStore.resetToDefaults())
-  registerGuardedHandler('settings:import', (_event, input: unknown) => settingsStore.importSettings(input))
+  registerGuardedHandler('settings:reset', () => {
+    const next = settingsStore.resetToDefaults()
+    onAppearanceChanged?.()
+    return next
+  })
+  registerGuardedHandler('settings:import', (_event, input: unknown) => {
+    const next = settingsStore.importSettings(input)
+    onAppearanceChanged?.()
+    return next
+  })
   registerGuardedHandler('settings:update-updater', (_event, updates: Partial<AppSettings['updater']>) => settingsStore.updateUpdater(updates))
   registerGuardedHandler('settings:update-window', (_event, updates: Partial<AppSettings['window']>) => settingsStore.updateWindow(updates))
   registerGuardedHandler('settings:get-npm-registry', () => settingsStore.getSettings().npmRegistry)

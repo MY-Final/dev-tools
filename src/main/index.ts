@@ -15,6 +15,8 @@ import { registerTodoHandlers } from './todos-ipc'
 import { registerFileHandlers } from './file-ipc'
 import { settingsStore } from './settings'
 import { configureIpcSecurity, isTrustedRendererUrl } from './ipc-security'
+import { applyWindowChrome, getChromeColors, getTitleBarOptions, watchSystemTheme } from './window-chrome'
+import { loadWindowState, trackWindowState } from './window-state'
 
 let mainWindow: BrowserWindow | null = null
 let tray: Tray | null = null
@@ -161,15 +163,17 @@ function handleWindowClose(event: Electron.Event): void {
 }
 
 function createWindow(): void {
+  const windowState = loadWindowState()
+
   // Create the browser window.
   const win = new BrowserWindow({
-    width: 1100,
-    height: 750,
+    ...windowState.bounds,
     show: false,
-    backgroundColor: '#0f1117',
+    backgroundColor: getChromeColors().background,
     autoHideMenuBar: true,
     paintWhenInitiallyHidden: true,
     icon,
+    ...getTitleBarOptions(),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: true,
@@ -177,6 +181,9 @@ function createWindow(): void {
       nodeIntegration: false
     }
   })
+
+  if (windowState.maximized) win.maximize()
+  trackWindowState(win)
 
   win.on('ready-to-show', () => {
     win.show()
@@ -261,8 +268,11 @@ app.whenReady().then(() => {
     optimizer.watchWindowShortcuts(window)
   })
 
-  // Register settings IPC handlers
-  registerSettingsHandlers()
+  // Register settings IPC handlers（外观变更后同步窗口底色与系统按钮颜色）
+  registerSettingsHandlers(() => applyWindowChrome(mainWindow))
+
+  // 主题设为「跟随系统」时，系统深浅色切换也要反映到窗口 chrome 上
+  watchSystemTheme(() => mainWindow)
 
   // Register updater IPC handlers
   registerUpdaterHandlers()

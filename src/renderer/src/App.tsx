@@ -4,6 +4,7 @@ import { Download, FileText } from 'lucide-react'
 import Sidebar from '@renderer/components/Sidebar'
 import CommandPalette from '@renderer/components/CommandPalette'
 import ShortcutHelp from '@renderer/components/ShortcutHelp'
+import TitleBar from '@renderer/components/TitleBar'
 import { PageSkeleton } from '@renderer/components/Skeleton'
 import ToolHelp from '@renderer/components/ToolHelp'
 import ElectronOnlyPage from '@renderer/components/ElectronOnlyPage'
@@ -229,22 +230,25 @@ function AppContent(): React.JSX.Element {
   }
 
   return (
-    <div className="app-layout">
-      <a className="skip-link" href="#main-content">
-        跳到主要内容
-      </a>
-      <Sidebar
-        currentPage={currentPage}
-        onNavigate={navigate}
-        collapsed={settings.appearance.sidebarCollapsed}
-        onToggleCollapse={handleToggleCollapse}
-      />
-      <main id="main-content" className="main-content" tabIndex={-1}>
-        {renderPage()}
-      </main>
-      <CommandPalette currentPage={currentPage} onNavigate={navigate} />
-      <ShortcutHelp />
-      <UpdatePrompt />
+    <div className="app-root">
+      <TitleBar currentPage={currentPage} />
+      <div className="app-layout">
+        <a className="skip-link" href="#main-content">
+          跳到主要内容
+        </a>
+        <Sidebar
+          currentPage={currentPage}
+          onNavigate={navigate}
+          collapsed={settings.appearance.sidebarCollapsed}
+          onToggleCollapse={handleToggleCollapse}
+        />
+        <main id="main-content" className="main-content" tabIndex={-1}>
+          {renderPage()}
+        </main>
+        <CommandPalette currentPage={currentPage} onNavigate={navigate} />
+        <ShortcutHelp />
+        <UpdatePrompt />
+      </div>
     </div>
   )
 }

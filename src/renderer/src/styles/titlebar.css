@@ -1,0 +1,50 @@
+/* ========================================
+   自绘标题栏（桌面端 Windows / macOS）
+   只负责一条安静的条带：品牌 + 当前页面。
+   按钮不自己画——Windows 用系统 overlay，macOS 用内嵌红绿灯，
+   最大化、贴靠布局、双击还原都交给系统，行为才是原生的。
+   ======================================== */
+
+.titlebar {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex: 0 0 auto;
+  height: var(--titlebar-height, 34px);
+  padding: 0 14px;
+  background: var(--color-background);
+  border-bottom: 1px solid var(--color-border);
+  overflow: hidden;
+  user-select: none;
+  /* 整条可拖动窗口；双击由系统做最大化/还原 */
+  -webkit-app-region: drag;
+}
+
+/* macOS 红绿灯内嵌在左上角，给它让出位置 */
+.titlebar--darwin {
+  padding-left: 84px;
+}
+
+.titlebar-brand {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.titlebar-sep {
+  font-size: var(--text-xs);
+  color: var(--color-border-active);
+  flex-shrink: 0;
+}
+
+.titlebar-page {
+  min-width: 0;
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
